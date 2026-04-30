@@ -4,7 +4,22 @@ export interface User {
   telegram_chat_id?: number
   daily_kcal_target: number
   daily_protein_target: number
+  fat_pct_target: number
+  carbs_pct_target: number
   persons_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface PersonProfile {
+  id: string
+  user_id: string
+  name: string
+  sex: 'female' | 'male' | 'other'
+  age: number
+  daily_kcal_target: number
+  fat_pct_target: number
+  carbs_pct_target: number
   created_at: string
   updated_at: string
 }
@@ -22,10 +37,33 @@ export interface WeeklyMeal {
   id: string
   weekly_menu_id: string
   day_number: number
-  meal_type: 'comida' | 'cena'
+  meal_type: 'desayuno' | 'comida' | 'cena'
   dish_name: string
   dish_description?: string
   image_url?: string
+  kcal: number
+  protein_g: number
+  carbs_g: number
+  fat_g: number
+  created_at: string
+  weekly_meal_ingredients?: WeeklyMealIngredient[]
+}
+
+export interface WeeklyDayImage {
+  id: string
+  weekly_menu_id: string
+  day_number: number
+  image_url: string
+  created_at: string
+  updated_at: string
+}
+
+export interface WeeklyMealIngredient {
+  id: string
+  weekly_meal_id: string
+  name: string
+  quantity: number
+  unit_type: 'kg' | 'g' | 'l' | 'ml' | 'ud' | 'pack' | 'unidad'
   created_at: string
 }
 
@@ -62,7 +100,7 @@ export interface MealPlan {
   id: string
   user_id: string
   plan_date: string
-  meal_type: 'comida' | 'cena'
+  meal_type: 'desayuno' | 'comida' | 'cena'
   dish_id?: string
   day_original?: number
   kcal?: number
@@ -100,4 +138,5 @@ export interface GeneratedMenu {
   menu_name: string
   comida: string
   cena: string
+  desayuno?: string
 }

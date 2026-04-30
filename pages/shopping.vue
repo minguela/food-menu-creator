@@ -100,6 +100,7 @@
 import type { ShoppingListItem } from '~/types'
 
 const supabase = useSupabase()
+const { loadCurrentUser } = useCurrentUser()
 
 const items = ref<ShoppingListItem[]>([])
 const loading = ref(true)
@@ -119,6 +120,13 @@ const totalPrice = computed(() => {
 
 const loadShoppingList = async () => {
   loading.value = true
+  const currentUser = await loadCurrentUser()
+
+  if (!currentUser) {
+    items.value = []
+    loading.value = false
+    return
+  }
 
   const { data, error } = await supabase
     .from('shopping_lists')
@@ -130,6 +138,7 @@ const loadShoppingList = async () => {
         unit_type
       )
     `)
+    .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false })
     .limit(100)
 

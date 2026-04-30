@@ -1,6 +1,6 @@
 # 🍽️ MenuPlanner
 
-Interfaz web para gestionar menús semanales rotativos conectada a Supabase.
+Interfaz web para gestionar menús semanales rotativos conectada a Supabase, con perfiles de personas, control nutricional, ingredientes exactos y lista de la compra.
 
 ## 🚀 Inicio rápido
 
@@ -22,7 +22,13 @@ Abre http://localhost:3000
 ### Build para producción
 
 ```bash
-npm run generate
+npm run build
+```
+
+### Tests
+
+```bash
+npm test
 ```
 
 ## 📁 Estructura
@@ -31,10 +37,17 @@ npm run generate
 menu-web/
 ├── pages/
 │   ├── index.vue           # Lista de menús semanales
-│   ├── menu/[id].vue       # Detalle: añadir/editar platos
-│   └── generar.vue         # Generar menú rotativo de N días
+│   ├── menu/[id].vue       # Detalle: desayuno/comida/cena, imágenes e ingredientes
+│   ├── generar.vue         # Generar menú rotativo de N días
+│   ├── shopping.vue        # Lista de compra consolidada
+│   └── config.vue          # Perfiles y objetivos nutricionales
 ├── composables/
+│   ├── useCurrentUser.ts   # Usuario activo de la app
 │   └── useSupabase.ts      # Cliente Supabase
+├── utils/
+│   └── nutrition.js        # Validación y cálculo de macros
+├── tests/
+│   └── nutrition.test.mjs  # Tests de lógica nutricional
 ├── types/
 │   └── index.ts            # Tipos TypeScript
 ├── app.vue                 # Layout principal
@@ -57,9 +70,18 @@ menu-web/
 Las siguientes tablas deben existir en Supabase:
 
 - `weekly_menus` - Menús semanales
-- `weekly_meals` - Platos de cada menú
+- `weekly_meals` - Desayuno, comida y cena de cada día
+- `weekly_meal_ingredients` - Ingredientes exactos por plato
+- `weekly_day_images` - Imagen representativa del menú diario
+- `person_profiles` - Perfiles de personas y objetivos
+- `shopping_lists` - Lista de compra consolidada
 
-Puedes crearlas ejecutando el SQL en `../supabase/migrations/002_weekly_menus.sql`
+Aplica las migraciones de `../supabase/migrations/`, especialmente:
+
+- `004_weekly_meals_unique_slot.sql`
+- `005_profiles_daily_images_macros_ingredients.sql`
+
+El generador mensual usa `weekly_menus`/`weekly_meals` como fuente principal y consolida la compra desde `weekly_meal_ingredients`.
 
 ## 🌐 Despliegue en Vercel
 
@@ -75,10 +97,16 @@ Ver `DEPLOY.md` para más detalles.
 ## 📋 Funcionalidades
 
 - ✅ Crear menús semanales con nombre personalizado
-- ✅ Añadir platos para cada día (comida/cena)
-- ✅ Visualizar progreso (X/14 platos)
+- ✅ Añadir desayuno, comida y cena para cada día
+- ✅ Guardar kcal, proteína, hidratos, grasas e ingredientes por plato
+- ✅ Subir imagen representativa del menú diario
+- ✅ Gestionar perfiles de personas
+- ✅ Configurar porcentajes objetivo de grasas e hidratos; proteína deducida automáticamente
+- ✅ Rechazar combinaciones de macros ilógicas
+- ✅ Visualizar progreso (X/21 comidas)
 - ✅ Generar menú rotativo para N días
 - ✅ Vista previa del menú generado
+- ✅ Lista de compra exacta y deduplicada desde ingredientes
 - ✅ Imprimir o copiar al portapapeles
 
 ## 🛠️ Tecnologías

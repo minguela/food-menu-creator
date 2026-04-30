@@ -31,9 +31,9 @@
           </span>
         </div>
         <div class="flex items-center gap-2 text-sm">
-          <span :class="menu.meals_count >= 14 ? 'text-green-600' : 'text-amber-600'">
-            {{ menu.meals_count >= 14 ? '✅' : '⏳' }}
-            {{ menu.meals_count }}/14 platos
+          <span :class="menu.meals_count >= 21 ? 'text-green-600' : 'text-amber-600'">
+            {{ menu.meals_count >= 21 ? '✅' : '⏳' }}
+            {{ menu.meals_count }}/21 comidas
           </span>
         </div>
         <p class="text-xs text-gray-500 mt-2">
@@ -93,6 +93,7 @@ import type { WeeklyMenu } from '~/types'
 
 const supabase = useSupabase()
 const router = useRouter()
+const { loadCurrentUser } = useCurrentUser()
 
 const menus = ref<WeeklyMenu[]>([])
 const loading = ref(true)
@@ -101,6 +102,13 @@ const newMenuName = ref('')
 
 const loadMenus = async () => {
   loading.value = true
+  const currentUser = await loadCurrentUser()
+
+  if (!currentUser) {
+    menus.value = []
+    loading.value = false
+    return
+  }
 
   const { data, error } = await supabase
     .from('weekly_menus')
@@ -108,6 +116,7 @@ const loadMenus = async () => {
       *,
       meals_count:weekly_meals(count)
     `)
+    .eq('user_id', currentUser.id)
     .order('week_number', { ascending: true })
 
   if (error) {
@@ -124,6 +133,11 @@ const loadMenus = async () => {
 
 const createMenu = async () => {
   if (!newMenuName.trim()) return
+  const currentUser = await loadCurrentUser()
+  if (!currentUser) {
+    alert('No hay usuario configurado. Usa /start en Telegram primero.')
+    return
+  }
 
   // Obtener siguiente week_number
   const maxWeek = menus.value.reduce((max, m) => Math.max(max, m.week_number), 0)
@@ -131,6 +145,7 @@ const createMenu = async () => {
   const { data, error } = await supabase
     .from('weekly_menus')
     .insert({
+      user_id: currentUser.id,
       name: newMenuName.trim(),
       week_number: maxWeek + 1
     })

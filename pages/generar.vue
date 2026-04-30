@@ -52,8 +52,8 @@
               class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded"
             >
               <span>{{ menu.name }}</span>
-              <span :class="menu.meals_count >= 14 ? 'text-green-600' : 'text-amber-600'">
-                {{ menu.meals_count }}/14
+              <span :class="menu.meals_count >= 21 ? 'text-green-600' : 'text-amber-600'">
+                {{ menu.meals_count }}/21
               </span>
             </div>
           </div>
@@ -79,6 +79,10 @@
             </div>
             <div class="text-sm space-y-1">
               <div class="flex items-center gap-2">
+                <span class="text-emerald-600">☕</span>
+                <span class="text-gray-700">{{ day.desayuno }}</span>
+              </div>
+              <div class="flex items-center gap-2">
                 <span class="text-amber-600">🍽️</span>
                 <span class="text-gray-700">{{ day.comida }}</span>
               </div>
@@ -87,7 +91,7 @@
                 <span class="text-gray-700">{{ day.cena }}</span>
               </div>
               <div class="text-xs text-gray-400 mt-1">
-                Menú: {{ day.menu_name }}
+                Menú: {{ day.menu_name }} · {{ day.kcal }} kcal
               </div>
             </div>
           </div>
@@ -126,6 +130,7 @@
 import type { WeeklyMenu } from '~/types'
 
 const supabase = useSupabase()
+const { loadCurrentUser } = useCurrentUser()
 
 const days = ref(30)
 const startDate = ref(new Date().toISOString().split('T')[0])
@@ -134,12 +139,19 @@ const generatedMenu = ref<any[]>([])
 const loading = ref(false)
 
 const loadMenus = async () => {
+  const currentUser = await loadCurrentUser()
+  if (!currentUser) {
+    menus.value = []
+    return
+  }
+
   const { data, error } = await supabase
     .from('weekly_menus')
     .select(`
       *,
       meals_count:weekly_meals(count)
     `)
+    .eq('user_id', currentUser.id)
     .order('week_number', { ascending: true })
 
   if (error) {
@@ -166,12 +178,14 @@ const generateMenu = async () => {
 
       const { data: dayMeals } = await supabase
         .from('weekly_meals')
-        .select('meal_type, dish_name')
+        .select('meal_type, dish_name, kcal, protein_g, carbs_g, fat_g')
         .eq('weekly_menu_id', menu.id)
         .eq('day_number', dayInWeek)
 
+      const desayuno = dayMeals?.find(m => m.meal_type === 'desayuno')
       const comida = dayMeals?.find(m => m.meal_type === 'comida')
       const cena = dayMeals?.find(m => m.meal_type === 'cena')
+      const kcal = (dayMeals || []).reduce((sum, meal) => sum + (Number(meal.kcal) || 0), 0)
 
       const date = new Date(startDate.value)
       date.setDate(date.getDate() + i)
@@ -180,8 +194,10 @@ const generateMenu = async () => {
         day: i + 1,
         date: date.toISOString(),
         menu_name: menu.name,
+        desayuno: desayuno?.dish_name || 'No disponible',
         comida: comida?.dish_name || 'No disponible',
         cena: cena?.dish_name || 'No disponible',
+        kcal,
       })
     }
 
@@ -208,8 +224,10 @@ const printMenu = () => {
 const copyToClipboard = () => {
   const text = generatedMenu.value.map(day =>
     `Día ${day.day} (${formatDate(day.date)}) - ${day.menu_name}\n` +
+    `  ☕ Desayuno: ${day.desayuno}\n` +
     `  🍽️ Comida: ${day.comida}\n` +
-    `  🌙 Cena: ${day.cena}`
+    `  🌙 Cena: ${day.cena}\n` +
+    `  Total: ${day.kcal} kcal`
   ).join('\n\n')
 
   navigator.clipboard.writeText(text).then(() => {

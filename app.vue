@@ -24,6 +24,20 @@
             >
               Generar
             </NuxtLink>
+            <NuxtLink
+              href="/shopping"
+              class="px-3 py-2 rounded-md text-sm font-medium"
+              :class="$route.path === '/shopping' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'"
+            >
+              🛒 Compra
+            </NuxtLink>
+            <NuxtLink
+              href="/config"
+              class="px-3 py-2 rounded-md text-sm font-medium"
+              :class="$route.path === '/config' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'"
+            >
+              ⚙️ Config
+            </NuxtLink>
           </div>
         </div>
       </div>

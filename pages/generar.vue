@@ -52,7 +52,7 @@
               class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded"
             >
               <span>{{ menu.name }}</span>
-              <span :class="menu.meals_count >= 21 ? 'text-green-600' : 'text-amber-600'">
+              <span :class="(menu.meals_count || 0) >= 21 ? 'text-green-600' : 'text-amber-600'">
                 {{ menu.meals_count }}/21
               </span>
             </div>
@@ -127,6 +127,7 @@
 </template>
 
 <script setup lang="ts">
+import { convertToGrams } from '~/utils/shopping-conversions.js'
 import type { WeeklyMenu } from '~/types'
 
 const supabase = useSupabase()
@@ -202,12 +203,83 @@ const generateMenu = async () => {
     }
 
     generatedMenu.value = result
+    await saveMonthlyHistory(result)
   } catch (error) {
     console.error('Error generando menú:', error)
     alert('Error generando menú')
   } finally {
     loading.value = false
   }
+}
+
+const saveMonthlyHistory = async (menuData: any[]) => {
+  const currentUser = await loadCurrentUser()
+  if (!currentUser || menuData.length === 0) return
+
+  const shopping = await buildShoppingSnapshot()
+  const start = new Date(startDate.value)
+  const end = new Date(start)
+  end.setDate(start.getDate() + days.value - 1)
+
+  const { error } = await supabase.from('monthly_menus').insert({
+    user_id: currentUser.id,
+    name: `Menú ${formatDate(start.toISOString())} - ${formatDate(end.toISOString())}`,
+    month: start.getMonth() + 1,
+    year: start.getFullYear(),
+    start_date: start.toISOString().split('T')[0],
+    end_date: end.toISOString().split('T')[0],
+    menu_data: menuData,
+    shopping_list: shopping,
+  })
+
+  if (error) {
+    console.error('Error guardando histórico mensual:', error)
+  }
+}
+
+const buildShoppingSnapshot = async () => {
+  const consolidated: Record<string, any> = {}
+
+  for (let i = 0; i < days.value; i++) {
+    const menuIndex = Math.floor(i / 7) % menus.value.length
+    const dayInWeek = (i % 7) + 1
+    const menu = menus.value[menuIndex]
+
+    const { data: meals } = await supabase
+      .from('weekly_meals')
+      .select('weekly_meal_ingredients(*)')
+      .eq('weekly_menu_id', menu.id)
+      .eq('day_number', dayInWeek)
+
+    for (const meal of meals || []) {
+      for (const ingredient of meal.weekly_meal_ingredients || []) {
+        const conversion = convertToGrams({
+          name: ingredient.name,
+          quantity: ingredient.quantity,
+          unitType: ingredient.unit_type,
+        })
+        const key = ingredient.name.toLowerCase()
+        if (!consolidated[key]) {
+          consolidated[key] = {
+            item_name: ingredient.name,
+            quantity_grams: 0,
+            purchased: false,
+            conversion_status: conversion.status,
+            conversion_note: conversion.note,
+          }
+        }
+        consolidated[key].quantity_grams += conversion.grams
+        if (conversion.status === 'ambiguous') {
+          consolidated[key].conversion_status = 'ambiguous'
+          consolidated[key].conversion_note = conversion.note
+        }
+      }
+    }
+  }
+
+  return Object.values(consolidated)
+    .map((item: any) => ({ ...item, quantity_grams: Math.round(item.quantity_grams) }))
+    .sort((a: any, b: any) => a.item_name.localeCompare(b.item_name))
 }
 
 const formatDate = (dateString: string) => {

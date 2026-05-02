@@ -12,6 +12,10 @@ export default defineNuxtConfig({
       supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
     },
     supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
+    twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
+    twilioFromNumber: process.env.TWILIO_FROM_NUMBER,
+    twilioWhatsAppFrom: process.env.TWILIO_WHATSAPP_FROM,
   },
   app: {
     head: {

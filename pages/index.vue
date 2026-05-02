@@ -31,8 +31,8 @@
           </span>
         </div>
         <div class="flex items-center gap-2 text-sm">
-          <span :class="menu.meals_count >= 21 ? 'text-green-600' : 'text-amber-600'">
-            {{ menu.meals_count >= 21 ? '✅' : '⏳' }}
+          <span :class="(menu.meals_count || 0) >= 21 ? 'text-green-600' : 'text-amber-600'">
+            {{ (menu.meals_count || 0) >= 21 ? '✅' : '⏳' }}
             {{ menu.meals_count }}/21 comidas
           </span>
         </div>
@@ -132,7 +132,7 @@ const loadMenus = async () => {
 }
 
 const createMenu = async () => {
-  if (!newMenuName.trim()) return
+  if (!newMenuName.value.trim()) return
   const currentUser = await loadCurrentUser()
   if (!currentUser) {
     alert('No hay usuario configurado. Usa /start en Telegram primero.')
@@ -146,7 +146,7 @@ const createMenu = async () => {
     .from('weekly_menus')
     .insert({
       user_id: currentUser.id,
-      name: newMenuName.trim(),
+      name: newMenuName.value.trim(),
       week_number: maxWeek + 1
     })
     .select()

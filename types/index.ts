@@ -2,6 +2,8 @@ export interface User {
   id: string
   telegram_id?: number
   telegram_chat_id?: number
+  phone_number?: string
+  mobile_channel?: 'sms' | 'whatsapp'
   daily_kcal_target: number
   daily_protein_target: number
   fat_pct_target: number
@@ -112,8 +114,17 @@ export interface ShoppingListItem {
   id: string
   user_id: string
   week_start: string
-  ingredient_id: string
+  ingredient_id?: string
+  item_name?: string
   quantity_needed: number
+  quantity_grams?: number
+  original_quantity?: number
+  original_unit_type?: string
+  conversion_status?: 'exact' | 'estimated' | 'ambiguous' | 'manual'
+  conversion_note?: string
+  is_extra?: boolean
+  send_status?: 'pending' | 'sent' | 'delivered' | 'error'
+  send_error?: string
   estimated_price?: number
   purchased: boolean
   created_at: string
@@ -139,4 +150,19 @@ export interface GeneratedMenu {
   comida: string
   cena: string
   desayuno?: string
+}
+
+export interface MonthlyMenu {
+  id: string
+  user_id: string
+  name: string
+  month: number
+  year: number
+  start_date: string
+  end_date: string
+  menu_data: GeneratedMenu[]
+  shopping_list: ShoppingListItem[]
+  reused_from?: string
+  created_at: string
+  updated_at: string
 }

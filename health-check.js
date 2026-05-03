@@ -19,7 +19,7 @@ const routes = [
   },
   {
     path: "/shopping",
-    expected: ["Lista de Compra"],
+    expected: ["Lista de la Compra"],
   },
   {
     path: "/config",

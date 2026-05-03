@@ -171,3 +171,11 @@ export interface MonthlyMenu {
   created_at: string;
   updated_at: string;
 }
+
+export interface ErrorLog {
+  id: string;
+  source: "web" | "telegram" | "ocr";
+  message: string;
+  stack_trace?: string | null;
+  created_at: string;
+}

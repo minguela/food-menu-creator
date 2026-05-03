@@ -235,6 +235,7 @@ import {
   buildShoppingCsv,
   convertToGrams,
 } from "~/utils/shopping-conversions.js";
+import { logError } from "~/utils/log-error";
 import type { ShoppingListItem } from "~/types";
 
 const supabase = useSupabase();
@@ -445,6 +446,7 @@ const sendToMobile = async () => {
   } catch (error: any) {
     sendError.value = true;
     sendMessage.value = error?.statusMessage || "No se pudo enviar la lista.";
+    await logError("web", error, { context: "shopping.sendToMobile" });
     await loadShoppingList();
   } finally {
     sending.value = false;

@@ -144,6 +144,7 @@
 
 <script setup lang="ts">
 import { convertToGrams } from "~/utils/shopping-conversions.js";
+import { logError } from "~/utils/log-error";
 import type { WeeklyMenu } from "~/types";
 
 const supabase = useSupabase();
@@ -227,6 +228,7 @@ const generateMenu = async () => {
     await saveMonthlyHistory(result);
   } catch (error) {
     console.error("Error generando menú:", error);
+    await logError("web", error, { context: "generar.generateMenu" });
     alert("Error generando menú");
   } finally {
     loading.value = false;
@@ -255,6 +257,7 @@ const saveMonthlyHistory = async (menuData: any[]) => {
 
   if (error) {
     console.error("Error guardando histórico mensual:", error);
+    await logError("web", error, { context: "generar.saveMonthlyHistory" });
   }
 };
 

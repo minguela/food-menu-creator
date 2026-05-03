@@ -31,6 +31,15 @@ npm run build
 npm test
 ```
 
+### Comprobación de salud
+
+```bash
+npm run health-check -- --base-url=http://127.0.0.1:3000
+```
+
+El repositorio también ejecuta lint y health-check en GitHub Actions en cada push y pull request.
+Vercel ya está conectado al repo y despliega automáticamente los pushes a `main` en producción.
+
 ## 📁 Estructura
 
 ```
@@ -48,6 +57,7 @@ menu-web/
 │   └── nutrition.js        # Validación y cálculo de macros
 ├── tests/
 │   └── nutrition.test.mjs  # Tests de lógica nutricional
+├── health-check.js         # Verificación HTTP básica de rutas clave
 ├── types/
 │   └── index.ts            # Tipos TypeScript
 ├── app.vue                 # Layout principal
@@ -86,11 +96,14 @@ El generador mensual usa `weekly_menus`/`weekly_meals` como fuente principal y c
 ## 🌐 Despliegue en Vercel
 
 1. Ve a https://vercel.com/new
-2. Importa este proyecto
-3. Configura las variables de entorno:
+2. Importa este proyecto y vincula el repo GitHub
+3. Marca `main` como `Production Branch` si Vercel no lo hubiera dejado ya así
+4. Configura las variables de entorno:
    - `NUXT_PUBLIC_SUPABASE_URL`
    - `NUXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Haz clic en **Deploy**
+5. Haz clic en **Deploy**
+
+Una vez vinculado, cada push a `main` genera un despliegue de producción automáticamente.
 
 Ver `DEPLOY.md` para más detalles.
 

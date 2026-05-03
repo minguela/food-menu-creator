@@ -27,6 +27,74 @@
         </div>
       </header>
 
+      <section class="bg-white rounded-lg shadow-sm border p-4">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 class="font-semibold text-gray-900">Crear desde imagen</h2>
+            <p class="text-sm text-gray-500 mt-1">
+              Sube una foto por día o una imagen que contenga varios días del menú.
+            </p>
+          </div>
+          <div class="inline-flex rounded-lg border overflow-hidden">
+            <button
+              type="button"
+              @click="creationMode = 'daily'"
+              class="px-3 py-2 text-sm font-medium"
+              :class="creationMode === 'daily' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
+            >
+              Día a día
+            </button>
+            <button
+              type="button"
+              @click="creationMode = 'block'"
+              class="px-3 py-2 text-sm font-medium border-l"
+              :class="creationMode === 'block' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
+            >
+              Por bloque
+            </button>
+          </div>
+        </div>
+
+        <div v-if="creationMode === 'daily'" class="mt-4 text-sm text-gray-600">
+          Usa el botón de imagen de cada día. El OCR rellenará los platos detectados y podrás corregirlos debajo.
+        </div>
+
+        <div v-else class="mt-4 grid gap-3 md:grid-cols-[140px_140px_1fr]">
+          <label>
+            <span class="block text-sm font-medium text-gray-700 mb-1">Día inicial</span>
+            <input
+              v-model.number="blockStartDay"
+              type="number"
+              min="1"
+              max="7"
+              class="w-full border rounded-lg px-3 py-2"
+            />
+          </label>
+          <label>
+            <span class="block text-sm font-medium text-gray-700 mb-1">Días incluidos</span>
+            <input
+              v-model.number="blockDayCount"
+              type="number"
+              min="1"
+              :max="8 - blockStartDay"
+              class="w-full border rounded-lg px-3 py-2"
+            />
+          </label>
+          <label class="self-end">
+            <span class="sr-only">Subir imagen de bloque</span>
+            <input type="file" accept="image/*" class="hidden" @change="uploadBlockImage" />
+            <span
+              class="block text-center px-4 py-2 rounded-lg border border-indigo-600 text-indigo-700 cursor-pointer hover:bg-indigo-50"
+              :class="imageProcessing ? 'opacity-50 pointer-events-none' : ''"
+            >
+              {{ imageProcessing ? 'Procesando OCR...' : 'Subir imagen del bloque' }}
+            </span>
+          </label>
+        </div>
+
+        <p v-if="imageError" class="text-sm text-red-600 mt-3">{{ imageError }}</p>
+      </section>
+
       <section class="grid gap-4 lg:grid-cols-7">
         <article
           v-for="day in 7"
@@ -36,8 +104,11 @@
           <div class="p-3 border-b bg-gray-50">
             <div class="flex justify-between items-center">
               <h2 class="font-semibold text-gray-900">Día {{ day }}</h2>
-              <label class="text-xs text-indigo-600 cursor-pointer hover:text-indigo-800">
-                Imagen
+              <label
+                class="text-xs text-indigo-600 cursor-pointer hover:text-indigo-800"
+                :class="imageProcessing ? 'opacity-50 pointer-events-none' : ''"
+              >
+                {{ imageProcessing ? 'OCR...' : 'Imagen' }}
                 <input type="file" accept="image/*" class="hidden" @change="uploadDailyImage(day, $event)" />
               </label>
             </div>
@@ -47,6 +118,9 @@
               alt="Imagen del menú diario"
               class="mt-3 h-28 w-full object-cover rounded"
             />
+            <p v-if="getDayImage(day)?.ocr_status" class="text-[11px] text-gray-500 mt-2">
+              OCR: {{ ocrStatusLabel(getDayImage(day)?.ocr_status) }}
+            </p>
           </div>
 
           <div class="divide-y">
@@ -77,6 +151,12 @@
                     {{ ingredient.name }} · {{ ingredient.quantity }} {{ ingredient.unit_type }}
                   </li>
                 </ul>
+                <button
+                  @click="openMealModal(day, type, getMeal(day, type)!)"
+                  class="text-xs text-indigo-600 hover:text-indigo-800 mr-3"
+                >
+                  Editar
+                </button>
                 <button
                   @click="deleteMeal(getMeal(day, type)!.id)"
                   class="text-xs text-red-500 hover:text-red-700"
@@ -112,9 +192,9 @@
         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
         @click.self="closeMealModal"
       >
-        <form class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" @submit.prevent="addMeal">
+        <form class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" @submit.prevent="saveMeal">
           <h2 class="text-xl font-bold mb-4">
-            Añadir {{ mealLabel(selectedType).toLowerCase() }} · Día {{ selectedDay }}
+            {{ editingMealId ? 'Editar' : 'Añadir' }} {{ mealLabel(selectedType).toLowerCase() }} · Día {{ selectedDay }}
           </h2>
 
           <div class="grid gap-3 md:grid-cols-2">
@@ -154,8 +234,8 @@
 
             <div class="space-y-2">
               <div v-for="(ingredient, index) in ingredientRows" :key="index" class="grid grid-cols-[1fr_90px_90px_32px] gap-2">
-                <input v-model.trim="ingredient.name" class="border rounded-lg px-3 py-2" placeholder="Nombre" required />
-                <input v-model.number="ingredient.quantity" type="number" min="0.01" step="0.01" class="border rounded-lg px-3 py-2" required />
+                <input v-model.trim="ingredient.name" class="border rounded-lg px-3 py-2" placeholder="Nombre" />
+                <input v-model.number="ingredient.quantity" type="number" min="0.01" step="0.01" class="border rounded-lg px-3 py-2" />
                 <select v-model="ingredient.unit_type" class="border rounded-lg px-3 py-2">
                   <option v-for="unit in unitTypes" :key="unit" :value="unit">{{ unit }}</option>
                 </select>
@@ -175,7 +255,7 @@
               :disabled="savingMeal || !mealFormValid"
               class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
             >
-              {{ savingMeal ? 'Guardando...' : 'Guardar plato' }}
+              {{ savingMeal ? 'Guardando...' : editingMealId ? 'Actualizar plato' : 'Guardar plato' }}
             </button>
           </div>
         </form>
@@ -210,9 +290,15 @@ const dayImages = ref<WeeklyDayImage[]>([])
 const loading = ref(true)
 const showMealModal = ref(false)
 const savingMeal = ref(false)
+const imageProcessing = ref(false)
 const formError = ref('')
+const imageError = ref('')
 const selectedDay = ref(1)
 const selectedType = ref<MealType>('comida')
+const editingMealId = ref<string | null>(null)
+const creationMode = ref<'daily' | 'block'>('daily')
+const blockStartDay = ref(1)
+const blockDayCount = ref(3)
 const newMeal = ref({
   dish_name: '',
   dish_description: '',
@@ -246,8 +332,7 @@ const consolidatedIngredients = computed(() => {
 const mealFormValid = computed(() =>
   Boolean(newMeal.value.dish_name) &&
   newMeal.value.kcal >= 0 &&
-  ingredientRows.value.length > 0 &&
-  ingredientRows.value.every((ingredient) => ingredient.name && ingredient.quantity > 0)
+  ingredientRows.value.every((ingredient) => !ingredient.name || ingredient.quantity > 0)
 )
 
 const loadMenu = async () => {
@@ -305,24 +390,52 @@ const daySummary = (day: number) => {
   return summarizeDailyMeals(meals.value.filter((meal) => meal.day_number === day))
 }
 
-const openMealModal = (day: number, type: MealType) => {
+watch(blockStartDay, (day) => {
+  const normalizedDay = Math.min(7, Math.max(1, Number(day) || 1))
+  if (normalizedDay !== day) blockStartDay.value = normalizedDay
+  blockDayCount.value = Math.min(blockDayCount.value, 8 - normalizedDay)
+})
+
+watch(blockDayCount, (count) => {
+  const normalizedCount = Math.min(8 - blockStartDay.value, Math.max(1, Number(count) || 1))
+  if (normalizedCount !== count) blockDayCount.value = normalizedCount
+})
+
+const openMealModal = (day: number, type: MealType, meal?: WeeklyMeal) => {
   selectedDay.value = day
   selectedType.value = type
-  newMeal.value = {
-    dish_name: '',
-    dish_description: '',
-    kcal: 0,
-    protein_g: 0,
-    carbs_g: 0,
-    fat_g: 0,
-  }
-  ingredientRows.value = [{ name: '', quantity: 1, unit_type: 'g' }]
+  editingMealId.value = meal?.id || null
+  newMeal.value = meal
+    ? {
+        dish_name: meal.dish_name,
+        dish_description: meal.dish_description || '',
+        kcal: meal.kcal || 0,
+        protein_g: meal.protein_g || 0,
+        carbs_g: meal.carbs_g || 0,
+        fat_g: meal.fat_g || 0,
+      }
+    : {
+        dish_name: '',
+        dish_description: '',
+        kcal: 0,
+        protein_g: 0,
+        carbs_g: 0,
+        fat_g: 0,
+      }
+  ingredientRows.value = meal?.weekly_meal_ingredients?.length
+    ? meal.weekly_meal_ingredients.map((ingredient) => ({
+        name: ingredient.name,
+        quantity: Number(ingredient.quantity) || 1,
+        unit_type: ingredient.unit_type,
+      }))
+    : [{ name: '', quantity: 1, unit_type: 'g' }]
   formError.value = ''
   showMealModal.value = true
 }
 
 const closeMealModal = () => {
   showMealModal.value = false
+  editingMealId.value = null
   formError.value = ''
 }
 
@@ -334,27 +447,38 @@ const removeIngredientRow = (index: number) => {
   ingredientRows.value.splice(index, 1)
 }
 
-const addMeal = async () => {
+const saveMeal = async () => {
   if (!menu.value || !mealFormValid.value) return
 
   savingMeal.value = true
   formError.value = ''
 
-  const { data: meal, error } = await supabase
-    .from('weekly_meals')
-    .insert({
-      weekly_menu_id: menu.value.id,
-      day_number: selectedDay.value,
-      meal_type: selectedType.value,
-      dish_name: newMeal.value.dish_name,
-      dish_description: newMeal.value.dish_description || null,
-      kcal: newMeal.value.kcal,
-      protein_g: newMeal.value.protein_g,
-      carbs_g: newMeal.value.carbs_g,
-      fat_g: newMeal.value.fat_g,
-    })
-    .select()
-    .single()
+  const mealPayload = {
+    weekly_menu_id: menu.value.id,
+    day_number: selectedDay.value,
+    meal_type: selectedType.value,
+    dish_name: newMeal.value.dish_name,
+    dish_description: newMeal.value.dish_description || null,
+    kcal: newMeal.value.kcal,
+    protein_g: newMeal.value.protein_g,
+    carbs_g: newMeal.value.carbs_g,
+    fat_g: newMeal.value.fat_g,
+  }
+
+  const mealRequest = editingMealId.value
+    ? supabase
+        .from('weekly_meals')
+        .update(mealPayload)
+        .eq('id', editingMealId.value)
+        .select()
+        .single()
+    : supabase
+        .from('weekly_meals')
+        .insert(mealPayload)
+        .select()
+        .single()
+
+  const { data: meal, error } = await mealRequest
 
   if (error || !meal) {
     savingMeal.value = false
@@ -364,22 +488,38 @@ const addMeal = async () => {
     return
   }
 
-  const { error: ingredientsError } = await supabase
-    .from('weekly_meal_ingredients')
-    .insert(ingredientRows.value.map((ingredient) => ({
-      weekly_meal_id: meal.id,
-      name: ingredient.name.toLowerCase(),
-      quantity: ingredient.quantity,
-      unit_type: ingredient.unit_type,
-    })))
+  if (editingMealId.value) {
+    const { error: deleteIngredientsError } = await supabase
+      .from('weekly_meal_ingredients')
+      .delete()
+      .eq('weekly_meal_id', editingMealId.value)
 
-  savingMeal.value = false
-
-  if (ingredientsError) {
-    formError.value = `Error guardando ingredientes: ${ingredientsError.message}`
-    return
+    if (deleteIngredientsError) {
+      savingMeal.value = false
+      formError.value = `Error actualizando ingredientes: ${deleteIngredientsError.message}`
+      return
+    }
   }
 
+  const rowsToInsert = ingredientRows.value.filter((ingredient) => ingredient.name && ingredient.quantity > 0)
+  if (rowsToInsert.length > 0) {
+    const { error: ingredientsError } = await supabase
+      .from('weekly_meal_ingredients')
+      .insert(rowsToInsert.map((ingredient) => ({
+        weekly_meal_id: meal.id,
+        name: ingredient.name.toLowerCase(),
+        quantity: ingredient.quantity,
+        unit_type: ingredient.unit_type,
+      })))
+
+    if (ingredientsError) {
+      savingMeal.value = false
+      formError.value = `Error guardando ingredientes: ${ingredientsError.message}`
+      return
+    }
+  }
+
+  savingMeal.value = false
   closeMealModal()
   await loadMenu()
 }
@@ -401,19 +541,57 @@ const deleteMeal = async (mealId: string) => {
 }
 
 const uploadDailyImage = async (day: number, event: Event) => {
+  creationMode.value = 'daily'
+  await uploadMenuImage({
+    event,
+    startDay: day,
+    dayCount: 1,
+    sourceMode: 'daily',
+  })
+}
+
+const uploadBlockImage = async (event: Event) => {
+  await uploadMenuImage({
+    event,
+    startDay: blockStartDay.value,
+    dayCount: blockDayCount.value,
+    sourceMode: 'block',
+  })
+}
+
+const uploadMenuImage = async ({
+  event,
+  startDay,
+  dayCount,
+  sourceMode,
+}: {
+  event: Event
+  startDay: number
+  dayCount: number
+  sourceMode: 'daily' | 'block'
+}) => {
   if (!menu.value) return
 
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
 
-  const fileName = `${menu.value.id}/day_${day}_${Date.now()}.${file.name.split('.').pop()}`
+  imageProcessing.value = true
+  imageError.value = ''
+
+  const normalizedStartDay = Math.min(7, Math.max(1, startDay))
+  const normalizedDayCount = Math.min(8 - normalizedStartDay, Math.max(1, dayCount))
+  const affectedDays = Array.from({ length: normalizedDayCount }, (_, index) => normalizedStartDay + index)
+  const fileName = `${menu.value.id}/${sourceMode}_${normalizedStartDay}_${normalizedDayCount}_${Date.now()}.${file.name.split('.').pop()}`
+
   const { error: uploadError } = await supabase.storage
     .from('menu-images')
     .upload(fileName, file)
 
   if (uploadError) {
-    alert('Error subiendo imagen: ' + uploadError.message)
+    imageProcessing.value = false
+    imageError.value = 'Error subiendo imagen: ' + uploadError.message
+    target.value = ''
     return
   }
 
@@ -421,22 +599,55 @@ const uploadDailyImage = async (day: number, event: Event) => {
     .from('menu-images')
     .getPublicUrl(fileName)
 
-  const { error } = await supabase
+  const rows = affectedDays.map((day) => ({
+    weekly_menu_id: menu.value!.id,
+    day_number: day,
+    image_url: publicUrl,
+    source_mode: sourceMode,
+    day_span_count: normalizedDayCount,
+    ocr_status: 'processing',
+    ocr_error: null,
+    updated_at: new Date().toISOString(),
+  }))
+
+  const { data: imageRows, error } = await supabase
     .from('weekly_day_images')
-    .upsert({
-      weekly_menu_id: menu.value.id,
-      day_number: day,
-      image_url: publicUrl,
-      updated_at: new Date().toISOString(),
-    }, {
+    .upsert(rows, {
       onConflict: 'weekly_menu_id,day_number',
     })
+    .select()
 
   if (error) {
-    alert('Error guardando imagen diaria: ' + error.message)
+    imageProcessing.value = false
+    imageError.value = 'Error guardando imagen: ' + error.message
+    target.value = ''
     return
   }
 
+  const { error: ocrError } = await supabase.functions.invoke('ocr-processor', {
+    body: {
+      weekly_menu_id: menu.value.id,
+      weekly_day_image_ids: (imageRows || []).map((image) => image.id),
+      image_url: publicUrl,
+      start_day: normalizedStartDay,
+      day_count: normalizedDayCount,
+      source_mode: sourceMode,
+    },
+  })
+
+  if (ocrError) {
+    imageError.value = 'La imagen se guardó, pero el OCR falló: ' + ocrError.message
+    await supabase
+      .from('weekly_day_images')
+      .update({
+        ocr_status: 'error',
+        ocr_error: ocrError.message,
+      })
+      .in('id', (imageRows || []).map((image) => image.id))
+  }
+
+  imageProcessing.value = false
+  target.value = ''
   await loadMenu()
 }
 
@@ -450,6 +661,13 @@ const mealColor = (type: MealType) => {
   if (type === 'desayuno') return 'text-emerald-700'
   if (type === 'comida') return 'text-amber-700'
   return 'text-indigo-700'
+}
+
+const ocrStatusLabel = (status?: WeeklyDayImage['ocr_status']) => {
+  if (status === 'processing') return 'procesando'
+  if (status === 'processed') return 'procesado'
+  if (status === 'error') return 'error'
+  return 'pendiente'
 }
 
 const formatDate = (dateString: string) => {

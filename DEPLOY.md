@@ -3,11 +3,14 @@
 ## Opción 1: Vercel Dashboard (Recomendada)
 
 1. **Ve a** https://vercel.com/new
-2. **Importa el repositorio** desde GitHub o sube el proyecto
-3. **Configura las variables de entorno:**
+2. **Importa el repositorio** desde GitHub
+3. **Asegúrate de que `main` esté marcado como `Production Branch`**
+4. **Configura las variables de entorno:**
    - `NUXT_PUBLIC_SUPABASE_URL` = `https://tceusgxbfpekjcthrrqu.supabase.co`
    - `NUXT_PUBLIC_SUPABASE_ANON_KEY` = `sb_publishable__ar3t49-ts89flpoWupqTA_44jctdfW`
-4. **Haz clic en Deploy**
+5. **Haz clic en Deploy**
+
+Con la integración nativa de GitHub activa, cada push a `main` se despliega automáticamente en producción.
 
 ## Opción 2: Vercel CLI
 
@@ -60,3 +63,4 @@ npm run preview
 - La aplicación está configurada para usar **Nuxt 3** con **Tailwind CSS**
 - El preset de Vercel está configurado en `nuxt.config.ts` como `vercel-edge`
 - Las variables de entorno sensibles (`SUPABASE_SERVICE_ROLE_KEY`) no deben exponerse en el cliente
+- No hace falta un workflow de GitHub Actions para desplegar si la integración GitHub-Vercel está activa y `main` es la producción.

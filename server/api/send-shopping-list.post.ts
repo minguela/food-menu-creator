@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { buildShoppingListText } from '../../utils/shopping-conversions.js'
+import { buildShoppingListText } from '~/utils/shopping-conversions.js'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ userId: string; phoneNumber: string; channel?: 'sms' | 'whatsapp' }>(event)

@@ -56,6 +56,11 @@ export interface WeeklyDayImage {
   weekly_menu_id: string
   day_number: number
   image_url: string
+  source_mode?: 'daily' | 'block'
+  day_span_count?: number
+  ocr_status?: 'pending' | 'processing' | 'processed' | 'error'
+  ocr_raw_text?: string
+  ocr_error?: string
   created_at: string
   updated_at: string
 }

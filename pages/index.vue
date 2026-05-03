@@ -29,13 +29,23 @@
         class="bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow cursor-pointer"
         @click="viewMenu(menu)"
       >
-        <div class="flex justify-between items-start mb-2">
+        <div class="flex justify-between items-start gap-3 mb-2">
           <h3 class="text-lg font-semibold text-gray-900">{{ menu.name }}</h3>
-          <span
-            class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full"
-          >
-            Semana {{ menu.week_number }}
-          </span>
+          <div class="flex items-center gap-2">
+            <span
+              class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full"
+            >
+              Semana {{ menu.week_number }}
+            </span>
+            <button
+              type="button"
+              class="text-red-600 hover:text-red-800 text-sm"
+              title="Eliminar menú"
+              @click.stop="confirmDeleteMenu(menu)"
+            >
+              🗑️
+            </button>
+          </div>
         </div>
         <div class="flex items-center gap-2 text-sm">
           <span
@@ -185,6 +195,29 @@ const createMenu = async () => {
 
 const viewMenu = (menu: WeeklyMenu) => {
   router.push(`/menu/${menu.id}`);
+};
+
+const confirmDeleteMenu = async (menu: WeeklyMenu) => {
+  if (!confirm(`¿Eliminar el menú "${menu.name}"?`)) return;
+
+  const currentUser = await loadCurrentUser();
+  if (!currentUser) {
+    alert("No hay usuario configurado. Usa /start en Telegram primero.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("weekly_menus")
+    .delete()
+    .eq("id", menu.id)
+    .eq("user_id", currentUser.id);
+
+  if (error) {
+    alert("Error eliminando menú: " + error.message);
+    return;
+  }
+
+  await loadMenus();
 };
 
 const formatDate = (dateString: string) => {

@@ -28,7 +28,14 @@
             {{ mealsCount }}/21 comidas · {{ formatDate(menu.created_at) }}
           </p>
         </div>
-        <div class="text-right">
+        <div class="text-right flex flex-col items-end gap-3">
+          <button
+            type="button"
+            class="text-sm text-red-600 hover:text-red-800"
+            @click="deleteMenu"
+          >
+            Eliminar menú
+          </button>
           <p class="text-sm text-gray-500">Ingredientes únicos</p>
           <p class="text-2xl font-semibold text-gray-900">
             {{ consolidatedIngredients.length }}
@@ -463,6 +470,7 @@ type MealType = WeeklyMeal["meal_type"];
 
 const supabase = useSupabase();
 const route = useRoute();
+const router = useRouter();
 const { loadCurrentUser } = useCurrentUser();
 
 const mealTypes = MEAL_TYPES as MealType[];
@@ -829,6 +837,31 @@ const deleteMeal = async (mealId: string) => {
   }
 
   await loadMenu();
+};
+
+const deleteMenu = async () => {
+  if (!menu.value) return;
+  if (!confirm(`¿Eliminar el menú "${menu.value.name}" y todo su contenido?`))
+    return;
+
+  const currentUser = await loadCurrentUser();
+  if (!currentUser) {
+    alert("No hay usuario configurado. Usa /start en Telegram primero.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("weekly_menus")
+    .delete()
+    .eq("id", menu.value.id)
+    .eq("user_id", currentUser.id);
+
+  if (error) {
+    alert("Error eliminando menú: " + error.message);
+    return;
+  }
+
+  await router.push("/");
 };
 
 const uploadDailyImage = async (day: number, event: Event) => {

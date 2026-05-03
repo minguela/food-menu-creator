@@ -219,11 +219,17 @@
                 <p class="text-sm font-semibold text-gray-900">
                   {{ getMeal(day, type)?.dish_name }}
                 </p>
-                <p class="text-xs text-gray-500">
+                <p
+                  v-if="hasCalculatedMacros(getMeal(day, type))"
+                  class="text-xs text-gray-500"
+                >
                   {{ getMeal(day, type)?.kcal || 0 }} kcal · P
                   {{ getMeal(day, type)?.protein_g || 0 }}g · H
                   {{ getMeal(day, type)?.carbs_g || 0 }}g · G
                   {{ getMeal(day, type)?.fat_g || 0 }}g
+                </p>
+                <p v-else class="text-xs text-amber-700">
+                  Pendiente de cálculo
                 </p>
                 <ul class="text-xs text-gray-600 space-y-1">
                   <li
@@ -639,6 +645,15 @@ const daySummary = (day: number) => {
   return summarizeDailyMeals(
     meals.value.filter((meal) => meal.day_number === day),
   );
+};
+
+const hasCalculatedMacros = (meal?: WeeklyMeal) => {
+  if (!meal) return false;
+  const kcal = Number(meal.kcal) || 0;
+  const protein = Number(meal.protein_g) || 0;
+  const carbs = Number(meal.carbs_g) || 0;
+  const fat = Number(meal.fat_g) || 0;
+  return kcal > 0 || protein > 0 || carbs > 0 || fat > 0;
 };
 
 watch(blockStartDay, (day) => {

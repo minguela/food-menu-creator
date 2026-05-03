@@ -378,10 +378,18 @@ const buildFromRotatingMenu = async () => {
     const dayIds = (dayRows || []).map((row) => row.id);
     if (dayIds.length === 0) throw new Error("El menú rotativo no tiene días");
 
-    const { data: mealRows } = await supabase
-      .from("rotating_menu_meals")
-      .select("rotating_menu_meal_ingredients(*)")
-      .in("rotating_menu_day_id", dayIds);
+    const { data: portionRows } = await supabase
+      .from("rotating_menu_meal_profile_portions")
+      .select("rotating_menu_meal_profile_ingredients(*)")
+      .in(
+        "rotating_menu_meal_id",
+        (
+          await supabase
+            .from("rotating_menu_meals")
+            .select("id")
+            .in("rotating_menu_day_id", dayIds)
+        ).data?.map((row: any) => row.id) || [],
+      );
 
     const consolidated: Record<
       string,
@@ -393,8 +401,9 @@ const buildFromRotatingMenu = async () => {
       }
     > = {};
 
-    for (const meal of mealRows || []) {
-      for (const ingredient of meal.rotating_menu_meal_ingredients || []) {
+    for (const portion of portionRows || []) {
+      for (const ingredient of portion.rotating_menu_meal_profile_ingredients ||
+        []) {
         const conversion = convertToGrams({
           name: ingredient.name,
           quantity: ingredient.final_quantity,

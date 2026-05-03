@@ -93,6 +93,10 @@ export interface Ingredient {
   carrefour_category?: string;
   carrefour_product_id?: string;
   unit_type: "kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad";
+  kcal_per_100g?: number | null;
+  protein_per_100g?: number | null;
+  carbs_per_100g?: number | null;
+  fat_per_100g?: number | null;
   created_at: string;
 }
 

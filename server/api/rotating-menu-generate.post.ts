@@ -44,9 +44,7 @@ export default defineEventHandler(async (event) => {
         .in("id", body.profileIds || []),
       supabase
         .from("weekly_meals")
-        .select(
-          "id, day_number, meal_type, dish_name, dish_description, kcal, protein_g, carbs_g, fat_g, weekly_meal_ingredients(*)",
-        )
+        .select("id, day_number, meal_type, dish_name, dish_description")
         .in("weekly_menu_id", body.sourceWeeklyMenuIds),
     ]);
 
@@ -132,32 +130,50 @@ export default defineEventHandler(async (event) => {
   );
   const { data: dishRows } = await supabase
     .from("dishes")
-    .select("name, recipe_status")
+    .select("id,name,normalized_name,recipe_status")
     .eq("user_id", body.userId)
-    .in("name", uniqueDishNames);
-  const recipeStatusByName = new Map(
+    .in(
+      "normalized_name",
+      uniqueDishNames.map((name) => name.toLowerCase()),
+    );
+  const dishByNormalizedName = new Map(
     (dishRows || []).map((row: any) => [
-      String(row.name),
-      row.recipe_status || "pending_ingredients",
+      String(row.normalized_name || row.name || "").toLowerCase(),
+      row,
     ]),
   );
 
-  const ingredientNames = new Set<string>();
-  for (const type of ["desayuno", "comida", "cena"] as MealType[]) {
-    for (const meal of mealLibrary[type]) {
-      for (const ingredient of meal.weekly_meal_ingredients || []) {
-        ingredientNames.add(String(ingredient.name || "").toLowerCase());
-      }
+  const recipeIds = (dishRows || []).map((row: any) => row.id);
+  const { data: recipeRows } = recipeIds.length
+    ? await supabase
+        .from("recipe_ingredients")
+        .select("*")
+        .in("recipe_id", recipeIds)
+    : { data: [] as any[] };
+  const recipeIngredientsByRecipeId = new Map<string, any[]>();
+  for (const row of recipeRows || []) {
+    if (!recipeIngredientsByRecipeId.has(row.recipe_id)) {
+      recipeIngredientsByRecipeId.set(row.recipe_id, []);
     }
+    recipeIngredientsByRecipeId.get(row.recipe_id)?.push(row);
   }
+
+  const ingredientNames = Array.from(
+    new Set(
+      (recipeRows || [])
+        .filter((row: any) => row.is_confirmed)
+        .map((row: any) => String(row.normalized_name || "").toLowerCase())
+        .filter(Boolean),
+    ),
+  );
   const { data: ingredientRows } = await supabase
     .from("ingredients")
     .select(
-      "name, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
+      "name, normalized_name, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
     )
-    .in("name", [...ingredientNames]);
+    .in("normalized_name", ingredientNames);
   const nutritionMap = new Map(
-    (ingredientRows || []).map((row: any) => [row.name, row]),
+    (ingredientRows || []).map((row: any) => [row.normalized_name, row]),
   );
 
   const shares = {
@@ -187,15 +203,47 @@ export default defineEventHandler(async (event) => {
       const picked = options[pickIndex];
       lastByType[mealType] = picked.dish_name;
 
-      const baseKcal = Math.max(1, Number(picked.kcal) || 1);
-      const baseProtein = Math.max(1, Number(picked.protein_g) || 1);
-      const ingredientBase = (picked.weekly_meal_ingredients || []).map(
-        (ing: any) => ({
+      const linkedDish =
+        dishByNormalizedName.get(
+          String(picked.dish_name || "").toLowerCase(),
+        ) || null;
+      const recipeStatus = linkedDish?.recipe_status || "pending_ingredients";
+      const recipeRowsForDish = linkedDish
+        ? recipeIngredientsByRecipeId.get(linkedDish.id) || []
+        : [];
+      const ingredientBase = recipeRowsForDish
+        .filter((row: any) => row.is_confirmed)
+        .map((ing: any) => ({
           name: String(ing.name || ""),
+          normalized_name: String(
+            ing.normalized_name || ing.name || "",
+          ).toLowerCase(),
           quantity: Number(ing.quantity) || 0,
           unit_type: ing.unit_type,
-        }),
-      );
+        }));
+
+      let baseKcal = 0;
+      let baseProtein = 0;
+      for (const baseIng of ingredientBase) {
+        const n = nutritionMap.get(baseIng.normalized_name);
+        const normalized = normalizeToGrams(
+          baseIng.quantity,
+          baseIng.unit_type,
+        );
+        if (
+          !n ||
+          normalized === null ||
+          n.kcal_per_100g == null ||
+          n.protein_per_100g == null
+        ) {
+          continue;
+        }
+        const factor = normalized / 100;
+        baseKcal += Number(n.kcal_per_100g) * factor;
+        baseProtein += Number(n.protein_per_100g) * factor;
+      }
+      baseKcal = Math.max(1, baseKcal || 1);
+      baseProtein = Math.max(1, baseProtein || 1);
 
       const portions = profileTargets.map((profile) => {
         const targetMealKcal = profile.target_kcal * shares[mealType].kcal;
@@ -215,9 +263,6 @@ export default defineEventHandler(async (event) => {
         let carbs = 0;
         let fat = 0;
         let pending = false;
-        const recipeStatus =
-          recipeStatusByName.get(String(picked.dish_name || "")) ||
-          "pending_ingredients";
         if (ingredientBase.length === 0 && recipeStatus !== "not_required") {
           pending = true;
         }
@@ -231,7 +276,7 @@ export default defineEventHandler(async (event) => {
         const ingredients = ingredientBase.map((ing: any) => {
           const finalQuantity = round(ing.quantity * multiplier);
           const normalized = normalizeToGrams(finalQuantity, ing.unit_type);
-          const n = nutritionMap.get(String(ing.name).toLowerCase());
+          const n = nutritionMap.get(String(ing.normalized_name).toLowerCase());
           let nutritionPending = false;
           if (!n || normalized === null) {
             nutritionPending = true;

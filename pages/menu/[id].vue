@@ -219,6 +219,12 @@
                 <p class="text-sm font-semibold text-gray-900">
                   {{ getMeal(day, type)?.dish_name }}
                 </p>
+                <p
+                  v-if="recipeStatusLabel(getMeal(day, type)?.dish_name)"
+                  class="text-[11px] text-gray-500"
+                >
+                  {{ recipeStatusLabel(getMeal(day, type)?.dish_name) }}
+                </p>
                 <p class="text-xs text-amber-700">Pendiente de cálculo</p>
                 <ul class="text-xs text-gray-600 space-y-1">
                   <li
@@ -465,6 +471,7 @@ const savingMeal = ref(false);
 const imageProcessing = ref(false);
 const formError = ref("");
 const imageError = ref("");
+const recipeStatusByName = ref<Record<string, string>>({});
 const selectedDay = ref(1);
 const selectedType = ref<MealType>("comida");
 const editingMealId = ref<string | null>(null);
@@ -564,7 +571,32 @@ const loadMenu = async () => {
   meals.value = mealsData || [];
   dayImages.value = imagesData || [];
   await ensureRecipeLibrary(meals.value);
+  await loadRecipeStatuses();
   loading.value = false;
+};
+
+const loadRecipeStatuses = async () => {
+  const currentUser = await loadCurrentUser();
+  if (!currentUser) return;
+  const names = Array.from(
+    new Set(
+      (meals.value || []).map((meal) => meal.dish_name?.trim()).filter(Boolean),
+    ),
+  ) as string[];
+  if (names.length === 0) {
+    recipeStatusByName.value = {};
+    return;
+  }
+  const { data } = await supabase
+    .from("dishes")
+    .select("name,recipe_status")
+    .eq("user_id", currentUser.id)
+    .in("name", names);
+  const map: Record<string, string> = {};
+  for (const row of data || []) {
+    map[String(row.name)] = String(row.recipe_status || "pending_ingredients");
+  }
+  recipeStatusByName.value = map;
 };
 
 const ensureRecipeLibrary = async (weeklyMeals: WeeklyMeal[]) => {
@@ -591,7 +623,9 @@ const ensureRecipeLibrary = async (weeklyMeals: WeeklyMeal[]) => {
       return {
         user_id: currentUser.id,
         name,
+        normalized_name: name.toLowerCase().trim(),
         description: null,
+        source: "ocr",
         kcal: null,
         protein_g: null,
         carbs_g: null,
@@ -612,19 +646,22 @@ const ensureRecipeLibrary = async (weeklyMeals: WeeklyMeal[]) => {
         dish.name || "",
       );
       return candidates.map((candidate) => ({
-        dish_id: dish.id,
+        recipe_id: dish.id,
+        ingredient_id: null,
         name: candidate.name,
-        confidence: candidate.confidence,
-        source: candidate.source,
+        normalized_name: candidate.name.toLowerCase().trim(),
+        quantity: null,
+        unit_type: null,
+        is_confirmed: false,
+        is_suggested: true,
         needs_review: candidate.needs_review,
-        confirmed: false,
       }));
     });
 
     if (suggestions.length > 0) {
       await supabase
-        .from("dish_ingredient_suggestions")
-        .upsert(suggestions, { onConflict: "dish_id,name" });
+        .from("recipe_ingredients")
+        .upsert(suggestions, { onConflict: "recipe_id,normalized_name" });
     }
   }
 };
@@ -1101,6 +1138,18 @@ const ocrStatusLabel = (status?: WeeklyDayImage["ocr_status"]) => {
   if (status === "processed") return "procesado";
   if (status === "error") return "error";
   return "pendiente";
+};
+
+const recipeStatusLabel = (dishName?: string) => {
+  if (!dishName) return "";
+  const status = recipeStatusByName.value[dishName];
+  if (status === "complete") return "Receta completa";
+  if (status === "incomplete_nutrition") return "Receta sin nutrición completa";
+  if (status === "suggested_ingredients")
+    return "Ingredientes sugeridos pendientes";
+  if (status === "not_required") return "No requiere ingredientes";
+  if (status === "pending_ingredients") return "Ingredientes pendientes";
+  return "";
 };
 
 const formatDate = (dateString: string) => {

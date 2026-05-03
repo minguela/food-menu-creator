@@ -79,12 +79,15 @@ export interface Dish {
   user_id?: string | null;
   menu_image_id?: string;
   name: string;
+  normalized_name?: string;
   description?: string;
   recipe_status?:
     | "pending_ingredients"
     | "suggested_ingredients"
     | "complete"
-    | "not_required";
+    | "not_required"
+    | "incomplete_nutrition";
+  source?: "ocr" | "manual" | "fixed_meal" | "imported" | string;
   kcal?: number;
   protein_g?: number;
   carbs_g?: number;
@@ -96,14 +99,35 @@ export interface Dish {
 export interface Ingredient {
   id: string;
   name: string;
+  normalized_name?: string;
   carrefour_category?: string;
   carrefour_product_id?: string;
+  default_unit_type?: "kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad";
   unit_type: "kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad";
   kcal_per_100g?: number | null;
   protein_per_100g?: number | null;
   carbs_per_100g?: number | null;
   fat_per_100g?: number | null;
+  source?: "manual" | "system" | "imported" | string;
+  is_verified?: boolean;
   created_at: string;
+  updated_at?: string;
+}
+
+export interface RecipeIngredient {
+  id: string;
+  recipe_id: string;
+  ingredient_id?: string | null;
+  name: string;
+  normalized_name: string;
+  quantity?: number | null;
+  unit_type?: "kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad" | null;
+  is_confirmed: boolean;
+  is_suggested: boolean;
+  needs_review: boolean;
+  created_at: string;
+  updated_at?: string;
+  ingredients?: Ingredient | null;
 }
 
 export interface DishIngredient {

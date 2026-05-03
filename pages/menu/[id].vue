@@ -85,6 +85,27 @@
           detectados y podrás corregirlos debajo.
         </div>
 
+        <div class="mt-4">
+          <p class="text-sm font-medium text-gray-700 mb-2">
+            Franjas a extraer del OCR
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <label
+              v-for="type in mealTypes"
+              :key="`ocr-type-${type}`"
+              class="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border cursor-pointer"
+            >
+              <input
+                v-model="ocrMealTypes"
+                type="checkbox"
+                :value="type"
+                class="h-4 w-4"
+              />
+              <span>{{ mealLabel(type) }}</span>
+            </label>
+          </div>
+        </div>
+
         <div v-else class="mt-4 grid gap-3 md:grid-cols-[140px_140px_1fr]">
           <label>
             <span class="block text-sm font-medium text-gray-700 mb-1"
@@ -500,6 +521,7 @@ const editingMealId = ref<string | null>(null);
 const creationMode = ref<"daily" | "block">("daily");
 const blockStartDay = ref(1);
 const blockDayCount = ref(3);
+const ocrMealTypes = ref<MealType[]>(["comida", "cena"]);
 const applyBreakfastToWeek = ref(false);
 const newMeal = ref({
   dish_name: "",
@@ -896,6 +918,10 @@ const uploadMenuImage = async ({
   sourceMode: "daily" | "block";
 }) => {
   if (!menu.value) return;
+  if (ocrMealTypes.value.length === 0) {
+    imageError.value = "Selecciona al menos una franja (desayuno/comida/cena).";
+    return;
+  }
 
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
@@ -969,6 +995,7 @@ const uploadMenuImage = async ({
     start_day: normalizedStartDay,
     day_count: normalizedDayCount,
     source_mode: sourceMode,
+    meal_types: ocrMealTypes.value,
   });
 
   if (ocrError) {

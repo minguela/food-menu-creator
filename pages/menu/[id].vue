@@ -219,18 +219,7 @@
                 <p class="text-sm font-semibold text-gray-900">
                   {{ getMeal(day, type)?.dish_name }}
                 </p>
-                <p
-                  v-if="hasCalculatedMacros(getMeal(day, type))"
-                  class="text-xs text-gray-500"
-                >
-                  {{ getMeal(day, type)?.kcal || 0 }} kcal · P
-                  {{ getMeal(day, type)?.protein_g || 0 }}g · H
-                  {{ getMeal(day, type)?.carbs_g || 0 }}g · G
-                  {{ getMeal(day, type)?.fat_g || 0 }}g
-                </p>
-                <p v-else class="text-xs text-amber-700">
-                  Pendiente de cálculo
-                </p>
+                <p class="text-xs text-amber-700">Pendiente de cálculo</p>
                 <ul class="text-xs text-gray-600 space-y-1">
                   <li
                     v-for="ingredient in getMeal(day, type)
@@ -257,14 +246,8 @@
             </div>
           </div>
 
-          <div class="p-3 bg-gray-50 border-t text-xs text-gray-600">
-            <p class="font-medium text-gray-900">
-              Total día: {{ daySummary(day).kcal }} kcal
-            </p>
-            <p>
-              P {{ daySummary(day).protein_g }}g · H
-              {{ daySummary(day).carbs_g }}g · G {{ daySummary(day).fat_g }}g
-            </p>
+          <div class="p-3 bg-gray-50 border-t text-xs text-amber-700">
+            Totales nutricionales pendientes de cálculo en menú rotativo
           </div>
         </article>
       </section>
@@ -325,53 +308,6 @@
               >
               <input
                 v-model.trim="newMeal.dish_description"
-                class="w-full border rounded-lg px-4 py-2"
-              />
-            </label>
-            <label>
-              <span class="block text-sm font-medium text-gray-700 mb-1"
-                >kcal</span
-              >
-              <input
-                v-model.number="newMeal.kcal"
-                type="number"
-                min="0"
-                class="w-full border rounded-lg px-4 py-2"
-              />
-            </label>
-            <label>
-              <span class="block text-sm font-medium text-gray-700 mb-1"
-                >Proteína (g)</span
-              >
-              <input
-                v-model.number="newMeal.protein_g"
-                type="number"
-                min="0"
-                step="0.1"
-                class="w-full border rounded-lg px-4 py-2"
-              />
-            </label>
-            <label>
-              <span class="block text-sm font-medium text-gray-700 mb-1"
-                >Hidratos (g)</span
-              >
-              <input
-                v-model.number="newMeal.carbs_g"
-                type="number"
-                min="0"
-                step="0.1"
-                class="w-full border rounded-lg px-4 py-2"
-              />
-            </label>
-            <label>
-              <span class="block text-sm font-medium text-gray-700 mb-1"
-                >Grasas (g)</span
-              >
-              <input
-                v-model.number="newMeal.fat_g"
-                type="number"
-                min="0"
-                step="0.1"
                 class="w-full border rounded-lg px-4 py-2"
               />
             </label>
@@ -488,7 +424,7 @@
 </template>
 
 <script setup lang="ts">
-import { MEAL_TYPES, summarizeDailyMeals } from "~/utils/nutrition.js";
+import { MEAL_TYPES } from "~/utils/nutrition.js";
 import { logError } from "~/utils/log-error";
 import type {
   WeeklyDayImage,
@@ -536,10 +472,6 @@ const applyBreakfastToWeek = ref(false);
 const newMeal = ref({
   dish_name: "",
   dish_description: "",
-  kcal: 0,
-  protein_g: 0,
-  carbs_g: 0,
-  fat_g: 0,
 });
 const ingredientRows = ref<
   Array<{
@@ -582,7 +514,6 @@ const consolidatedIngredients = computed(() => {
 const mealFormValid = computed(
   () =>
     Boolean(newMeal.value.dish_name) &&
-    newMeal.value.kcal >= 0 &&
     ingredientRows.value.every(
       (ingredient) => !ingredient.name || ingredient.quantity > 0,
     ),
@@ -628,7 +559,45 @@ const loadMenu = async () => {
 
   meals.value = mealsData || [];
   dayImages.value = imagesData || [];
+  await ensureRecipeLibrary(meals.value);
   loading.value = false;
+};
+
+const ensureRecipeLibrary = async (weeklyMeals: WeeklyMeal[]) => {
+  const currentUser = await loadCurrentUser();
+  if (!currentUser) return;
+  const names = Array.from(
+    new Set(
+      weeklyMeals
+        .map((meal) => meal.dish_name?.trim())
+        .filter((name) => !!name && !/^libre$/i.test(String(name))),
+    ),
+  );
+  if (names.length === 0) return;
+
+  const { data: existing } = await supabase
+    .from("dishes")
+    .select("name")
+    .eq("user_id", currentUser.id)
+    .in("name", names);
+  const existingNames = new Set((existing || []).map((item: any) => item.name));
+
+  const toInsert = names
+    .filter((name) => !existingNames.has(name))
+    .map((name) => ({
+      user_id: currentUser.id,
+      name,
+      description: null,
+      kcal: null,
+      protein_g: null,
+      carbs_g: null,
+      fat_g: null,
+      servings_base: 1,
+    }));
+
+  if (toInsert.length > 0) {
+    await supabase.from("dishes").insert(toInsert);
+  }
 };
 
 const getMeal = (day: number, type: MealType) => {
@@ -639,21 +608,6 @@ const getMeal = (day: number, type: MealType) => {
 
 const getDayImage = (day: number) => {
   return dayImages.value.find((image) => image.day_number === day);
-};
-
-const daySummary = (day: number) => {
-  return summarizeDailyMeals(
-    meals.value.filter((meal) => meal.day_number === day),
-  );
-};
-
-const hasCalculatedMacros = (meal?: WeeklyMeal) => {
-  if (!meal) return false;
-  const kcal = Number(meal.kcal) || 0;
-  const protein = Number(meal.protein_g) || 0;
-  const carbs = Number(meal.carbs_g) || 0;
-  const fat = Number(meal.fat_g) || 0;
-  return kcal > 0 || protein > 0 || carbs > 0 || fat > 0;
 };
 
 watch(blockStartDay, (day) => {
@@ -679,18 +633,10 @@ const openMealModal = (day: number, type: MealType, meal?: WeeklyMeal) => {
     ? {
         dish_name: meal.dish_name,
         dish_description: meal.dish_description || "",
-        kcal: meal.kcal || 0,
-        protein_g: meal.protein_g || 0,
-        carbs_g: meal.carbs_g || 0,
-        fat_g: meal.fat_g || 0,
       }
     : {
         dish_name: "",
         dish_description: "",
-        kcal: 0,
-        protein_g: 0,
-        carbs_g: 0,
-        fat_g: 0,
       };
   ingredientRows.value = meal?.weekly_meal_ingredients?.length
     ? meal.weekly_meal_ingredients.map((ingredient) => ({
@@ -720,6 +666,8 @@ const removeIngredientRow = (index: number) => {
 
 const saveMeal = async () => {
   if (!menu.value || !mealFormValid.value) return;
+  const currentUser = await loadCurrentUser();
+  if (!currentUser) return;
 
   savingMeal.value = true;
   formError.value = "";
@@ -743,10 +691,10 @@ const saveMeal = async () => {
           meal_type: selectedType.value,
           dish_name: newMeal.value.dish_name,
           dish_description: newMeal.value.dish_description || null,
-          kcal: newMeal.value.kcal,
-          protein_g: newMeal.value.protein_g,
-          carbs_g: newMeal.value.carbs_g,
-          fat_g: newMeal.value.fat_g,
+          kcal: 0,
+          protein_g: 0,
+          carbs_g: 0,
+          fat_g: 0,
         },
         {
           onConflict: "weekly_menu_id,day_number,meal_type",
@@ -796,12 +744,13 @@ const saveMeal = async () => {
     const { data: savedDish, error: dishError } = await supabase
       .from("dishes")
       .insert({
+        user_id: currentUser.id,
         name: newMeal.value.dish_name,
         description: newMeal.value.dish_description || null,
-        kcal: newMeal.value.kcal,
-        protein_g: newMeal.value.protein_g,
-        carbs_g: newMeal.value.carbs_g,
-        fat_g: newMeal.value.fat_g,
+        kcal: null,
+        protein_g: null,
+        carbs_g: null,
+        fat_g: null,
         servings_base: 1,
       })
       .select()

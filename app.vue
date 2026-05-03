@@ -41,7 +41,7 @@
       aria-label="Navegación móvil"
       class="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-700 bg-[#16161ce8] p-2 backdrop-blur-xl md:hidden"
     >
-      <ul class="grid grid-cols-5 gap-2">
+      <ul class="grid grid-cols-6 gap-2">
         <li v-for="item in navItems" :key="`mobile-${item.path}`">
           <NuxtLink
             :href="item.path"
@@ -64,6 +64,7 @@
 <script setup lang="ts">
 const navItems = [
   { path: "/", label: "Menús", shortLabel: "Menús", icon: "M" },
+  { path: "/recipes", label: "Recetas", shortLabel: "Recetas", icon: "R" },
   { path: "/generar", label: "Generar", shortLabel: "Generar", icon: "G" },
   { path: "/shopping", label: "Compra", shortLabel: "Compra", icon: "C" },
   { path: "/history", label: "Histórico", shortLabel: "Hist.", icon: "H" },

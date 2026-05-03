@@ -1,0 +1,482 @@
+import { createClient } from "@supabase/supabase-js";
+
+type MealType = "desayuno" | "comida" | "cena";
+
+type GeneratePayload = {
+  userId: string;
+  name: string;
+  durationDays: number;
+  startDate: string;
+  sourceWeeklyMenuIds: string[];
+  profileIds: string[];
+  includeGlobalProfile: boolean;
+};
+
+export default defineEventHandler(async (event) => {
+  const body = (await readBody(event)) as GeneratePayload;
+  const config = useRuntimeConfig(event);
+  const supabase = createClient(
+    config.public.supabaseUrl,
+    config.supabaseServiceKey,
+  );
+
+  if (!body?.userId) {
+    throw createError({ statusCode: 400, statusMessage: "userId requerido" });
+  }
+  if (
+    !Array.isArray(body.sourceWeeklyMenuIds) ||
+    body.sourceWeeklyMenuIds.length === 0
+  ) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "sourceWeeklyMenuIds requerido",
+    });
+  }
+
+  const targetDays = Math.min(90, Math.max(1, Number(body.durationDays) || 7));
+
+  const [{ data: user }, { data: profiles }, { data: weeklyMeals }] =
+    await Promise.all([
+      supabase.from("users").select("*").eq("id", body.userId).single(),
+      supabase
+        .from("person_profiles")
+        .select("*")
+        .in("id", body.profileIds || []),
+      supabase
+        .from("weekly_meals")
+        .select(
+          "id, day_number, meal_type, dish_name, dish_description, kcal, protein_g, carbs_g, fat_g, weekly_meal_ingredients(*)",
+        )
+        .in("weekly_menu_id", body.sourceWeeklyMenuIds),
+    ]);
+
+  if (!user) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: "Usuario no encontrado",
+    });
+  }
+
+  const profileTargets = (profiles || []).map((profile: any) => {
+    const proteinPct =
+      100 - Number(profile.fat_pct_target) - Number(profile.carbs_pct_target);
+    return {
+      key: profile.id,
+      profile_id: profile.id,
+      profile_name: profile.name,
+      target_kcal: Number(profile.daily_kcal_target),
+      target_protein_g: Number(
+        (Number(profile.daily_kcal_target) * proteinPct) / 100 / 4,
+      ),
+      target_carbs_g: Number(
+        (Number(profile.daily_kcal_target) * Number(profile.carbs_pct_target)) /
+          100 /
+          4,
+      ),
+      target_fat_g: Number(
+        (Number(profile.daily_kcal_target) * Number(profile.fat_pct_target)) /
+          100 /
+          9,
+      ),
+    };
+  });
+
+  if (body.includeGlobalProfile) {
+    const proteinPct =
+      100 - Number(user.fat_pct_target) - Number(user.carbs_pct_target);
+    profileTargets.push({
+      key: "global",
+      profile_id: null,
+      profile_name: "Perfil global",
+      target_kcal: Number(user.daily_kcal_target),
+      target_protein_g: Number(
+        (Number(user.daily_kcal_target) * proteinPct) / 100 / 4,
+      ),
+      target_carbs_g: Number(
+        (Number(user.daily_kcal_target) * Number(user.carbs_pct_target)) /
+          100 /
+          4,
+      ),
+      target_fat_g: Number(
+        (Number(user.daily_kcal_target) * Number(user.fat_pct_target)) /
+          100 /
+          9,
+      ),
+    });
+  }
+
+  if (profileTargets.length === 0) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Selecciona al menos un perfil",
+    });
+  }
+
+  const mealLibrary: Record<MealType, any[]> = {
+    desayuno: [],
+    comida: [],
+    cena: [],
+  };
+  for (const meal of weeklyMeals || []) {
+    if (mealLibrary[meal.meal_type as MealType]) {
+      mealLibrary[meal.meal_type as MealType].push(meal);
+    }
+  }
+
+  const ingredientNames = new Set<string>();
+  for (const type of ["desayuno", "comida", "cena"] as MealType[]) {
+    for (const meal of mealLibrary[type]) {
+      for (const ingredient of meal.weekly_meal_ingredients || []) {
+        ingredientNames.add(String(ingredient.name || "").toLowerCase());
+      }
+    }
+  }
+  const { data: ingredientRows } = await supabase
+    .from("ingredients")
+    .select(
+      "name, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
+    )
+    .in("name", [...ingredientNames]);
+  const nutritionMap = new Map(
+    (ingredientRows || []).map((row: any) => [row.name, row]),
+  );
+
+  const shares = {
+    desayuno: { kcal: 0.25, protein: 0.3 },
+    comida: { kcal: 0.4, protein: 0.4 },
+    cena: { kcal: 0.35, protein: 0.3 },
+  };
+
+  const generatedDays: any[] = [];
+  const lastByType: Record<string, string> = {};
+
+  for (let day = 1; day <= targetDays; day++) {
+    const date = new Date(body.startDate);
+    date.setDate(date.getDate() + day - 1);
+    const dayMeals: any[] = [];
+
+    for (const mealType of ["desayuno", "comida", "cena"] as MealType[]) {
+      const options = mealLibrary[mealType] || [];
+      if (options.length === 0) continue;
+      let pickIndex = (day - 1) % options.length;
+      if (
+        options.length > 1 &&
+        options[pickIndex].dish_name === lastByType[mealType]
+      ) {
+        pickIndex = (pickIndex + 1) % options.length;
+      }
+      const picked = options[pickIndex];
+      lastByType[mealType] = picked.dish_name;
+
+      const baseKcal = Math.max(1, Number(picked.kcal) || 1);
+      const baseProtein = Math.max(1, Number(picked.protein_g) || 1);
+      const ingredientBase = (picked.weekly_meal_ingredients || []).map(
+        (ing: any) => ({
+          name: String(ing.name || ""),
+          quantity: Number(ing.quantity) || 0,
+          unit_type: ing.unit_type,
+        }),
+      );
+
+      const portions = profileTargets.map((profile) => {
+        const targetMealKcal = profile.target_kcal * shares[mealType].kcal;
+        const targetMealProtein =
+          profile.target_protein_g * shares[mealType].protein;
+        const multiplier = Math.max(
+          0.55,
+          Math.min(
+            2.5,
+            (targetMealKcal / baseKcal) * 0.65 +
+              (targetMealProtein / baseProtein) * 0.35,
+          ),
+        );
+
+        let kcal = 0;
+        let protein = 0;
+        let carbs = 0;
+        let fat = 0;
+        let pending = false;
+
+        const ingredients = ingredientBase.map((ing: any) => {
+          const finalQuantity = round(ing.quantity * multiplier);
+          const normalized = normalizeToGrams(finalQuantity, ing.unit_type);
+          const n = nutritionMap.get(String(ing.name).toLowerCase());
+          let nutritionPending = false;
+          if (!n || normalized === null) {
+            nutritionPending = true;
+            pending = true;
+          } else if (
+            n.kcal_per_100g == null ||
+            n.protein_per_100g == null ||
+            n.carbs_per_100g == null ||
+            n.fat_per_100g == null
+          ) {
+            nutritionPending = true;
+            pending = true;
+          } else {
+            const factor = normalized / 100;
+            kcal += Number(n.kcal_per_100g) * factor;
+            protein += Number(n.protein_per_100g) * factor;
+            carbs += Number(n.carbs_per_100g) * factor;
+            fat += Number(n.fat_per_100g) * factor;
+          }
+          return {
+            name: ing.name,
+            base_quantity: ing.quantity,
+            final_quantity: finalQuantity,
+            unit_type: ing.unit_type,
+            nutrition_pending: nutritionPending,
+          };
+        });
+
+        return {
+          profile_key: profile.key,
+          profile_id: profile.profile_id,
+          profile_name: profile.profile_name,
+          serving_multiplier: round(multiplier, 3),
+          final_kcal: Math.round(kcal),
+          final_protein_g: round(protein),
+          final_carbs_g: round(carbs),
+          final_fat_g: round(fat),
+          nutrition_pending: pending,
+          ingredients,
+        };
+      });
+
+      dayMeals.push({
+        meal_type: mealType,
+        source_weekly_meal_id: picked.id,
+        dish_name: picked.dish_name,
+        dish_description: picked.dish_description || null,
+        profile_portions: portions,
+      });
+    }
+
+    generatedDays.push({
+      day_number: day,
+      day_date: date.toISOString().split("T")[0],
+      meals: dayMeals,
+    });
+  }
+
+  const totalTargets = profileTargets.reduce(
+    (acc, p) => {
+      acc.kcal += p.target_kcal;
+      acc.protein += p.target_protein_g;
+      acc.carbs += p.target_carbs_g;
+      acc.fat += p.target_fat_g;
+      return acc;
+    },
+    { kcal: 0, protein: 0, carbs: 0, fat: 0 },
+  );
+
+  const { data: rotatingMenu, error: rotatingError } = await supabase
+    .from("rotating_menus")
+    .insert({
+      user_id: body.userId,
+      profile_id: profileTargets.find((p) => p.profile_id)?.profile_id || null,
+      name: body.name || "Menú rotativo",
+      source_weekly_menu_ids: body.sourceWeeklyMenuIds,
+      duration_days: targetDays,
+      persons_count: profileTargets.length,
+      target_kcal: Math.round(totalTargets.kcal),
+      target_protein_g: round(totalTargets.protein),
+      target_carbs_g: round(totalTargets.carbs),
+      target_fat_g: round(totalTargets.fat),
+    })
+    .select("id")
+    .single();
+  if (rotatingError || !rotatingMenu) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: rotatingError?.message || "Error guardando rotating_menus",
+    });
+  }
+
+  const realProfiles = profileTargets.filter((p) => p.profile_id);
+  if (realProfiles.length > 0) {
+    const { error: profileInsertError } = await supabase
+      .from("rotating_menu_profiles")
+      .insert(
+        realProfiles.map((profile) => ({
+          rotating_menu_id: rotatingMenu.id,
+          profile_id: profile.profile_id,
+          target_kcal: Math.round(profile.target_kcal),
+          target_protein_g: round(profile.target_protein_g),
+          target_carbs_g: round(profile.target_carbs_g),
+          target_fat_g: round(profile.target_fat_g),
+        })),
+      );
+    if (profileInsertError) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: profileInsertError.message,
+      });
+    }
+  }
+
+  const dayRows = generatedDays.map((day) => {
+    const totals = day.meals.reduce(
+      (acc: any, meal: any) => {
+        for (const portion of meal.profile_portions) {
+          acc.kcal += portion.final_kcal;
+          acc.protein += portion.final_protein_g;
+          acc.carbs += portion.final_carbs_g;
+          acc.fat += portion.final_fat_g;
+        }
+        return acc;
+      },
+      { kcal: 0, protein: 0, carbs: 0, fat: 0 },
+    );
+    return {
+      rotating_menu_id: rotatingMenu.id,
+      day_number: day.day_number,
+      day_date: day.day_date,
+      total_kcal: Math.round(totals.kcal),
+      total_protein_g: round(totals.protein),
+      total_carbs_g: round(totals.carbs),
+      total_fat_g: round(totals.fat),
+    };
+  });
+  const { data: savedDays, error: daysError } = await supabase
+    .from("rotating_menu_days")
+    .insert(dayRows)
+    .select("id, day_number");
+  if (daysError || !savedDays) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: daysError?.message || "Error guardando rotating_menu_days",
+    });
+  }
+  const dayIdByNumber = new Map(
+    savedDays.map((row: any) => [row.day_number, row.id]),
+  );
+
+  const mealRows = generatedDays.flatMap((day) =>
+    day.meals.map((meal: any) => ({
+      rotating_menu_day_id: dayIdByNumber.get(day.day_number),
+      meal_type: meal.meal_type,
+      source_weekly_meal_id: meal.source_weekly_meal_id,
+      dish_name: meal.dish_name,
+      dish_description: meal.dish_description || null,
+      base_servings: 1,
+      serving_multiplier: meal.profile_portions[0]?.serving_multiplier || 1,
+      final_kcal: meal.profile_portions[0]?.final_kcal || 0,
+      final_protein_g: meal.profile_portions[0]?.final_protein_g || 0,
+      final_carbs_g: meal.profile_portions[0]?.final_carbs_g || 0,
+      final_fat_g: meal.profile_portions[0]?.final_fat_g || 0,
+    })),
+  );
+  const { data: savedMeals, error: mealsError } = await supabase
+    .from("rotating_menu_meals")
+    .insert(mealRows)
+    .select("id, rotating_menu_day_id, meal_type");
+  if (mealsError || !savedMeals) {
+    throw createError({
+      statusCode: 500,
+      statusMessage:
+        mealsError?.message || "Error guardando rotating_menu_meals",
+    });
+  }
+  const mealIdByKey = new Map(
+    savedMeals.map((meal: any) => [
+      `${meal.rotating_menu_day_id}:${meal.meal_type}`,
+      meal.id,
+    ]),
+  );
+
+  const portionsRows = generatedDays.flatMap((day) =>
+    day.meals.flatMap((meal: any) => {
+      const dayId = dayIdByNumber.get(day.day_number);
+      const mealId = mealIdByKey.get(`${dayId}:${meal.meal_type}`);
+      return meal.profile_portions
+        .filter((p: any) => p.profile_id)
+        .map((portion: any) => ({
+          rotating_menu_meal_id: mealId,
+          profile_id: portion.profile_id,
+          serving_multiplier: portion.serving_multiplier,
+          final_kcal: portion.final_kcal,
+          final_protein_g: portion.final_protein_g,
+          final_carbs_g: portion.final_carbs_g,
+          final_fat_g: portion.final_fat_g,
+          nutrition_pending: portion.nutrition_pending,
+        }));
+    }),
+  );
+  const { data: savedPortions, error: portionsError } = await supabase
+    .from("rotating_menu_meal_profile_portions")
+    .insert(portionsRows)
+    .select("id, rotating_menu_meal_id, profile_id");
+  if (portionsError || !savedPortions) {
+    throw createError({
+      statusCode: 500,
+      statusMessage:
+        portionsError?.message ||
+        "Error guardando rotating_menu_meal_profile_portions",
+    });
+  }
+  const portionIdByKey = new Map(
+    savedPortions.map((p: any) => [
+      `${p.rotating_menu_meal_id}:${p.profile_id}`,
+      p.id,
+    ]),
+  );
+
+  const ingredientsRows = generatedDays.flatMap((day) =>
+    day.meals.flatMap((meal: any) => {
+      const dayId = dayIdByNumber.get(day.day_number);
+      const mealId = mealIdByKey.get(`${dayId}:${meal.meal_type}`);
+      return meal.profile_portions
+        .filter((p: any) => p.profile_id)
+        .flatMap((portion: any) => {
+          const portionId = portionIdByKey.get(
+            `${mealId}:${portion.profile_id}`,
+          );
+          return portion.ingredients
+            .filter((ing: any) => ing.name && ing.final_quantity > 0)
+            .map((ing: any) => ({
+              rotating_menu_meal_profile_portion_id: portionId,
+              name: String(ing.name).toLowerCase(),
+              base_quantity: ing.base_quantity,
+              final_quantity: ing.final_quantity,
+              unit_type: ing.unit_type,
+              nutrition_pending: !!ing.nutrition_pending,
+            }));
+        });
+    }),
+  );
+  if (ingredientsRows.length > 0) {
+    const { error: ingredientsError } = await supabase
+      .from("rotating_menu_meal_profile_ingredients")
+      .insert(ingredientsRows);
+    if (ingredientsError) {
+      throw createError({
+        statusCode: 500,
+        statusMessage:
+          ingredientsError.message ||
+          "Error guardando rotating_menu_meal_profile_ingredients",
+      });
+    }
+  }
+
+  return {
+    success: true,
+    rotating_menu_id: rotatingMenu.id,
+    generated_days: generatedDays,
+    profiles: profileTargets,
+  };
+});
+
+function normalizeToGrams(quantity: number, unitType: string): number | null {
+  if (!Number.isFinite(quantity) || quantity <= 0) return 0;
+  if (unitType === "g") return quantity;
+  if (unitType === "kg") return quantity * 1000;
+  if (unitType === "ml") return quantity;
+  if (unitType === "l") return quantity * 1000;
+  return null;
+}
+
+function round(value: number, digits = 2) {
+  const factor = 10 ** digits;
+  return Math.round(value * factor) / factor;
+}

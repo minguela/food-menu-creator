@@ -142,53 +142,6 @@
                     placeholder="Descripción opcional"
                   />
                 </label>
-                <label>
-                  <span class="block text-xs font-medium text-gray-700 mb-1">
-                    kcal
-                  </span>
-                  <input
-                    v-model.number="fixedMeals[type].kcal"
-                    type="number"
-                    min="0"
-                    class="w-full border rounded-lg px-3 py-2"
-                  />
-                </label>
-                <label>
-                  <span class="block text-xs font-medium text-gray-700 mb-1">
-                    Proteína (g)
-                  </span>
-                  <input
-                    v-model.number="fixedMeals[type].protein_g"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    class="w-full border rounded-lg px-3 py-2"
-                  />
-                </label>
-                <label>
-                  <span class="block text-xs font-medium text-gray-700 mb-1">
-                    Hidratos (g)
-                  </span>
-                  <input
-                    v-model.number="fixedMeals[type].carbs_g"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    class="w-full border rounded-lg px-3 py-2"
-                  />
-                </label>
-                <label>
-                  <span class="block text-xs font-medium text-gray-700 mb-1">
-                    Grasas (g)
-                  </span>
-                  <input
-                    v-model.number="fixedMeals[type].fat_g"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    class="w-full border rounded-lg px-3 py-2"
-                  />
-                </label>
               </div>
 
               <div class="mt-3 space-y-2">
@@ -296,10 +249,6 @@ const fixedMeals = reactive(
       {
         dish_name: "",
         dish_description: "",
-        kcal: 0,
-        protein_g: 0,
-        carbs_g: 0,
-        fat_g: 0,
         ingredients: [{ name: "", quantity: 1, unit_type: "g" as const }],
       },
     ]),
@@ -308,10 +257,6 @@ const fixedMeals = reactive(
     {
       dish_name: string;
       dish_description: string;
-      kcal: number;
-      protein_g: number;
-      carbs_g: number;
-      fat_g: number;
       ingredients: Array<{ name: string; quantity: number; unit_type: string }>;
     }
   >,
@@ -398,10 +343,10 @@ const createMenu = async () => {
           meal_type: type,
           dish_name: fixed.dish_name.trim(),
           dish_description: fixed.dish_description.trim() || null,
-          kcal: fixed.kcal || 0,
-          protein_g: fixed.protein_g || 0,
-          carbs_g: fixed.carbs_g || 0,
-          fat_g: fixed.fat_g || 0,
+          kcal: 0,
+          protein_g: 0,
+          carbs_g: 0,
+          fat_g: 0,
         });
       }
     }
@@ -450,10 +395,10 @@ const createMenu = async () => {
           meal_type: type,
           dish_name: fixed.dish_name.trim(),
           dish_description: fixed.dish_description.trim() || null,
-          kcal: fixed.kcal || 0,
-          protein_g: fixed.protein_g || 0,
-          carbs_g: fixed.carbs_g || 0,
-          fat_g: fixed.fat_g || 0,
+          kcal: 0,
+          protein_g: 0,
+          carbs_g: 0,
+          fat_g: 0,
         })
         .select("id")
         .maybeSingle();
@@ -510,10 +455,6 @@ const resetFixedMeals = () => {
     fixedMeals[type] = {
       dish_name: "",
       dish_description: "",
-      kcal: 0,
-      protein_g: 0,
-      carbs_g: 0,
-      fat_g: 0,
       ingredients: [{ name: "", quantity: 1, unit_type: "g" }],
     };
   }

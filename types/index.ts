@@ -76,6 +76,7 @@ export interface WeeklyMealIngredient {
 
 export interface Dish {
   id: string;
+  user_id?: string | null;
   menu_image_id?: string;
   name: string;
   description?: string;

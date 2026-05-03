@@ -426,6 +426,10 @@
 <script setup lang="ts">
 import { MEAL_TYPES } from "~/utils/nutrition.js";
 import { logError } from "~/utils/log-error";
+import {
+  extractIngredientCandidatesFromDishName,
+  getRecipeStatusFromDishName,
+} from "~/utils/ingredient-candidates";
 import type {
   WeeklyDayImage,
   WeeklyMeal,
@@ -567,36 +571,61 @@ const ensureRecipeLibrary = async (weeklyMeals: WeeklyMeal[]) => {
   const currentUser = await loadCurrentUser();
   if (!currentUser) return;
   const names = Array.from(
-    new Set(
-      weeklyMeals
-        .map((meal) => meal.dish_name?.trim())
-        .filter((name) => !!name && !/^libre$/i.test(String(name))),
-    ),
-  );
+    new Set(weeklyMeals.map((meal) => meal.dish_name?.trim())),
+  ).filter(Boolean) as string[];
   if (names.length === 0) return;
 
   const { data: existing } = await supabase
     .from("dishes")
-    .select("name")
+    .select("id,name,recipe_status")
     .eq("user_id", currentUser.id)
     .in("name", names);
-  const existingNames = new Set((existing || []).map((item: any) => item.name));
+  const existingByName = new Map(
+    (existing || []).map((item: any) => [item.name, item]),
+  );
 
   const toInsert = names
-    .filter((name) => !existingNames.has(name))
-    .map((name) => ({
-      user_id: currentUser.id,
-      name,
-      description: null,
-      kcal: null,
-      protein_g: null,
-      carbs_g: null,
-      fat_g: null,
-      servings_base: 1,
-    }));
+    .filter((name) => !existingByName.has(name))
+    .map((name) => {
+      const candidates = extractIngredientCandidatesFromDishName(name);
+      return {
+        user_id: currentUser.id,
+        name,
+        description: null,
+        kcal: null,
+        protein_g: null,
+        carbs_g: null,
+        fat_g: null,
+        servings_base: 1,
+        recipe_status: getRecipeStatusFromDishName(name, candidates),
+      };
+    });
 
   if (toInsert.length > 0) {
-    await supabase.from("dishes").insert(toInsert);
+    const { data: insertedDishes } = await supabase
+      .from("dishes")
+      .insert(toInsert)
+      .select("id,name");
+
+    const suggestions = (insertedDishes || []).flatMap((dish: any) => {
+      const candidates = extractIngredientCandidatesFromDishName(
+        dish.name || "",
+      );
+      return candidates.map((candidate) => ({
+        dish_id: dish.id,
+        name: candidate.name,
+        confidence: candidate.confidence,
+        source: candidate.source,
+        needs_review: candidate.needs_review,
+        confirmed: false,
+      }));
+    });
+
+    if (suggestions.length > 0) {
+      await supabase
+        .from("dish_ingredient_suggestions")
+        .upsert(suggestions, { onConflict: "dish_id,name" });
+    }
   }
 };
 

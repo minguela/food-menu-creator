@@ -54,6 +54,59 @@
           </button>
         </div>
 
+        <div
+          v-if="dish.pending_suggestions.length > 0"
+          class="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3"
+        >
+          <p class="text-xs text-amber-800 mb-2">
+            Ingredientes detectados desde el nombre del plato. Revisa y confirma
+            antes de usar para cálculos.
+          </p>
+          <div class="space-y-2">
+            <div
+              v-for="suggestion in dish.pending_suggestions"
+              :key="suggestion.id"
+              class="grid grid-cols-[1fr_120px_100px_120px] gap-2 items-center"
+            >
+              <input
+                v-model.trim="suggestion.name"
+                class="border rounded-lg px-3 py-2 text-sm"
+              />
+              <input
+                v-model.number="suggestion.quantity"
+                type="number"
+                min="0.01"
+                step="0.01"
+                class="border rounded-lg px-3 py-2 text-sm"
+                placeholder="Cantidad"
+              />
+              <select
+                v-model="suggestion.unit_type"
+                class="border rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="">Unidad</option>
+                <option v-for="unit in unitTypes" :key="unit" :value="unit">
+                  {{ unit }}
+                </option>
+              </select>
+              <div class="flex gap-2">
+                <button
+                  class="text-xs text-green-700"
+                  @click="confirmSuggestion(dish, suggestion)"
+                >
+                  Confirmar
+                </button>
+                <button
+                  class="text-xs text-red-700"
+                  @click="deleteSuggestion(suggestion.id)"
+                >
+                  Quitar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div v-if="editingDishId === dish.id" class="mt-3 space-y-2">
           <div
             v-for="(row, index) in editRows"
@@ -135,7 +188,22 @@ import type { Dish } from "~/types";
 const supabase = useSupabase();
 const { loadCurrentUser } = useCurrentUser();
 
-type DishRow = Dish & { dish_ingredients?: any[] };
+type SuggestionRow = {
+  id: string;
+  name: string;
+  confidence: "high" | "medium" | "low";
+  source: "dish_name";
+  needs_review: boolean;
+  confirmed: boolean;
+  quantity: number | null;
+  unit_type: string;
+};
+
+type DishRow = Dish & {
+  dish_ingredients?: any[];
+  dish_ingredient_suggestions?: SuggestionRow[];
+  pending_suggestions: SuggestionRow[];
+};
 type EditRow = {
   name: string;
   quantity: number;
@@ -161,8 +229,11 @@ const filterLabel = (f: string) =>
   f === "all" ? "Todos" : f === "complete" ? "Completos" : "Pendientes";
 
 const dishState = (dish: DishRow) => {
-  if (/^libre$/i.test(dish.name))
+  if (dish.recipe_status === "not_required" || /^libre$/i.test(dish.name))
     return { label: "No requiere ingredientes", color: "text-gray-500" };
+  if ((dish.pending_suggestions || []).length > 0) {
+    return { label: "Sugerencias por confirmar", color: "text-amber-700" };
+  }
   const rows = dish.dish_ingredients || [];
   if (rows.length === 0)
     return { label: "Pendiente de ingredientes", color: "text-amber-700" };
@@ -199,7 +270,7 @@ const loadRecipes = async () => {
   const { data, error } = await supabase
     .from("dishes")
     .select(
-      "*, dish_ingredients(quantity, unit_type, ingredients(id, name, unit_type, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g))",
+      "*, dish_ingredients(quantity, unit_type, ingredients(id, name, unit_type, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g)), dish_ingredient_suggestions(id,name,confidence,source,needs_review,confirmed)",
     )
     .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false })
@@ -209,7 +280,16 @@ const loadRecipes = async () => {
     dishes.value = [];
     return;
   }
-  dishes.value = (data || []) as DishRow[];
+  dishes.value = ((data || []) as any[]).map((dish) => ({
+    ...dish,
+    pending_suggestions: (dish.dish_ingredient_suggestions || [])
+      .filter((row: any) => !row.confirmed)
+      .map((row: any) => ({
+        ...row,
+        quantity: null,
+        unit_type: "",
+      })),
+  }));
 };
 
 const toggleEdit = (dishId: string) => {
@@ -312,8 +392,101 @@ const saveDishIngredients = async (dish: DishRow) => {
   if (links.length > 0) {
     await supabase.from("dish_ingredients").insert(links);
   }
+  await syncRecipeStatus(dish.id);
   await loadRecipes();
   toggleEdit(dish.id);
+};
+
+const confirmSuggestion = async (dish: DishRow, suggestion: SuggestionRow) => {
+  if (!suggestion.name || !suggestion.quantity || suggestion.quantity <= 0)
+    return;
+  if (!suggestion.unit_type) return;
+
+  const ingredientName = suggestion.name.toLowerCase();
+  const existing = await supabase
+    .from("ingredients")
+    .select("id")
+    .eq("name", ingredientName)
+    .maybeSingle();
+
+  let ingredientId = existing.data?.id;
+  if (!ingredientId) {
+    const created = await supabase
+      .from("ingredients")
+      .insert({
+        name: ingredientName,
+        unit_type: suggestion.unit_type,
+      })
+      .select("id")
+      .single();
+    ingredientId = created.data?.id;
+  }
+  if (!ingredientId) return;
+
+  await supabase.from("dish_ingredients").upsert(
+    {
+      dish_id: dish.id,
+      ingredient_id: ingredientId,
+      quantity: suggestion.quantity,
+      unit_type: suggestion.unit_type,
+    },
+    { onConflict: "dish_id,ingredient_id" },
+  );
+
+  await supabase
+    .from("dish_ingredient_suggestions")
+    .update({ confirmed: true })
+    .eq("id", suggestion.id);
+
+  await syncRecipeStatus(dish.id);
+  await loadRecipes();
+};
+
+const deleteSuggestion = async (suggestionId: string) => {
+  await supabase
+    .from("dish_ingredient_suggestions")
+    .delete()
+    .eq("id", suggestionId);
+  await loadRecipes();
+};
+
+const syncRecipeStatus = async (dishId: string) => {
+  const dish = dishes.value.find((item) => item.id === dishId);
+  if (!dish) return;
+  if (dish.recipe_status === "not_required" || /^libre$/i.test(dish.name)) {
+    await supabase
+      .from("dishes")
+      .update({ recipe_status: "not_required" })
+      .eq("id", dishId);
+    return;
+  }
+
+  const { count: ingredientCount } = await supabase
+    .from("dish_ingredients")
+    .select("*", { count: "exact", head: true })
+    .eq("dish_id", dishId);
+  if ((ingredientCount || 0) > 0) {
+    await supabase
+      .from("dishes")
+      .update({ recipe_status: "complete" })
+      .eq("id", dishId);
+    return;
+  }
+
+  const { count: suggestionCount } = await supabase
+    .from("dish_ingredient_suggestions")
+    .select("*", { count: "exact", head: true })
+    .eq("dish_id", dishId)
+    .eq("confirmed", false);
+  await supabase
+    .from("dishes")
+    .update({
+      recipe_status:
+        (suggestionCount || 0) > 0
+          ? "suggested_ingredients"
+          : "pending_ingredients",
+    })
+    .eq("id", dishId);
 };
 
 onMounted(loadRecipes);

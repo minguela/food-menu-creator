@@ -80,6 +80,11 @@ export interface Dish {
   menu_image_id?: string;
   name: string;
   description?: string;
+  recipe_status?:
+    | "pending_ingredients"
+    | "suggested_ingredients"
+    | "complete"
+    | "not_required";
   kcal?: number;
   protein_g?: number;
   carbs_g?: number;

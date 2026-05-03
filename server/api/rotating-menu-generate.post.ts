@@ -123,6 +123,25 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  const uniqueDishNames = Array.from(
+    new Set(
+      (weeklyMeals || [])
+        .map((meal: any) => String(meal.dish_name || "").trim())
+        .filter(Boolean),
+    ),
+  );
+  const { data: dishRows } = await supabase
+    .from("dishes")
+    .select("name, recipe_status")
+    .eq("user_id", body.userId)
+    .in("name", uniqueDishNames);
+  const recipeStatusByName = new Map(
+    (dishRows || []).map((row: any) => [
+      String(row.name),
+      row.recipe_status || "pending_ingredients",
+    ]),
+  );
+
   const ingredientNames = new Set<string>();
   for (const type of ["desayuno", "comida", "cena"] as MealType[]) {
     for (const meal of mealLibrary[type]) {
@@ -196,6 +215,18 @@ export default defineEventHandler(async (event) => {
         let carbs = 0;
         let fat = 0;
         let pending = false;
+        const recipeStatus =
+          recipeStatusByName.get(String(picked.dish_name || "")) ||
+          "pending_ingredients";
+        if (ingredientBase.length === 0 && recipeStatus !== "not_required") {
+          pending = true;
+        }
+        if (
+          recipeStatus === "pending_ingredients" ||
+          recipeStatus === "suggested_ingredients"
+        ) {
+          pending = true;
+        }
 
         const ingredients = ingredientBase.map((ing: any) => {
           const finalQuantity = round(ing.quantity * multiplier);

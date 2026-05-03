@@ -106,7 +106,10 @@
           </div>
         </div>
 
-        <div v-else class="mt-4 grid gap-3 md:grid-cols-[140px_140px_1fr]">
+        <div
+          v-if="creationMode === 'block'"
+          class="mt-4 grid gap-3 md:grid-cols-[140px_140px_1fr]"
+        >
           <label>
             <span class="block text-sm font-medium text-gray-700 mb-1"
               >Día inicial</span

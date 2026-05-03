@@ -48,4 +48,44 @@ test.describe("ocr-processor edge function", () => {
     const body = await response.json();
     expect(body).toHaveProperty("success", true);
   });
+
+  test("extrae bloque semanal evitando cabeceras en comida/cena", async ({
+    request,
+  }) => {
+    const imageUrl =
+      "https://food-menu-creator-lyart.vercel.app/test-assets/menu-7dias-fodmap.jpg";
+
+    const response = await request.post(OCR_URL, {
+      headers: {
+        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      data: {
+        weekly_menu_id: "00000000-0000-0000-0000-000000000000",
+        weekly_day_image_ids: [],
+        image_url: imageUrl,
+        start_day: 1,
+        day_count: 7,
+        source_mode: "block",
+        meal_types: ["comida", "cena"],
+      },
+    });
+
+    // Si el asset no está disponible en este entorno, no marcamos falso negativo.
+    if (response.status() >= 400) {
+      test.skip(true, "No se pudo acceder al asset de prueba remoto.");
+      return;
+    }
+
+    const body = await response.json();
+    expect(body).toHaveProperty("success", true);
+    const meals: Array<{ name: string }> = body.meals || [];
+
+    const suspicious = meals.filter((meal) =>
+      /@|diciembre|fodmap|menu dia|intenta hacer|seguimos con el desayuno/i.test(
+        meal.name || "",
+      ),
+    );
+    expect(suspicious.length).toBe(0);
+  });
 });

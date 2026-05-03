@@ -179,3 +179,42 @@ export interface ErrorLog {
   stack_trace?: string | null;
   created_at: string;
 }
+
+export interface SavedFixedMeal {
+  id: string;
+  user_id: string;
+  meal_type: "desayuno" | "comida" | "cena";
+  dish_name: string;
+  dish_description?: string;
+  kcal: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  created_at: string;
+  updated_at: string;
+  saved_fixed_meal_ingredients?: SavedFixedMealIngredient[];
+}
+
+export interface SavedFixedMealIngredient {
+  id: string;
+  fixed_meal_id: string;
+  name: string;
+  quantity: number;
+  unit_type: "kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad";
+}
+
+export interface RotatingMenu {
+  id: string;
+  user_id: string;
+  profile_id?: string | null;
+  name: string;
+  source_weekly_menu_ids: string[];
+  duration_days: number;
+  persons_count: number;
+  target_kcal: number;
+  target_protein_g: number;
+  target_carbs_g: number;
+  target_fat_g: number;
+  created_at: string;
+  updated_at: string;
+}

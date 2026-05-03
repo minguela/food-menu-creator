@@ -459,6 +459,7 @@
 
 <script setup lang="ts">
 import { MEAL_TYPES, summarizeDailyMeals } from "~/utils/nutrition.js";
+import { logError } from "~/utils/log-error";
 import type {
   WeeklyDayImage,
   WeeklyMeal,
@@ -899,6 +900,13 @@ const uploadMenuImage = async ({
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
   if (!file) return;
+  const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+  if (file.size > MAX_IMAGE_BYTES) {
+    imageError.value =
+      "La imagen supera 2MB. Reduce tamaño/resolución (recomendado 300 DPI) e inténtalo de nuevo.";
+    target.value = "";
+    return;
+  }
 
   imageProcessing.value = true;
   imageError.value = "";
@@ -954,20 +962,21 @@ const uploadMenuImage = async ({
     return;
   }
 
-  const { error: ocrError } = await supabase.functions.invoke("ocr-processor", {
-    body: {
-      weekly_menu_id: menu.value.id,
-      weekly_day_image_ids: (imageRows || []).map((image) => image.id),
-      image_url: publicUrl,
-      start_day: normalizedStartDay,
-      day_count: normalizedDayCount,
-      source_mode: sourceMode,
-    },
+  const { error: ocrError } = await invokeOcrWithRetry({
+    weekly_menu_id: menu.value.id,
+    weekly_day_image_ids: (imageRows || []).map((image) => image.id),
+    image_url: publicUrl,
+    start_day: normalizedStartDay,
+    day_count: normalizedDayCount,
+    source_mode: sourceMode,
   });
 
   if (ocrError) {
     imageError.value =
       "La imagen se guardó, pero el OCR falló: " + ocrError.message;
+    await logError("ocr", ocrError, {
+      context: "menu.uploadMenuImage.invokeOcrWithRetry",
+    });
     await supabase
       .from("weekly_day_images")
       .update({
@@ -983,6 +992,31 @@ const uploadMenuImage = async ({
   imageProcessing.value = false;
   target.value = "";
   await loadMenu();
+};
+
+const sleep = (ms: number) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+const invokeOcrWithRetry = async (payload: Record<string, unknown>) => {
+  const maxAttempts = 3;
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const { error } = await supabase.functions.invoke("ocr-processor", {
+      body: payload,
+    });
+    if (!error) return { error: null };
+
+    lastError = new Error(error.message);
+    if (attempt < maxAttempts) {
+      const backoffMs = 500 * 2 ** (attempt - 1);
+      await sleep(backoffMs);
+    }
+  }
+
+  return { error: lastError };
 };
 
 const mealLabel = (type: MealType) => {

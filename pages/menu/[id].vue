@@ -496,6 +496,7 @@ type MealType = WeeklyMeal["meal_type"];
 const supabase = useSupabase();
 const route = useRoute();
 const router = useRouter();
+const runtimeConfig = useRuntimeConfig();
 const { loadCurrentUser } = useCurrentUser();
 
 const mealTypes = MEAL_TYPES as MealType[];
@@ -992,13 +993,16 @@ const uploadMenuImage = async ({
   }
 
   const { error: ocrError } = await invokeOcrWithRetry({
-    weekly_menu_id: menu.value.id,
-    weekly_day_image_ids: (imageRows || []).map((image) => image.id),
-    image_url: publicUrl,
-    start_day: normalizedStartDay,
-    day_count: normalizedDayCount,
-    source_mode: sourceMode,
-    meal_types: ocrMealTypes.value,
+    file,
+    payload: {
+      weekly_menu_id: menu.value.id,
+      weekly_day_image_ids: (imageRows || []).map((image) => image.id),
+      image_url: publicUrl,
+      start_day: normalizedStartDay,
+      day_count: normalizedDayCount,
+      source_mode: sourceMode,
+      meal_types: ocrMealTypes.value,
+    },
   });
 
   if (ocrError) {
@@ -1029,17 +1033,55 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
-const invokeOcrWithRetry = async (payload: Record<string, unknown>) => {
+const invokeOcrWithRetry = async ({
+  file,
+  payload,
+}: {
+  file: File;
+  payload: Record<string, unknown>;
+}) => {
   const maxAttempts = 3;
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const { error } = await supabase.functions.invoke("ocr-processor", {
-      body: payload,
-    });
-    if (!error) return { error: null };
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken =
+        session?.access_token || runtimeConfig.public.supabaseAnonKey;
+      const formData = new FormData();
+      formData.append("file", file);
 
-    lastError = new Error(error.message);
+      for (const [key, value] of Object.entries(payload)) {
+        if (value === undefined || value === null) continue;
+        if (Array.isArray(value) || typeof value === "object") {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, String(value));
+        }
+      }
+
+      const response = await fetch(
+        `${runtimeConfig.public.supabaseUrl}/functions/v1/ocr-processor`,
+        {
+          method: "POST",
+          headers: {
+            apikey: runtimeConfig.public.supabaseAnonKey,
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: formData,
+        },
+      );
+
+      if (response.ok) return { error: null };
+      const body = await response.json().catch(() => ({}));
+      lastError = new Error(body?.error || `OCR error HTTP ${response.status}`);
+    } catch (error) {
+      lastError =
+        error instanceof Error ? error : new Error("Error OCR desconocido");
+    }
+
     if (attempt < maxAttempts) {
       const backoffMs = 500 * 2 ** (attempt - 1);
       await sleep(backoffMs);

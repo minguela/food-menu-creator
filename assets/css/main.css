@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --bg: #18181b;
+  --bg-elevated: #1f1f24;
+  --bg-soft: #27272f;
+  --border: #34343d;
+  --accent: #38bdf8;
+  --text-main: #f4f4f5;
+  --text-muted: #d4d4d8;
+}
+
+@layer base {
+  html,
+  body,
+  #__nuxt {
+    min-height: 100%;
+    background: radial-gradient(circle at 20% 0%, #1f2738 0%, var(--bg) 35%);
+    color: var(--text-main);
+    font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  * {
+    min-width: 0;
+  }
+
+  a,
+  button,
+  input,
+  select,
+  textarea {
+    transition:
+      background-color 0.2s ease-in-out,
+      border-color 0.2s ease-in-out,
+      color 0.2s ease-in-out,
+      transform 0.2s ease-in-out;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .bg-white {
+    background-color: var(--bg-elevated) !important;
+  }
+
+  .bg-gray-50 {
+    background-color: var(--bg-soft) !important;
+  }
+
+  .text-gray-900 {
+    color: var(--text-main) !important;
+  }
+
+  .text-gray-700,
+  .text-gray-600,
+  .text-gray-500,
+  .text-gray-400 {
+    color: var(--text-muted) !important;
+  }
+
+  .border,
+  .border-b,
+  .border-t {
+    border-color: var(--border) !important;
+  }
+
+  input,
+  textarea,
+  select {
+    background-color: #111117 !important;
+    color: var(--text-main) !important;
+    border-color: var(--border) !important;
+  }
+
+  ::placeholder {
+    color: #a1a1aa;
+  }
+}
+
+@layer components {
+  .ui-surface {
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--bg-elevated) 95%, black);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .ui-chip {
+    border-radius: 9999px;
+    border: 1px solid #31506d;
+    background: rgba(56, 189, 248, 0.12);
+    color: #b9e8ff !important;
+  }
+
+  .ui-btn-primary {
+    background-color: #0ea5e9 !important;
+    color: #071520 !important;
+    border: 1px solid #38bdf8;
+    border-radius: 1rem;
+    font-weight: 600;
+  }
+
+  .ui-btn-primary:hover {
+    background-color: #38bdf8 !important;
+    transform: translateY(-1px);
+  }
+
+  .ui-btn-muted {
+    border-radius: 1rem;
+    border: 1px solid var(--border);
+    background-color: #252530 !important;
+    color: var(--text-main) !important;
+  }
+
+  .ui-btn-muted:hover {
+    background-color: #2f2f3a !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .max-w-7xl {
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

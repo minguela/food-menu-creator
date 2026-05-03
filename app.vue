@@ -1,80 +1,72 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Navegación -->
-    <nav class="bg-white shadow-sm border-b">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-          <div class="flex items-center">
-            <NuxtLink href="/" class="text-xl font-bold text-indigo-600">
-              🍽️ MenuPlanner
-            </NuxtLink>
-          </div>
-          <div class="flex items-center space-x-4">
-            <NuxtLink
-              href="/"
-              class="px-3 py-2 rounded-md text-sm font-medium"
-              :class="
-                $route.path === '/'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-700 hover:bg-gray-100'
-              "
-            >
-              Menús
-            </NuxtLink>
-            <NuxtLink
-              href="/generar"
-              class="px-3 py-2 rounded-md text-sm font-medium"
-              :class="
-                $route.path === '/generar'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-700 hover:bg-gray-100'
-              "
-            >
-              Generar
-            </NuxtLink>
-            <NuxtLink
-              href="/shopping"
-              class="px-3 py-2 rounded-md text-sm font-medium"
-              :class="
-                $route.path === '/shopping'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-700 hover:bg-gray-100'
-              "
-            >
-              🛒 Compra
-            </NuxtLink>
-            <NuxtLink
-              href="/history"
-              class="px-3 py-2 rounded-md text-sm font-medium"
-              :class="
-                $route.path === '/history'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-700 hover:bg-gray-100'
-              "
-            >
-              Histórico
-            </NuxtLink>
-            <NuxtLink
-              href="/config"
-              class="px-3 py-2 rounded-md text-sm font-medium"
-              :class="
-                $route.path === '/config'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-700 hover:bg-gray-100'
-              "
-            >
-              ⚙️ Config
-            </NuxtLink>
-          </div>
-        </div>
+  <div class="min-h-screen overflow-x-hidden">
+    <header class="sticky top-0 z-40 border-b bg-[#18181bdd] backdrop-blur-xl">
+      <div
+        class="mx-auto flex h-16 w-full max-w-7xl items-center px-4 sm:px-6 lg:px-8"
+      >
+        <NuxtLink
+          href="/"
+          class="text-lg font-bold tracking-tight text-sky-300"
+        >
+          MenuPlanner
+        </NuxtLink>
+        <nav
+          aria-label="Navegación principal"
+          class="ml-auto hidden items-center gap-2 md:flex"
+        >
+          <NuxtLink
+            v-for="item in navItems"
+            :key="item.path"
+            :href="item.path"
+            class="rounded-2xl px-4 py-2 text-sm font-medium"
+            :class="
+              $route.path === item.path
+                ? 'ui-chip'
+                : 'text-zinc-300 hover:bg-zinc-800'
+            "
+          >
+            {{ item.label }}
+          </NuxtLink>
+        </nav>
       </div>
-    </nav>
+    </header>
 
-    <!-- Contenido principal -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main
+      class="mx-auto w-full max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-8"
+    >
       <NuxtPage />
     </main>
+
+    <nav
+      aria-label="Navegación móvil"
+      class="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-700 bg-[#16161ce8] p-2 backdrop-blur-xl md:hidden"
+    >
+      <ul class="grid grid-cols-5 gap-2">
+        <li v-for="item in navItems" :key="`mobile-${item.path}`">
+          <NuxtLink
+            :href="item.path"
+            class="flex flex-col items-center justify-center rounded-2xl px-2 py-2 text-[11px] font-medium"
+            :class="
+              $route.path === item.path
+                ? 'ui-chip'
+                : 'text-zinc-300 hover:bg-zinc-800'
+            "
+          >
+            <span class="text-sm">{{ item.icon }}</span>
+            <span>{{ item.shortLabel }}</span>
+          </NuxtLink>
+        </li>
+      </ul>
+    </nav>
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+const navItems = [
+  { path: "/", label: "Menús", shortLabel: "Menús", icon: "M" },
+  { path: "/generar", label: "Generar", shortLabel: "Generar", icon: "G" },
+  { path: "/shopping", label: "Compra", shortLabel: "Compra", icon: "C" },
+  { path: "/history", label: "Histórico", shortLabel: "Hist.", icon: "H" },
+  { path: "/config", label: "Config", shortLabel: "Config", icon: "A" },
+];
+</script>

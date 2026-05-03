@@ -12,12 +12,17 @@
 
     <!-- Estado de carga -->
     <div v-if="loading" class="text-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+      <div
+        class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"
+      ></div>
       <p class="mt-4 text-gray-600">Cargando menús...</p>
     </div>
 
     <!-- Lista de menús -->
-    <div v-else-if="menus.length > 0" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div
+      v-else-if="menus.length > 0"
+      class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+    >
       <div
         v-for="menu in menus"
         :key="menu.id"
@@ -26,13 +31,21 @@
       >
         <div class="flex justify-between items-start mb-2">
           <h3 class="text-lg font-semibold text-gray-900">{{ menu.name }}</h3>
-          <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
+          <span
+            class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full"
+          >
             Semana {{ menu.week_number }}
           </span>
         </div>
         <div class="flex items-center gap-2 text-sm">
-          <span :class="(menu.meals_count || 0) >= 21 ? 'text-green-600' : 'text-amber-600'">
-            {{ (menu.meals_count || 0) >= 21 ? '✅' : '⏳' }}
+          <span
+            :class="
+              (menu.meals_count || 0) >= 21
+                ? 'text-green-600'
+                : 'text-amber-600'
+            "
+          >
+            {{ (menu.meals_count || 0) >= 21 ? "✅" : "⏳" }}
             {{ menu.meals_count }}/21 comidas
           </span>
         </div>
@@ -89,95 +102,100 @@
 </template>
 
 <script setup lang="ts">
-import type { WeeklyMenu } from '~/types'
+import type { WeeklyMenu } from "~/types";
 
-const supabase = useSupabase()
-const router = useRouter()
-const { loadCurrentUser } = useCurrentUser()
+const supabase = useSupabase();
+const router = useRouter();
+const { loadCurrentUser } = useCurrentUser();
 
-const menus = ref<WeeklyMenu[]>([])
-const loading = ref(true)
-const showNewMenuModal = ref(false)
-const newMenuName = ref('')
+const menus = ref<WeeklyMenu[]>([]);
+const loading = ref(true);
+const showNewMenuModal = ref(false);
+const newMenuName = ref("");
 
 const loadMenus = async () => {
-  loading.value = true
-  const currentUser = await loadCurrentUser()
+  loading.value = true;
+  const currentUser = await loadCurrentUser();
 
   if (!currentUser) {
-    menus.value = []
-    loading.value = false
-    return
+    menus.value = [];
+    loading.value = false;
+    return;
   }
 
   const { data, error } = await supabase
-    .from('weekly_menus')
-    .select(`
+    .from("weekly_menus")
+    .select(
+      `
       *,
       meals_count:weekly_meals(count)
-    `)
-    .eq('user_id', currentUser.id)
-    .order('week_number', { ascending: true })
+    `,
+    )
+    .eq("user_id", currentUser.id)
+    .order("week_number", { ascending: true });
 
   if (error) {
-    console.error('Error cargando menús:', error)
+    console.error("Error cargando menús:", error);
   } else {
-    menus.value = (data || []).map(m => ({
+    menus.value = (data || []).map((m) => ({
       ...m,
-      meals_count: m.meals_count?.[0]?.count || 0
-    }))
+      meals_count: m.meals_count?.[0]?.count || 0,
+    }));
   }
 
-  loading.value = false
-}
+  loading.value = false;
+};
 
 const createMenu = async () => {
-  if (!newMenuName.value.trim()) return
-  const currentUser = await loadCurrentUser()
+  if (!newMenuName.value.trim()) return;
+  const currentUser = await loadCurrentUser();
   if (!currentUser) {
-    alert('No hay usuario configurado. Usa /start en Telegram primero.')
-    return
+    alert("No hay usuario configurado. Usa /start en Telegram primero.");
+    return;
   }
 
   // Obtener siguiente week_number
-  const maxWeek = menus.value.reduce((max, m) => Math.max(max, m.week_number), 0)
+  const maxWeek = menus.value.reduce(
+    (max, m) => Math.max(max, m.week_number),
+    0,
+  );
 
   const { data, error } = await supabase
-    .from('weekly_menus')
+    .from("weekly_menus")
     .insert({
       user_id: currentUser.id,
       name: newMenuName.value.trim(),
-      week_number: maxWeek + 1
+      week_number: maxWeek + 1,
     })
     .select()
-    .single()
+    .single();
 
   if (error) {
-    alert('Error creando menú: ' + error.message)
-    return
+    alert("Error creando menú: " + error.message);
+    return;
   }
 
-  newMenuName.value = ''
-  showNewMenuModal.value = false
-  await loadMenus()
+  newMenuName.value = "";
+  showNewMenuModal.value = false;
+  await loadMenus();
 
   // Ir a la página de detalle del menú creado
-  router.push(`/menu/${data.id}`)
-}
+  router.push(`/menu/${data.id}`);
+};
 
 const viewMenu = (menu: WeeklyMenu) => {
-  router.push(`/menu/${menu.id}`)
-}
+  router.push(`/menu/${menu.id}`);
+};
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('es-ES', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  })
-}
+  return new Date(dateString).toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
 
 onMounted(() => {
-  loadMenus()
-})
+  loadMenus();
+});
 </script>

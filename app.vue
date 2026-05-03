@@ -13,35 +13,55 @@
             <NuxtLink
               href="/"
               class="px-3 py-2 rounded-md text-sm font-medium"
-              :class="$route.path === '/' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'"
+              :class="
+                $route.path === '/'
+                  ? 'bg-indigo-100 text-indigo-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+              "
             >
               Menús
             </NuxtLink>
             <NuxtLink
               href="/generar"
               class="px-3 py-2 rounded-md text-sm font-medium"
-              :class="$route.path === '/generar' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'"
+              :class="
+                $route.path === '/generar'
+                  ? 'bg-indigo-100 text-indigo-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+              "
             >
               Generar
             </NuxtLink>
             <NuxtLink
               href="/shopping"
               class="px-3 py-2 rounded-md text-sm font-medium"
-              :class="$route.path === '/shopping' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'"
+              :class="
+                $route.path === '/shopping'
+                  ? 'bg-indigo-100 text-indigo-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+              "
             >
               🛒 Compra
             </NuxtLink>
             <NuxtLink
               href="/history"
               class="px-3 py-2 rounded-md text-sm font-medium"
-              :class="$route.path === '/history' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'"
+              :class="
+                $route.path === '/history'
+                  ? 'bg-indigo-100 text-indigo-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+              "
             >
               Histórico
             </NuxtLink>
             <NuxtLink
               href="/config"
               class="px-3 py-2 rounded-md text-sm font-medium"
-              :class="$route.path === '/config' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'"
+              :class="
+                $route.path === '/config'
+                  ? 'bg-indigo-100 text-indigo-700'
+                  : 'text-gray-700 hover:bg-gray-100'
+              "
             >
               ⚙️ Config
             </NuxtLink>
@@ -57,5 +77,4 @@
   </div>
 </template>
 
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>

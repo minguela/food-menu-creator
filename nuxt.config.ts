@@ -1,10 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-07-15',
+  compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
-  modules: ['@nuxtjs/tailwindcss'],
+  modules: ["@nuxtjs/tailwindcss"],
   nitro: {
-    preset: 'vercel-edge',
+    preset: "vercel-edge",
   },
   runtimeConfig: {
     public: {
@@ -19,12 +19,15 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'MenuPlanner',
+      title: "MenuPlanner",
       meta: [
-        { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'Planificador de menús semanales rotativos' }
-      ]
-    }
-  }
-})
+        { charset: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        {
+          name: "description",
+          content: "Planificador de menús semanales rotativos",
+        },
+      ],
+    },
+  },
+});

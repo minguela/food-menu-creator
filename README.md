@@ -69,11 +69,11 @@ menu-web/
 
 ### Variables de entorno
 
-| Variable | Descripción |
-|----------|-------------|
-| `NUXT_PUBLIC_SUPABASE_URL` | URL de tu proyecto Supabase |
-| `NUXT_PUBLIC_SUPABASE_ANON_KEY` | Clave anónima pública |
-| `SUPABASE_SERVICE_ROLE_KEY` | Clave de servicio (solo servidor) |
+| Variable                        | Descripción                       |
+| ------------------------------- | --------------------------------- |
+| `NUXT_PUBLIC_SUPABASE_URL`      | URL de tu proyecto Supabase       |
+| `NUXT_PUBLIC_SUPABASE_ANON_KEY` | Clave anónima pública             |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Clave de servicio (solo servidor) |
 
 ### Base de datos requerida
 
@@ -111,6 +111,7 @@ Ver `DEPLOY.md` para más detalles.
 
 - ✅ Crear menús semanales con nombre personalizado
 - ✅ Añadir desayuno, comida y cena para cada día
+- ✅ Aplicar un desayuno a toda la semana y guardarlo como receta reutilizable
 - ✅ Guardar kcal, proteína, hidratos, grasas e ingredientes por plato
 - ✅ Subir imagen representativa del menú diario
 - ✅ Gestionar perfiles de personas

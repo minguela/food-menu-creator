@@ -37,7 +37,7 @@
           :disabled="loading || menus.length === 0"
           class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
         >
-          {{ loading ? 'Generando...' : 'Generar Menú' }}
+          {{ loading ? "Generando..." : "Generar Menú" }}
         </button>
 
         <!-- Menús disponibles -->
@@ -52,13 +52,22 @@
               class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded"
             >
               <span>{{ menu.name }}</span>
-              <span :class="(menu.meals_count || 0) >= 21 ? 'text-green-600' : 'text-amber-600'">
+              <span
+                :class="
+                  (menu.meals_count || 0) >= 21
+                    ? 'text-green-600'
+                    : 'text-amber-600'
+                "
+              >
                 {{ menu.meals_count }}/21
               </span>
             </div>
           </div>
           <p v-else class="text-sm text-gray-500">
-            No hay menús creados. <NuxtLink href="/" class="text-indigo-600 hover:underline">Crear uno</NuxtLink>
+            No hay menús creados.
+            <NuxtLink href="/" class="text-indigo-600 hover:underline"
+              >Crear uno</NuxtLink
+            >
           </p>
         </div>
       </div>
@@ -67,7 +76,10 @@
       <div class="bg-white rounded-lg shadow-sm border p-6">
         <h2 class="text-lg font-semibold mb-4">Resultado</h2>
 
-        <div v-if="generatedMenu.length > 0" class="max-h-[600px] overflow-y-auto space-y-3">
+        <div
+          v-if="generatedMenu.length > 0"
+          class="max-h-[600px] overflow-y-auto space-y-3"
+        >
           <div
             v-for="day in generatedMenu"
             :key="day.day"
@@ -75,7 +87,9 @@
           >
             <div class="flex justify-between items-center mb-2">
               <span class="font-medium text-gray-900">Día {{ day.day }}</span>
-              <span class="text-xs text-gray-500">{{ formatDate(day.date) }}</span>
+              <span class="text-xs text-gray-500">{{
+                formatDate(day.date)
+              }}</span>
             </div>
             <div class="text-sm space-y-1">
               <div class="flex items-center gap-2">
@@ -102,7 +116,9 @@
         </div>
 
         <div v-else class="text-center py-12">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"
+          ></div>
           <p class="mt-4 text-gray-600">Generando menú...</p>
         </div>
       </div>
@@ -127,129 +143,134 @@
 </template>
 
 <script setup lang="ts">
-import { convertToGrams } from '~/utils/shopping-conversions.js'
-import type { WeeklyMenu } from '~/types'
+import { convertToGrams } from "~/utils/shopping-conversions.js";
+import type { WeeklyMenu } from "~/types";
 
-const supabase = useSupabase()
-const { loadCurrentUser } = useCurrentUser()
+const supabase = useSupabase();
+const { loadCurrentUser } = useCurrentUser();
 
-const days = ref(30)
-const startDate = ref(new Date().toISOString().split('T')[0])
-const menus = ref<WeeklyMenu[]>([])
-const generatedMenu = ref<any[]>([])
-const loading = ref(false)
+const days = ref(30);
+const startDate = ref(new Date().toISOString().split("T")[0]);
+const menus = ref<WeeklyMenu[]>([]);
+const generatedMenu = ref<any[]>([]);
+const loading = ref(false);
 
 const loadMenus = async () => {
-  const currentUser = await loadCurrentUser()
+  const currentUser = await loadCurrentUser();
   if (!currentUser) {
-    menus.value = []
-    return
+    menus.value = [];
+    return;
   }
 
   const { data, error } = await supabase
-    .from('weekly_menus')
-    .select(`
+    .from("weekly_menus")
+    .select(
+      `
       *,
       meals_count:weekly_meals(count)
-    `)
-    .eq('user_id', currentUser.id)
-    .order('week_number', { ascending: true })
+    `,
+    )
+    .eq("user_id", currentUser.id)
+    .order("week_number", { ascending: true });
 
   if (error) {
-    console.error('Error cargando menús:', error)
+    console.error("Error cargando menús:", error);
   } else {
-    menus.value = (data || []).map(m => ({
+    menus.value = (data || []).map((m) => ({
       ...m,
-      meals_count: m.meals_count?.[0]?.count || 0
-    }))
+      meals_count: m.meals_count?.[0]?.count || 0,
+    }));
   }
-}
+};
 
 const generateMenu = async () => {
-  loading.value = true
-  generatedMenu.value = []
+  loading.value = true;
+  generatedMenu.value = [];
 
   try {
-    const result: any[] = []
+    const result: any[] = [];
 
     for (let i = 0; i < days.value; i++) {
-      const menuIndex = Math.floor(i / 7) % menus.value.length
-      const dayInWeek = (i % 7) + 1
-      const menu = menus.value[menuIndex]
+      const menuIndex = Math.floor(i / 7) % menus.value.length;
+      const dayInWeek = (i % 7) + 1;
+      const menu = menus.value[menuIndex];
 
       const { data: dayMeals } = await supabase
-        .from('weekly_meals')
-        .select('meal_type, dish_name, kcal, protein_g, carbs_g, fat_g')
-        .eq('weekly_menu_id', menu.id)
-        .eq('day_number', dayInWeek)
+        .from("weekly_meals")
+        .select("meal_type, dish_name, kcal, protein_g, carbs_g, fat_g")
+        .eq("weekly_menu_id", menu.id)
+        .eq("day_number", dayInWeek);
 
-      const desayuno = dayMeals?.find(m => m.meal_type === 'desayuno')
-      const comida = dayMeals?.find(m => m.meal_type === 'comida')
-      const cena = dayMeals?.find(m => m.meal_type === 'cena')
-      const kcal = (dayMeals || []).reduce((sum, meal) => sum + (Number(meal.kcal) || 0), 0)
+      const desayuno = dayMeals?.find((m) => m.meal_type === "desayuno");
+      const comida = dayMeals?.find((m) => m.meal_type === "comida");
+      const cena = dayMeals?.find((m) => m.meal_type === "cena");
+      const kcal = (dayMeals || []).reduce(
+        (sum, meal) => sum + (Number(meal.kcal) || 0),
+        0,
+      );
 
-      const date = new Date(startDate.value)
-      date.setDate(date.getDate() + i)
+      const date = new Date(startDate.value);
+      date.setDate(date.getDate() + i);
 
       result.push({
         day: i + 1,
         date: date.toISOString(),
         menu_name: menu.name,
-        desayuno: desayuno?.dish_name || 'No disponible',
-        comida: comida?.dish_name || 'No disponible',
-        cena: cena?.dish_name || 'No disponible',
+        desayuno: desayuno?.dish_name || "No disponible",
+        comida: comida?.dish_name || "No disponible",
+        cena: cena?.dish_name || "No disponible",
         kcal,
-      })
+      });
     }
 
-    generatedMenu.value = result
-    await saveMonthlyHistory(result)
+    generatedMenu.value = result;
+    await saveMonthlyHistory(result);
   } catch (error) {
-    console.error('Error generando menú:', error)
-    alert('Error generando menú')
+    console.error("Error generando menú:", error);
+    alert("Error generando menú");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const saveMonthlyHistory = async (menuData: any[]) => {
-  const currentUser = await loadCurrentUser()
-  if (!currentUser || menuData.length === 0) return
+  const currentUser = await loadCurrentUser();
+  if (!currentUser || menuData.length === 0) return;
 
-  const shopping = await buildShoppingSnapshot()
-  const start = new Date(startDate.value)
-  const end = new Date(start)
-  end.setDate(start.getDate() + days.value - 1)
+  const shopping = await buildShoppingSnapshot();
+  const start = new Date(startDate.value);
+  const end = new Date(start);
+  end.setDate(start.getDate() + days.value - 1);
 
-  const { error } = await supabase.from('monthly_menus').insert({
+  const { error } = await supabase.from("monthly_menus").insert({
     user_id: currentUser.id,
     name: `Menú ${formatDate(start.toISOString())} - ${formatDate(end.toISOString())}`,
     month: start.getMonth() + 1,
     year: start.getFullYear(),
-    start_date: start.toISOString().split('T')[0],
-    end_date: end.toISOString().split('T')[0],
+    start_date: start.toISOString().split("T")[0],
+    end_date: end.toISOString().split("T")[0],
     menu_data: menuData,
     shopping_list: shopping,
-  })
+  });
 
   if (error) {
-    console.error('Error guardando histórico mensual:', error)
+    console.error("Error guardando histórico mensual:", error);
   }
-}
+};
 
 const buildShoppingSnapshot = async () => {
-  const consolidated: Record<string, any> = {}
+  const consolidated: Record<string, any> = {};
 
   for (let i = 0; i < days.value; i++) {
-    const menuIndex = Math.floor(i / 7) % menus.value.length
-    const dayInWeek = (i % 7) + 1
-    const menu = menus.value[menuIndex]
+    const menuIndex = Math.floor(i / 7) % menus.value.length;
+    const dayInWeek = (i % 7) + 1;
+    const menu = menus.value[menuIndex];
 
     const { data: meals } = await supabase
-      .from('weekly_meals')
-      .select('weekly_meal_ingredients(*)')
-      .eq('weekly_menu_id', menu.id)
-      .eq('day_number', dayInWeek)
+      .from("weekly_meals")
+      .select("weekly_meal_ingredients(*)")
+      .eq("weekly_menu_id", menu.id)
+      .eq("day_number", dayInWeek);
 
     for (const meal of meals || []) {
       for (const ingredient of meal.weekly_meal_ingredients || []) {
@@ -257,8 +278,8 @@ const buildShoppingSnapshot = async () => {
           name: ingredient.name,
           quantity: ingredient.quantity,
           unitType: ingredient.unit_type,
-        })
-        const key = ingredient.name.toLowerCase()
+        });
+        const key = ingredient.name.toLowerCase();
         if (!consolidated[key]) {
           consolidated[key] = {
             item_name: ingredient.name,
@@ -266,55 +287,62 @@ const buildShoppingSnapshot = async () => {
             purchased: false,
             conversion_status: conversion.status,
             conversion_note: conversion.note,
-          }
+          };
         }
-        consolidated[key].quantity_grams += conversion.grams
-        if (conversion.status === 'ambiguous') {
-          consolidated[key].conversion_status = 'ambiguous'
-          consolidated[key].conversion_note = conversion.note
+        consolidated[key].quantity_grams += conversion.grams;
+        if (conversion.status === "ambiguous") {
+          consolidated[key].conversion_status = "ambiguous";
+          consolidated[key].conversion_note = conversion.note;
         }
       }
     }
   }
 
   return Object.values(consolidated)
-    .map((item: any) => ({ ...item, quantity_grams: Math.round(item.quantity_grams) }))
-    .sort((a: any, b: any) => a.item_name.localeCompare(b.item_name))
-}
+    .map((item: any) => ({
+      ...item,
+      quantity_grams: Math.round(item.quantity_grams),
+    }))
+    .sort((a: any, b: any) => a.item_name.localeCompare(b.item_name));
+};
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('es-ES', {
-    day: 'numeric',
-    month: 'short'
-  })
-}
+  return new Date(dateString).toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "short",
+  });
+};
 
 const printMenu = () => {
-  window.print()
-}
+  window.print();
+};
 
 const copyToClipboard = () => {
-  const text = generatedMenu.value.map(day =>
-    `Día ${day.day} (${formatDate(day.date)}) - ${day.menu_name}\n` +
-    `  ☕ Desayuno: ${day.desayuno}\n` +
-    `  🍽️ Comida: ${day.comida}\n` +
-    `  🌙 Cena: ${day.cena}\n` +
-    `  Total: ${day.kcal} kcal`
-  ).join('\n\n')
+  const text = generatedMenu.value
+    .map(
+      (day) =>
+        `Día ${day.day} (${formatDate(day.date)}) - ${day.menu_name}\n` +
+        `  ☕ Desayuno: ${day.desayuno}\n` +
+        `  🍽️ Comida: ${day.comida}\n` +
+        `  🌙 Cena: ${day.cena}\n` +
+        `  Total: ${day.kcal} kcal`,
+    )
+    .join("\n\n");
 
   navigator.clipboard.writeText(text).then(() => {
-    alert('Copiado al portapapeles')
-  })
-}
+    alert("Copiado al portapapeles");
+  });
+};
 
 onMounted(() => {
-  loadMenus()
-})
+  loadMenus();
+});
 </script>
 
 <style scoped>
 @media print {
-  nav, button {
+  nav,
+  button {
     display: none !important;
   }
 }

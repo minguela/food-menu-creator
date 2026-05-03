@@ -84,13 +84,18 @@
     >
       <div class="bg-white rounded-lg p-6 w-full max-w-3xl">
         <h2 class="text-xl font-bold mb-4">Crear nuevo menú semanal</h2>
-        <input
-          v-model="newMenuName"
-          type="text"
-          placeholder="Nombre del menú (ej: Semana 1)"
-          class="w-full border rounded-lg px-4 py-2 mb-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          @keyup.enter="createMenu"
-        />
+        <label class="block mb-4">
+          <span class="block text-sm font-medium text-gray-700 mb-1">
+            Nombre del menú
+          </span>
+          <input
+            v-model="newMenuName"
+            type="text"
+            placeholder="Nombre del menú (ej: Semana 1)"
+            class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            @keyup.enter="createMenu"
+          />
+        </label>
 
         <section class="border rounded-lg p-4 mb-4">
           <h3 class="font-semibold text-gray-900 mb-2">
@@ -117,47 +122,73 @@
                 {{ mealLabel(type) }} fija
               </h4>
               <div class="grid gap-2 md:grid-cols-2">
-                <input
-                  v-model.trim="fixedMeals[type].dish_name"
-                  class="border rounded-lg px-3 py-2 md:col-span-2"
-                  placeholder="Nombre del plato"
-                />
-                <input
-                  v-model.trim="fixedMeals[type].dish_description"
-                  class="border rounded-lg px-3 py-2 md:col-span-2"
-                  placeholder="Descripción opcional"
-                />
-                <input
-                  v-model.number="fixedMeals[type].kcal"
-                  type="number"
-                  min="0"
-                  class="border rounded-lg px-3 py-2"
-                  placeholder="kcal"
-                />
-                <input
-                  v-model.number="fixedMeals[type].protein_g"
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  class="border rounded-lg px-3 py-2"
-                  placeholder="proteína g"
-                />
-                <input
-                  v-model.number="fixedMeals[type].carbs_g"
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  class="border rounded-lg px-3 py-2"
-                  placeholder="hidratos g"
-                />
-                <input
-                  v-model.number="fixedMeals[type].fat_g"
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  class="border rounded-lg px-3 py-2"
-                  placeholder="grasas g"
-                />
+                <label class="md:col-span-2">
+                  <span class="block text-xs font-medium text-gray-700 mb-1">
+                    Nombre del plato
+                  </span>
+                  <input
+                    v-model.trim="fixedMeals[type].dish_name"
+                    class="w-full border rounded-lg px-3 py-2"
+                    placeholder="Ej: Yogur con avena y fruta"
+                  />
+                </label>
+                <label class="md:col-span-2">
+                  <span class="block text-xs font-medium text-gray-700 mb-1">
+                    Descripción
+                  </span>
+                  <input
+                    v-model.trim="fixedMeals[type].dish_description"
+                    class="w-full border rounded-lg px-3 py-2"
+                    placeholder="Descripción opcional"
+                  />
+                </label>
+                <label>
+                  <span class="block text-xs font-medium text-gray-700 mb-1">
+                    kcal
+                  </span>
+                  <input
+                    v-model.number="fixedMeals[type].kcal"
+                    type="number"
+                    min="0"
+                    class="w-full border rounded-lg px-3 py-2"
+                  />
+                </label>
+                <label>
+                  <span class="block text-xs font-medium text-gray-700 mb-1">
+                    Proteína (g)
+                  </span>
+                  <input
+                    v-model.number="fixedMeals[type].protein_g"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    class="w-full border rounded-lg px-3 py-2"
+                  />
+                </label>
+                <label>
+                  <span class="block text-xs font-medium text-gray-700 mb-1">
+                    Hidratos (g)
+                  </span>
+                  <input
+                    v-model.number="fixedMeals[type].carbs_g"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    class="w-full border rounded-lg px-3 py-2"
+                  />
+                </label>
+                <label>
+                  <span class="block text-xs font-medium text-gray-700 mb-1">
+                    Grasas (g)
+                  </span>
+                  <input
+                    v-model.number="fixedMeals[type].fat_g"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    class="w-full border rounded-lg px-3 py-2"
+                  />
+                </label>
               </div>
 
               <div class="mt-3 space-y-2">
@@ -166,29 +197,48 @@
                   :key="`${type}-ing-${index}`"
                   class="grid grid-cols-[1fr_90px_90px_32px] gap-2"
                 >
-                  <input
-                    v-model.trim="ingredient.name"
-                    class="border rounded-lg px-3 py-2"
-                    placeholder="Ingrediente"
-                  />
-                  <input
-                    v-model.number="ingredient.quantity"
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    class="border rounded-lg px-3 py-2"
-                  />
-                  <select
-                    v-model="ingredient.unit_type"
-                    class="border rounded-lg px-3 py-2"
-                  >
-                    <option v-for="unit in unitTypes" :key="unit" :value="unit">
-                      {{ unit }}
-                    </option>
-                  </select>
+                  <label>
+                    <span class="block text-xs font-medium text-gray-700 mb-1">
+                      Ingrediente
+                    </span>
+                    <input
+                      v-model.trim="ingredient.name"
+                      class="w-full border rounded-lg px-3 py-2"
+                      placeholder="Ej: Avena"
+                    />
+                  </label>
+                  <label>
+                    <span class="block text-xs font-medium text-gray-700 mb-1">
+                      Cantidad
+                    </span>
+                    <input
+                      v-model.number="ingredient.quantity"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      class="w-full border rounded-lg px-3 py-2"
+                    />
+                  </label>
+                  <label>
+                    <span class="block text-xs font-medium text-gray-700 mb-1">
+                      Unidad
+                    </span>
+                    <select
+                      v-model="ingredient.unit_type"
+                      class="w-full border rounded-lg px-3 py-2"
+                    >
+                      <option
+                        v-for="unit in unitTypes"
+                        :key="unit"
+                        :value="unit"
+                      >
+                        {{ unit }}
+                      </option>
+                    </select>
+                  </label>
                   <button
                     type="button"
-                    class="text-red-600"
+                    class="text-red-600 self-end h-10"
                     @click="removeFixedIngredient(type, index)"
                   >
                     ×

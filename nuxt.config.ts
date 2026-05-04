@@ -16,6 +16,13 @@ export default defineNuxtConfig({
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
       adminTelegramId: process.env.NUXT_PUBLIC_ADMIN_TELEGRAM_ID,
+      appVersion:
+        process.env.NUXT_PUBLIC_APP_VERSION || process.env.npm_package_version,
+      appCommitSha:
+        process.env.NUXT_PUBLIC_APP_COMMIT_SHA ||
+        process.env.VERCEL_GIT_COMMIT_SHA ||
+        "",
+      appBuildTime: process.env.NUXT_PUBLIC_APP_BUILD_TIME || "",
     },
     supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
     twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,

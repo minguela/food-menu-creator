@@ -37,6 +37,8 @@ export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as EnrichBody;
   const limit = Math.min(50, Math.max(1, Number(body?.limit) || 20));
   const source = normalizeEnrichSource(body?.source) as EnrichSource;
+  const effectiveSource: EnrichSource =
+    source === "auto" || source === "bedca" ? "open_food_facts" : source;
   const config = useRuntimeConfig(event);
 
   const usdaKey = resolveUsdaKey({
@@ -45,7 +47,7 @@ export default defineEventHandler(async (event) => {
     envUsdaLegacy: process.env.USDA_API_KEY,
     envNuxtUsda: process.env.NUXT_USDA_FDC_API_KEY,
   });
-  if (source === "usda" && !usdaKey) {
+  if (effectiveSource === "usda" && !usdaKey) {
     throw createError({
       statusCode: 500,
       statusMessage:
@@ -58,6 +60,8 @@ export default defineEventHandler(async (event) => {
     envServiceRole: process.env.SUPABASE_SERVICE_ROLE_KEY,
     envNuxtServiceKey: process.env.NUXT_SUPABASE_SERVICE_KEY,
     envSupabaseKey: process.env.SUPABASE_KEY,
+    envAnonKey: process.env.SUPABASE_ANON_KEY,
+    envNuxtPublicAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
     publicAnonKey: config.public.supabaseAnonKey,
   });
   if (!supabaseKey) {
@@ -104,7 +108,7 @@ export default defineEventHandler(async (event) => {
       let bestCandidate: any = null;
       let bestScore = 0;
 
-      if (shouldTryUsda(source) && usdaKey) {
+      if (shouldTryUsda(effectiveSource) && usdaKey) {
         const usdaRes = await fetch(
           `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${usdaKey}`,
           {
@@ -157,7 +161,7 @@ export default defineEventHandler(async (event) => {
         }
       }
 
-      if (shouldTryOff(source) && (!bestCandidate || bestScore < 0.85)) {
+      if (shouldTryOff(effectiveSource) && (!bestCandidate || bestScore < 0.85)) {
         const offRes = await fetch(
           `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
             ingredient.name,
@@ -268,7 +272,7 @@ export default defineEventHandler(async (event) => {
 
   return {
     success: true,
-    source,
+    source: effectiveSource,
     processed: (ingredients || []).length,
     completed,
     needs_review: needsReview,

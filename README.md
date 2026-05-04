@@ -105,6 +105,21 @@ El generador mensual usa `weekly_menus`/`weekly_meals` como fuente principal y c
 
 Una vez vinculado, cada push a `main` genera un despliegue de producción automáticamente.
 
+## 🏷️ Versionado visible en UI
+
+La app muestra en cabecera y navegación móvil:
+
+- `vX.Y.Z` (desde `package.json`)
+- SHA corto del commit (si Vercel lo expone en entorno)
+
+Variables opcionales:
+
+- `NUXT_PUBLIC_APP_VERSION`
+- `NUXT_PUBLIC_APP_COMMIT_SHA`
+- `NUXT_PUBLIC_APP_BUILD_TIME`
+
+Si no defines `NUXT_PUBLIC_APP_VERSION`, se usa la versión de `package.json`.
+
 Ver `DEPLOY.md` para más detalles.
 
 ## 📋 Funcionalidades

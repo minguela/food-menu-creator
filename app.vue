@@ -28,6 +28,10 @@
             {{ item.label }}
           </NuxtLink>
         </nav>
+        <div class="ml-3 hidden text-right text-[11px] text-zinc-400 lg:block">
+          <p>v{{ appVersion }}</p>
+          <p v-if="appCommitShort">{{ appCommitShort }}</p>
+        </div>
       </div>
     </header>
 
@@ -41,6 +45,10 @@
       aria-label="Navegación móvil"
       class="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-700 bg-[#16161ce8] p-2 backdrop-blur-xl md:hidden"
     >
+      <div class="mb-2 text-center text-[10px] text-zinc-400">
+        v{{ appVersion
+        }}<span v-if="appCommitShort"> · {{ appCommitShort }}</span>
+      </div>
       <ul class="grid grid-cols-7 gap-2">
         <li v-for="item in navItems" :key="`mobile-${item.path}`">
           <NuxtLink
@@ -62,6 +70,15 @@
 </template>
 
 <script setup lang="ts">
+const runtimeConfig = useRuntimeConfig();
+const appVersion = computed(
+  () => runtimeConfig.public.appVersion || "0.0.0-local",
+);
+const appCommitShort = computed(() => {
+  const sha = String(runtimeConfig.public.appCommitSha || "").trim();
+  return sha ? sha.slice(0, 7) : "";
+});
+
 const navItems = [
   { path: "/", label: "Menús", shortLabel: "Menús", icon: "M" },
   { path: "/recipes", label: "Recetas", shortLabel: "Recetas", icon: "R" },

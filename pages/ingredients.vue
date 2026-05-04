@@ -51,8 +51,8 @@
           v-model="searchSource"
           class="border rounded-lg px-3 py-2 text-sm"
         >
-          <option value="usda">USDA</option>
           <option value="open_food_facts">Open Food Facts</option>
+          <option value="usda">USDA</option>
           <option value="bedca">BEDCA (próximamente)</option>
         </select>
       </div>
@@ -70,6 +70,13 @@
           {{ enrichSummary.needs_review }} · no encontrados
           {{ enrichSummary.not_found }}
         </span>
+        <button
+          class="px-3 py-2 border rounded-lg text-xs text-gray-700 disabled:opacity-50"
+          :disabled="backfillingAliases"
+          @click="backfillAliases"
+        >
+          {{ backfillingAliases ? "Mapeando..." : "Mapear ES→EN (USDA)" }}
+        </button>
       </div>
     </section>
 
@@ -289,9 +296,12 @@ const csvInput = ref("");
 const importingCsv = ref(false);
 const usdaCandidates = ref<any[]>([]);
 const searchingUsda = ref(false);
-const searchSource = ref<"usda" | "open_food_facts" | "bedca">("usda");
+const searchSource = ref<"usda" | "open_food_facts" | "bedca">(
+  "open_food_facts",
+);
 const enriching = ref(false);
 const enrichSummary = ref<EnrichSummary | null>(null);
+const backfillingAliases = ref(false);
 const reviewCandidates = ref<ReviewCandidate[]>([]);
 const selectedIds = ref<string[]>([]);
 const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
@@ -442,7 +452,7 @@ const runEnrichment = async () => {
         body: {
           limit: 50,
           source:
-            searchSource.value === "bedca" ? "auto" : searchSource.value,
+            searchSource.value === "usda" ? "usda" : "open_food_facts",
         },
       });
 
@@ -465,6 +475,20 @@ const runEnrichment = async () => {
     await logError("web", error, { context: "ingredients.runEnrichment" });
   } finally {
     enriching.value = false;
+  }
+};
+
+const backfillAliases = async () => {
+  backfillingAliases.value = true;
+  try {
+    await $fetch("/api/ingredient-aliases-backfill", {
+      method: "POST",
+      body: { limit: 1000 },
+    });
+  } catch (error) {
+    await logError("web", error, { context: "ingredients.backfillAliases" });
+  } finally {
+    backfillingAliases.value = false;
   }
 };
 

@@ -301,8 +301,8 @@
                     v-model="candidateSource"
                     class="border rounded-lg px-2 py-1 text-sm"
                   >
-                    <option value="usda">USDA</option>
                     <option value="open_food_facts">Open Food Facts</option>
+                    <option value="usda">USDA</option>
                     <option value="bedca">BEDCA (próximamente)</option>
                   </select>
                   <button
@@ -407,8 +407,8 @@
                     v-model="candidateSource"
                     class="border rounded-lg px-2 py-1 text-sm"
                   >
-                    <option value="usda">USDA</option>
                     <option value="open_food_facts">Open Food Facts</option>
+                    <option value="usda">USDA</option>
                     <option value="bedca">BEDCA (próximamente)</option>
                   </select>
                   <button
@@ -573,7 +573,9 @@ const pendingRows = ref<Array<RecipeIngredient>>([]);
 const confirmedRows = ref<Array<RecipeIngredient>>([]);
 const formError = ref("");
 const candidateTargetRowId = ref<string | null>(null);
-const candidateSource = ref<"usda" | "open_food_facts" | "bedca">("usda");
+const candidateSource = ref<"usda" | "open_food_facts" | "bedca">(
+  "open_food_facts",
+);
 const candidateQuery = ref("");
 const candidateResults = ref<any[]>([]);
 const candidateLoading = ref(false);
@@ -1008,13 +1010,8 @@ const autoApplyBestCandidate = async (row: RecipeIngredient) => {
   formError.value = "";
   candidateLoading.value = true;
   try {
-    let candidates = await fetchCandidates(row.name, "usda");
-    let bestCandidate = pickBestCandidate(candidates);
-
-    if (!bestCandidate) {
-      candidates = await fetchCandidates(row.name, "open_food_facts");
-      bestCandidate = pickBestCandidate(candidates);
-    }
+    const candidates = await fetchCandidates(row.name, "open_food_facts");
+    const bestCandidate = pickBestCandidate(candidates);
 
     if (!bestCandidate) {
       formError.value =

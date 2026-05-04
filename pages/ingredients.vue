@@ -283,7 +283,6 @@ type ReviewCandidate = {
 };
 
 const supabase = useSupabase();
-const runtimeConfig = useRuntimeConfig();
 const query = ref("");
 const rows = ref<IngredientRow[]>([]);
 const csvInput = ref("");
@@ -386,30 +385,16 @@ const searchFoods = async () => {
   if (!query.value.trim()) return;
   searchingUsda.value = true;
   try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const accessToken =
-      session?.access_token || runtimeConfig.public.supabaseAnonKey;
-    const response = await fetch(
-      `${runtimeConfig.public.supabaseUrl}/functions/v1/ingredient-search`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: runtimeConfig.public.supabaseAnonKey,
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          query: query.value.trim(),
-          source: searchSource.value,
-        }),
+    const payload = await $fetch<{
+      success: boolean;
+      candidates?: any[];
+    }>("/api/ingredient-search", {
+      method: "POST",
+      body: {
+        query: query.value.trim(),
+        source: searchSource.value,
       },
-    );
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload?.error || "No se pudo buscar en la fuente");
-    }
+    });
     usdaCandidates.value = Array.isArray(payload?.candidates)
       ? payload.candidates
       : [];
@@ -437,25 +422,43 @@ const saveIngredientFromCandidate = async (candidate: any) => {
 const runEnrichment = async () => {
   enriching.value = true;
   try {
-    const result = await $fetch<{
-      success: boolean;
-      source: "auto" | "usda" | "open_food_facts" | "bedca";
-      processed: number;
-      completed: number;
-      needs_review: number;
-      not_found: number;
-    }>("/api/enrich-ingredients", {
-      method: "POST",
-      body: {
-        limit: 50,
-        source: searchSource.value === "bedca" ? "auto" : searchSource.value,
-      },
-    });
+    const accumulated = {
+      processed: 0,
+      completed: 0,
+      needs_review: 0,
+      not_found: 0,
+    };
+
+    for (let round = 0; round < 25; round += 1) {
+      const result = await $fetch<{
+        success: boolean;
+        source: "auto" | "usda" | "open_food_facts" | "bedca";
+        processed: number;
+        completed: number;
+        needs_review: number;
+        not_found: number;
+      }>("/api/enrich-ingredients", {
+        method: "POST",
+        body: {
+          limit: 50,
+          source:
+            searchSource.value === "bedca" ? "auto" : searchSource.value,
+        },
+      });
+
+      accumulated.processed += result.processed || 0;
+      accumulated.completed += result.completed || 0;
+      accumulated.needs_review += result.needs_review || 0;
+      accumulated.not_found += result.not_found || 0;
+
+      if (!result.processed) break;
+    }
+
     enrichSummary.value = {
-      processed: result.processed || 0,
-      completed: result.completed || 0,
-      needs_review: result.needs_review || 0,
-      not_found: result.not_found || 0,
+      processed: accumulated.processed,
+      completed: accumulated.completed,
+      needs_review: accumulated.needs_review,
+      not_found: accumulated.not_found,
     };
     await load();
   } catch (error) {

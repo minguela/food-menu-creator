@@ -511,7 +511,6 @@ aceite de oliva"
 
 <script setup lang="ts">
 import { logError } from "~/utils/log-error";
-import { calculateRecipeNutrition } from "~/utils/recipe-nutrition";
 import { normalizeIngredientName } from "~/utils/ingredient-normalize";
 import { saveIngredientFromCandidate as persistCandidate } from "~/utils/save-ingredient-from-candidate";
 import type { Dish, Ingredient, RecipeIngredient } from "~/types";
@@ -1026,16 +1025,13 @@ const syncRecipeStatus = async (dishId: string) => {
     return;
   }
 
-  const nutrition = calculateRecipeNutrition(confirmed as any);
   await supabase
     .from("dishes")
     .update({
-      recipe_status: nutrition.complete ? "complete" : "suggested_ingredients",
+      recipe_status: "complete",
     })
     .eq("id", dishId);
-  dish.recipe_status = nutrition.complete
-    ? "complete"
-    : "suggested_ingredients";
+  dish.recipe_status = "complete";
 };
 
 const confirmRow = async (dishId: string, row: RecipeIngredient) => {

@@ -26,6 +26,14 @@
 
     <section class="bg-white rounded-lg border p-4">
       <div class="flex flex-wrap items-center gap-2">
+        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            :checked="allFilteredSelected"
+            @change="toggleSelectAllFiltered"
+          />
+          <span>Seleccionar visibles</span>
+        </label>
         <button
           v-for="item in filterItems"
           :key="item.value"
@@ -38,6 +46,13 @@
           @click="filter = item.value"
         >
           {{ item.label }}
+        </button>
+        <button
+          class="px-3 py-1.5 rounded-lg border text-sm text-gray-700 disabled:opacity-50"
+          :disabled="selectedDishIds.length === 0"
+          @click="clearSelection"
+        >
+          Limpiar selección
         </button>
         <button
           class="ml-auto px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm disabled:opacity-50"
@@ -387,6 +402,13 @@ const filteredDishes = computed(() =>
   }),
 );
 
+const allFilteredSelected = computed(() => {
+  if (filteredDishes.value.length === 0) return false;
+  return filteredDishes.value.every((dish) =>
+    selectedDishIds.value.includes(dish.id),
+  );
+});
+
 const loadRecipes = async () => {
   const currentUser = await loadCurrentUser();
   if (!currentUser) return;
@@ -414,6 +436,26 @@ const toggleDishSelected = (dishId: string) => {
     return;
   }
   selectedDishIds.value.push(dishId);
+};
+
+const toggleSelectAllFiltered = () => {
+  const filteredIds = filteredDishes.value.map((dish) => dish.id);
+  if (filteredIds.length === 0) return;
+
+  if (allFilteredSelected.value) {
+    selectedDishIds.value = selectedDishIds.value.filter(
+      (id) => !filteredIds.includes(id),
+    );
+    return;
+  }
+
+  selectedDishIds.value = Array.from(
+    new Set([...selectedDishIds.value, ...filteredIds]),
+  );
+};
+
+const clearSelection = () => {
+  selectedDishIds.value = [];
 };
 
 const toggleEdit = async (dishId: string) => {

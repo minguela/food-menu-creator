@@ -177,6 +177,7 @@
 <script setup lang="ts">
 import { logError } from "~/utils/log-error";
 import { calculateRecipeNutrition } from "~/utils/recipe-nutrition";
+import { normalizeIngredientName } from "~/utils/ingredient-normalize";
 import type { Dish, Ingredient, RecipeIngredient } from "~/types";
 
 type DishRow = Dish & {
@@ -220,8 +221,6 @@ const editingDishId = ref<string | null>(null);
 const pendingRows = ref<Array<RecipeIngredient>>([]);
 const confirmedRows = ref<Array<RecipeIngredient>>([]);
 const formError = ref("");
-
-const normalizeName = (value: string) => value.toLowerCase().trim();
 
 const statusMeta = (dish: DishRow) => {
   const status = dish.recipe_status || "pending_ingredients";
@@ -287,7 +286,7 @@ const toggleEdit = (dishId: string) => {
 };
 
 const upsertMasterIngredient = async (name: string, unitType: string) => {
-  const normalizedName = normalizeName(name);
+  const normalizedName = normalizeIngredientName(name);
   const existing = await supabase
     .from("ingredients")
     .select("id")
@@ -364,7 +363,7 @@ const confirmRow = async (dishId: string, row: RecipeIngredient) => {
     .update({
       ingredient_id: ingredientId,
       name: row.name,
-      normalized_name: normalizeName(row.name),
+      normalized_name: normalizeIngredientName(row.name),
       quantity: row.quantity,
       unit_type: row.unit_type,
       is_confirmed: true,
@@ -395,7 +394,7 @@ const saveConfirmedRow = async (row: RecipeIngredient) => {
     .update({
       ingredient_id: ingredientId,
       name: row.name,
-      normalized_name: normalizeName(row.name),
+      normalized_name: normalizeIngredientName(row.name),
       quantity: row.quantity,
       unit_type: row.unit_type,
       is_confirmed: true,
@@ -424,7 +423,7 @@ const addManualConfirmed = async (dishId: string) => {
     recipe_id: dishId,
     ingredient_id: null,
     name: "nuevo ingrediente",
-    normalized_name: "nuevo ingrediente",
+    normalized_name: normalizeIngredientName("nuevo ingrediente"),
     quantity: 1,
     unit_type: "g",
     is_confirmed: true,

@@ -39,6 +39,9 @@ export const calculateIngredientNutrition = ({
   if (!ingredientNutrition || grams === null) {
     return { complete: false, kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0 };
   }
+  if (ingredientNutrition.nutrition_status !== "complete") {
+    return { complete: false, kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0 };
+  }
   const { kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g } =
     ingredientNutrition;
   if (

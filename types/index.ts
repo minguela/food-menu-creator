@@ -109,7 +109,10 @@ export interface Ingredient {
   carbs_per_100g?: number | null;
   fat_per_100g?: number | null;
   source?: "manual" | "system" | "imported" | string;
+  external_id?: string | null;
+  barcode?: string | null;
   is_verified?: boolean;
+  nutrition_status?: "complete" | "pending" | "needs_review";
   created_at: string;
   updated_at?: string;
 }

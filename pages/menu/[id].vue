@@ -663,6 +663,22 @@ const ensureRecipeLibrary = async (weeklyMeals: WeeklyMeal[]) => {
         .from("recipe_ingredients")
         .upsert(suggestions, { onConflict: "recipe_id,normalized_name" });
     }
+
+    if ((insertedDishes || []).length > 0) {
+      try {
+        await $fetch("/api/recipes-auto-curate", {
+          method: "POST",
+          body: {
+            recipeIds: (insertedDishes || []).map((dish: any) => dish.id),
+            source: "open_food_facts",
+          },
+        });
+      } catch (curationError) {
+        await logError("web", curationError, {
+          context: "menu.ensureRecipeLibrary.autoCurate",
+        });
+      }
+    }
   }
 };
 

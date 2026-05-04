@@ -103,6 +103,36 @@
         </div>
 
         <div v-if="editingDishId === dish.id" class="mt-4 space-y-3">
+          <div class="rounded-lg border p-3 space-y-2">
+            <p class="text-xs font-medium text-gray-700">Datos de receta</p>
+            <div class="grid gap-2 md:grid-cols-2">
+              <label>
+                <span class="block text-xs text-gray-600 mb-1">Nombre</span>
+                <input
+                  v-model.trim="recipeForm.name"
+                  class="w-full border rounded-lg px-3 py-2"
+                />
+              </label>
+              <label>
+                <span class="block text-xs text-gray-600 mb-1"
+                  >Descripción</span
+                >
+                <input
+                  v-model.trim="recipeForm.description"
+                  class="w-full border rounded-lg px-3 py-2"
+                />
+              </label>
+            </div>
+            <div class="flex justify-end">
+              <button
+                class="text-xs px-3 py-1.5 rounded border text-indigo-700"
+                @click="saveRecipeMeta(dish.id)"
+              >
+                Guardar receta
+              </button>
+            </div>
+          </div>
+
           <p
             class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2"
           >
@@ -113,6 +143,15 @@
           <h3 class="text-sm font-medium text-gray-900">
             Sugeridos (sin confirmar)
           </h3>
+          <div class="flex justify-end">
+            <button
+              class="text-xs px-3 py-1.5 rounded border text-green-700 disabled:opacity-50"
+              :disabled="pendingRows.length === 0 || savingBatch"
+              @click="confirmAllPendingRows(dish.id)"
+            >
+              {{ savingBatch ? "Confirmando..." : "Confirmar todos" }}
+            </button>
+          </div>
           <div v-if="pendingRows.length === 0" class="text-sm text-gray-500">
             No hay sugerencias pendientes.
           </div>
@@ -214,6 +253,15 @@
           <h3 class="text-sm font-medium text-gray-900">
             Confirmados (base receta)
           </h3>
+          <div class="flex justify-end">
+            <button
+              class="text-xs px-3 py-1.5 rounded border text-indigo-700 disabled:opacity-50"
+              :disabled="confirmedRows.length === 0 || savingBatch"
+              @click="saveAllConfirmedRows(dish.id)"
+            >
+              {{ savingBatch ? "Guardando..." : "Guardar todos" }}
+            </button>
+          </div>
           <div class="space-y-2">
             <div
               v-for="row in confirmedRows"
@@ -377,6 +425,11 @@ const candidateQuery = ref("");
 const candidateResults = ref<any[]>([]);
 const candidateLoading = ref(false);
 const selectedDishIds = ref<string[]>([]);
+const savingBatch = ref(false);
+const recipeForm = reactive({
+  name: "",
+  description: "",
+});
 
 const statusMeta = (dish: DishRow) => {
   const status = dish.recipe_status || "pending_ingredients";
@@ -455,6 +508,8 @@ const refreshEditingDish = async (dishId: string) => {
   }
 
   const dish = data as DishRow;
+  recipeForm.name = dish.name || "";
+  recipeForm.description = dish.description || "";
   pendingRows.value = (dish.recipe_ingredients || [])
     .filter((row) => !row.is_confirmed)
     .map((row) => ({ ...row }));
@@ -494,12 +549,50 @@ const clearSelection = () => {
   selectedDishIds.value = [];
 };
 
+const updateOpenDishRows = () => {
+  if (!editingDishId.value) return;
+  const dish = dishes.value.find((row) => row.id === editingDishId.value);
+  if (!dish) return;
+  dish.recipe_ingredients = [
+    ...pendingRows.value.map((row) => ({ ...row })),
+    ...confirmedRows.value.map((row) => ({ ...row })),
+  ] as any;
+};
+
+const saveRecipeMeta = async (dishId: string) => {
+  formError.value = "";
+  if (!recipeForm.name.trim()) {
+    formError.value = "El nombre de la receta no puede estar vacío.";
+    return;
+  }
+  const { error } = await supabase
+    .from("dishes")
+    .update({
+      name: recipeForm.name.trim(),
+      normalized_name: normalizeIngredientName(recipeForm.name),
+      description: recipeForm.description.trim() || null,
+    })
+    .eq("id", dishId);
+  if (error) {
+    formError.value = error.message;
+    await logError("web", error, { context: "recipes.saveRecipeMeta" });
+    return;
+  }
+  const dish = dishes.value.find((row) => row.id === dishId);
+  if (dish) {
+    dish.name = recipeForm.name.trim();
+    dish.description = recipeForm.description.trim() || undefined;
+  }
+};
+
 const toggleEdit = async (dishId: string) => {
   formError.value = "";
   if (editingDishId.value === dishId) {
     editingDishId.value = null;
     pendingRows.value = [];
     confirmedRows.value = [];
+    recipeForm.name = "";
+    recipeForm.description = "";
     return;
   }
   editingDishId.value = dishId;
@@ -717,6 +810,7 @@ const syncRecipeStatus = async (dishId: string) => {
       .from("dishes")
       .update({ recipe_status: "not_required" })
       .eq("id", dishId);
+    dish.recipe_status = "not_required";
     return;
   }
 
@@ -735,6 +829,9 @@ const syncRecipeStatus = async (dishId: string) => {
           : "pending_ingredients",
       })
       .eq("id", dishId);
+    dish.recipe_status = suggested
+      ? "suggested_ingredients"
+      : "pending_ingredients";
     return;
   }
 
@@ -745,6 +842,7 @@ const syncRecipeStatus = async (dishId: string) => {
       recipe_status: nutrition.complete ? "complete" : "incomplete_nutrition",
     })
     .eq("id", dishId);
+  dish.recipe_status = nutrition.complete ? "complete" : "incomplete_nutrition";
 };
 
 const confirmRow = async (dishId: string, row: RecipeIngredient) => {
@@ -779,7 +877,12 @@ const confirmRow = async (dishId: string, row: RecipeIngredient) => {
     return;
   }
   await syncRecipeStatus(dishId);
-  await refreshEditingDish(dishId);
+  row.ingredient_id = ingredientId;
+  row.is_confirmed = true;
+  row.is_suggested = false;
+  pendingRows.value = pendingRows.value.filter((item) => item.id !== row.id);
+  confirmedRows.value.unshift({ ...row, quantity: 1, needs_review: false });
+  updateOpenDishRows();
 };
 
 const saveConfirmedRow = async (dishId: string, row: RecipeIngredient) => {
@@ -813,29 +916,76 @@ const saveConfirmedRow = async (dishId: string, row: RecipeIngredient) => {
     return;
   }
   await syncRecipeStatus(dishId);
-  await refreshEditingDish(dishId);
+  const current = confirmedRows.value.find((item) => item.id === row.id);
+  if (current) {
+    current.name = row.name;
+    current.unit_type = row.unit_type;
+    current.ingredient_id = ingredientId;
+    current.normalized_name = normalizeIngredientName(row.name);
+  }
+  updateOpenDishRows();
 };
 
 const deleteRow = async (dishId: string, rowId: string) => {
   await supabase.from("recipe_ingredients").delete().eq("id", rowId);
   await syncRecipeStatus(dishId);
-  await refreshEditingDish(dishId);
+  pendingRows.value = pendingRows.value.filter((item) => item.id !== rowId);
+  confirmedRows.value = confirmedRows.value.filter((item) => item.id !== rowId);
+  updateOpenDishRows();
 };
 
 const addManualConfirmed = async (dishId: string) => {
-  await supabase.from("recipe_ingredients").insert({
-    recipe_id: dishId,
-    ingredient_id: null,
-    name: "nuevo ingrediente",
-    normalized_name: normalizeIngredientName("nuevo ingrediente"),
-    quantity: 1,
-    unit_type: "g",
-    is_confirmed: true,
-    is_suggested: false,
-    needs_review: false,
-  });
+  const { data, error } = await supabase
+    .from("recipe_ingredients")
+    .insert({
+      recipe_id: dishId,
+      ingredient_id: null,
+      name: "nuevo ingrediente",
+      normalized_name: normalizeIngredientName("nuevo ingrediente"),
+      quantity: 1,
+      unit_type: "g",
+      is_confirmed: true,
+      is_suggested: false,
+      needs_review: false,
+    })
+    .select("*")
+    .single();
+  if (error) {
+    await logError("web", error, { context: "recipes.addManualConfirmed" });
+    formError.value = "No se pudo añadir el ingrediente.";
+    return;
+  }
   await syncRecipeStatus(dishId);
-  await refreshEditingDish(dishId);
+  confirmedRows.value.unshift(data as RecipeIngredient);
+  updateOpenDishRows();
+};
+
+const confirmAllPendingRows = async (dishId: string) => {
+  if (pendingRows.value.length === 0) return;
+  savingBatch.value = true;
+  formError.value = "";
+  try {
+    const rows = [...pendingRows.value];
+    for (const row of rows) {
+      await confirmRow(dishId, row);
+    }
+  } finally {
+    savingBatch.value = false;
+  }
+};
+
+const saveAllConfirmedRows = async (dishId: string) => {
+  if (confirmedRows.value.length === 0) return;
+  savingBatch.value = true;
+  formError.value = "";
+  try {
+    const rows = [...confirmedRows.value];
+    for (const row of rows) {
+      await saveConfirmedRow(dishId, row);
+    }
+  } finally {
+    savingBatch.value = false;
+  }
 };
 
 const deleteRecipe = async (dishId: string) => {

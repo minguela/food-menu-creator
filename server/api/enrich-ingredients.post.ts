@@ -6,6 +6,13 @@ import {
   scoreIngredientCandidate,
   toNutrientNumberOrNull,
 } from "~/server/utils/ingredient-enrichment";
+import {
+  normalizeEnrichSource,
+  resolveSupabaseServerKey,
+  resolveUsdaKey,
+  shouldTryOff,
+  shouldTryUsda,
+} from "~/utils/enrich-runtime";
 
 type EnrichBody = { limit?: number; source?: EnrichSource };
 type EnrichSource = "auto" | "usda" | "open_food_facts" | "bedca";
@@ -29,15 +36,15 @@ const extractUsdaNutrient = (foodNutrients: any[], keys: string[]) => {
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as EnrichBody;
   const limit = Math.min(50, Math.max(1, Number(body?.limit) || 20));
-  const source = String(body?.source || "auto")
-    .trim()
-    .toLowerCase() as EnrichSource;
+  const source = normalizeEnrichSource(body?.source) as EnrichSource;
   const config = useRuntimeConfig(event);
 
-  const usdaKey =
-    config.usdaFdcApiKey ||
-    process.env.USDA_FDC_API_KEY ||
-    process.env.USDA_API_KEY;
+  const usdaKey = resolveUsdaKey({
+    runtimeUsdaKey: config.usdaFdcApiKey,
+    envUsdaFdc: process.env.USDA_FDC_API_KEY,
+    envUsdaLegacy: process.env.USDA_API_KEY,
+    envNuxtUsda: process.env.NUXT_USDA_FDC_API_KEY,
+  });
   if (source === "usda" && !usdaKey) {
     throw createError({
       statusCode: 500,
@@ -46,10 +53,22 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const supabase = createClient(
-    config.public.supabaseUrl,
-    config.supabaseServiceKey,
-  );
+  const supabaseKey = resolveSupabaseServerKey({
+    runtimeServiceKey: config.supabaseServiceKey,
+    envServiceRole: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    envNuxtServiceKey: process.env.NUXT_SUPABASE_SERVICE_KEY,
+    envSupabaseKey: process.env.SUPABASE_KEY,
+    publicAnonKey: config.public.supabaseAnonKey,
+  });
+  if (!supabaseKey) {
+    throw createError({
+      statusCode: 500,
+      statusMessage:
+        "SUPABASE_SERVICE_ROLE_KEY no configurada en runtime. Configúrala en Vercel/Supabase.",
+    });
+  }
+
+  const supabase = createClient(config.public.supabaseUrl, supabaseKey);
 
   const { data: ingredients, error } = await supabase
     .from("ingredients")
@@ -85,10 +104,7 @@ export default defineEventHandler(async (event) => {
       let bestCandidate: any = null;
       let bestScore = 0;
 
-      const shouldTryUsda = source === "auto" || source === "usda";
-      const shouldTryOff = source === "auto" || source === "open_food_facts";
-
-      if (shouldTryUsda && usdaKey) {
+      if (shouldTryUsda(source) && usdaKey) {
         const usdaRes = await fetch(
           `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${usdaKey}`,
           {
@@ -141,7 +157,7 @@ export default defineEventHandler(async (event) => {
         }
       }
 
-      if (shouldTryOff && (!bestCandidate || bestScore < 0.85)) {
+      if (shouldTryOff(source) && (!bestCandidate || bestScore < 0.85)) {
         const offRes = await fetch(
           `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
             ingredient.name,

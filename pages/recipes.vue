@@ -155,7 +155,10 @@
                 >
                   Confirmar
                 </button>
-                <button class="text-xs text-red-700" @click="deleteRow(row.id)">
+                <button
+                  class="text-xs text-red-700"
+                  @click="deleteRow(dish.id, row.id)"
+                >
                   Quitar
                 </button>
               </div>
@@ -245,11 +248,14 @@
                 </button>
                 <button
                   class="text-xs text-indigo-700"
-                  @click="saveConfirmedRow(row)"
+                  @click="saveConfirmedRow(dish.id, row)"
                 >
                   Guardar
                 </button>
-                <button class="text-xs text-red-700" @click="deleteRow(row.id)">
+                <button
+                  class="text-xs text-red-700"
+                  @click="deleteRow(dish.id, row.id)"
+                >
                   Eliminar
                 </button>
               </div>
@@ -427,6 +433,36 @@ const loadRecipes = async () => {
   );
 };
 
+const refreshEditingDish = async (dishId: string) => {
+  const { data, error } = await supabase
+    .from("dishes")
+    .select("*, recipe_ingredients(*, ingredients(*))")
+    .eq("id", dishId)
+    .maybeSingle();
+
+  if (error || !data) {
+    await logError("web", error || new Error("Receta no encontrada"), {
+      context: "recipes.refreshEditingDish",
+    });
+    return;
+  }
+
+  const currentIndex = dishes.value.findIndex((dish) => dish.id === dishId);
+  if (currentIndex >= 0) {
+    dishes.value[currentIndex] = data as DishRow;
+  } else {
+    dishes.value.unshift(data as DishRow);
+  }
+
+  const dish = data as DishRow;
+  pendingRows.value = (dish.recipe_ingredients || [])
+    .filter((row) => !row.is_confirmed)
+    .map((row) => ({ ...row }));
+  confirmedRows.value = (dish.recipe_ingredients || [])
+    .filter((row) => row.is_confirmed)
+    .map((row) => ({ ...row }));
+};
+
 const isDishSelected = (dishId: string) =>
   selectedDishIds.value.includes(dishId);
 
@@ -466,22 +502,18 @@ const toggleEdit = async (dishId: string) => {
     confirmedRows.value = [];
     return;
   }
-  await ensureRecipeIngredientLinks(dishId);
-  await loadRecipes();
   editingDishId.value = dishId;
-  const dish = dishes.value.find((row) => row.id === dishId);
-  pendingRows.value = (dish?.recipe_ingredients || [])
-    .filter((row) => !row.is_confirmed)
-    .map((row) => ({ ...row }));
-  confirmedRows.value = (dish?.recipe_ingredients || [])
-    .filter((row) => row.is_confirmed)
-    .map((row) => ({ ...row }));
+  await ensureRecipeIngredientLinks(dishId);
+  await refreshEditingDish(dishId);
 };
 
 const ensureRecipeIngredientLinks = async (dishId: string) => {
-  const dish = dishes.value.find((row) => row.id === dishId);
-  if (!dish) return;
-  const toLink = (dish.recipe_ingredients || []).filter(
+  const { data: recipeRows } = await supabase
+    .from("recipe_ingredients")
+    .select("*")
+    .eq("recipe_id", dishId);
+
+  const toLink = (recipeRows || []).filter(
     (row) => row.is_confirmed && !row.ingredient_id && row.name,
   );
   if (toLink.length === 0) return;
@@ -747,11 +779,10 @@ const confirmRow = async (dishId: string, row: RecipeIngredient) => {
     return;
   }
   await syncRecipeStatus(dishId);
-  await loadRecipes();
-  toggleEdit(dishId);
+  await refreshEditingDish(dishId);
 };
 
-const saveConfirmedRow = async (row: RecipeIngredient) => {
+const saveConfirmedRow = async (dishId: string, row: RecipeIngredient) => {
   formError.value = "";
   if (!row.name || !row.unit_type) {
     formError.value = "Ingrediente confirmado inválido: revisa nombre/unidad.";
@@ -781,16 +812,14 @@ const saveConfirmedRow = async (row: RecipeIngredient) => {
     await logError("web", error, { context: "recipes.saveConfirmedRow" });
     return;
   }
-  if (editingDishId.value) await syncRecipeStatus(editingDishId.value);
-  await loadRecipes();
-  if (editingDishId.value) toggleEdit(editingDishId.value);
+  await syncRecipeStatus(dishId);
+  await refreshEditingDish(dishId);
 };
 
-const deleteRow = async (rowId: string) => {
+const deleteRow = async (dishId: string, rowId: string) => {
   await supabase.from("recipe_ingredients").delete().eq("id", rowId);
-  if (editingDishId.value) await syncRecipeStatus(editingDishId.value);
-  await loadRecipes();
-  if (editingDishId.value) toggleEdit(editingDishId.value);
+  await syncRecipeStatus(dishId);
+  await refreshEditingDish(dishId);
 };
 
 const addManualConfirmed = async (dishId: string) => {
@@ -806,8 +835,7 @@ const addManualConfirmed = async (dishId: string) => {
     needs_review: false,
   });
   await syncRecipeStatus(dishId);
-  await loadRecipes();
-  toggleEdit(dishId);
+  await refreshEditingDish(dishId);
 };
 
 const deleteRecipe = async (dishId: string) => {

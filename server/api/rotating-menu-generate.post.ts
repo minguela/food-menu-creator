@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
 
 type MealType = "desayuno" | "comida" | "cena";
 
@@ -15,10 +15,7 @@ type GeneratePayload = {
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as GeneratePayload;
   const config = useRuntimeConfig(event);
-  const supabase = createClient(
-    config.public.supabaseUrl,
-    config.supabaseServiceKey,
-  );
+  const supabase = createSupabaseAdminClient(config);
 
   if (!body?.userId) {
     throw createError({ statusCode: 400, statusMessage: "userId requerido" });

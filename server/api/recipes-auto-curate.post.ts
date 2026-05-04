@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { normalizeIngredientName } from "~/utils/ingredient-normalize";
+import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
 
 type AutoCurateBody = {
   recipeIds?: string[];
@@ -65,10 +65,7 @@ export default defineEventHandler(async (event) => {
   if (recipeIds.length === 0) return { success: true, processed: 0 };
 
   const config = useRuntimeConfig(event);
-  const supabase = createClient(
-    config.public.supabaseUrl,
-    config.supabaseServiceKey,
-  );
+  const supabase = createSupabaseAdminClient(config);
 
   const { data: suggestionRows, error: suggestionsError } = await supabase
     .from("recipe_ingredients")

@@ -63,6 +63,17 @@
           Limpiar selección
         </button>
         <button
+          class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-sm disabled:opacity-50"
+          :disabled="selectedDishIds.length === 0 || savingSelectedRecipes"
+          @click="saveSelectedRecipes"
+        >
+          {{
+            savingSelectedRecipes
+              ? "Guardando recetas..."
+              : `Guardar seleccionadas (${selectedDishIds.length})`
+          }}
+        </button>
+        <button
           class="ml-auto px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm disabled:opacity-50"
           :disabled="selectedDishIds.length === 0"
           @click="deleteSelectedRecipes"
@@ -138,7 +149,14 @@
               />
             </label>
             <div>
-              <h2 class="font-semibold text-gray-900">{{ dish.name }}</h2>
+              <div class="flex items-center gap-2">
+                <h2 class="font-semibold text-gray-900">{{ dish.name }}</h2>
+                <span
+                  class="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700"
+                >
+                  {{ ingredientCount(dish) }} ingredientes
+                </span>
+              </div>
               <p class="text-sm text-gray-500">
                 {{ dish.description || "Sin descripción" }}
               </p>
@@ -153,6 +171,13 @@
               @click="toggleEdit(dish.id)"
             >
               {{ editingDishId === dish.id ? "Cerrar" : "Editar / Curar" }}
+            </button>
+            <button
+              class="text-sm text-emerald-700 disabled:opacity-50"
+              :disabled="isRecipeSaving(dish.id)"
+              @click="saveRecipeQuick(dish.id)"
+            >
+              {{ isRecipeSaving(dish.id) ? "Guardando..." : "Guardar" }}
             </button>
             <button class="text-sm text-sky-700" @click="openSplitPanel(dish)">
               Dividir
@@ -554,6 +579,8 @@ const candidateQuery = ref("");
 const candidateResults = ref<any[]>([]);
 const candidateLoading = ref(false);
 const selectedDishIds = ref<string[]>([]);
+const savingDishIds = ref<string[]>([]);
+const savingSelectedRecipes = ref(false);
 const savingBatch = ref(false);
 const savingBulkIngredients = ref(false);
 const searchTerm = ref("");
@@ -609,6 +636,12 @@ const allFilteredSelected = computed(() => {
     selectedDishIds.value.includes(dish.id),
   );
 });
+
+const ingredientCount = (dish: DishRow) =>
+  (dish.recipe_ingredients || []).length;
+
+const isRecipeSaving = (dishId: string) =>
+  savingDishIds.value.includes(dishId);
 
 const loadRecipes = async () => {
   const currentUser = await loadCurrentUser();
@@ -689,6 +722,36 @@ const toggleSelectAllFiltered = () => {
 
 const clearSelection = () => {
   selectedDishIds.value = [];
+};
+
+const saveRecipeQuick = async (dishId: string) => {
+  if (isRecipeSaving(dishId)) return;
+  savingDishIds.value.push(dishId);
+  formError.value = "";
+  try {
+    await syncRecipeStatus(dishId);
+    if (editingDishId.value === dishId) {
+      await refreshEditingDish(dishId);
+    }
+  } catch (error) {
+    await logError("web", error, { context: "recipes.saveRecipeQuick" });
+    formError.value = "No se pudo guardar la receta.";
+  } finally {
+    savingDishIds.value = savingDishIds.value.filter((id) => id !== dishId);
+  }
+};
+
+const saveSelectedRecipes = async () => {
+  if (selectedDishIds.value.length === 0 || savingSelectedRecipes.value) return;
+  savingSelectedRecipes.value = true;
+  formError.value = "";
+  try {
+    for (const dishId of selectedDishIds.value) {
+      await saveRecipeQuick(dishId);
+    }
+  } finally {
+    savingSelectedRecipes.value = false;
+  }
 };
 
 const mergeCandidates = computed(() =>

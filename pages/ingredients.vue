@@ -360,13 +360,17 @@ const runEnrichment = async () => {
   try {
     const result = await $fetch<{
       success: boolean;
+      source: "auto" | "usda" | "open_food_facts" | "bedca";
       processed: number;
       completed: number;
       needs_review: number;
       not_found: number;
     }>("/api/enrich-ingredients", {
       method: "POST",
-      body: { limit: 50 },
+      body: {
+        limit: 50,
+        source: searchSource.value === "bedca" ? "auto" : searchSource.value,
+      },
     });
     enrichSummary.value = {
       processed: result.processed || 0,

@@ -7,7 +7,8 @@ import {
   toNutrientNumberOrNull,
 } from "~/server/utils/ingredient-enrichment";
 
-type EnrichBody = { limit?: number };
+type EnrichBody = { limit?: number; source?: EnrichSource };
+type EnrichSource = "auto" | "usda" | "open_food_facts" | "bedca";
 
 const extractUsdaNutrient = (foodNutrients: any[], keys: string[]) => {
   for (const item of foodNutrients || []) {
@@ -28,14 +29,20 @@ const extractUsdaNutrient = (foodNutrients: any[], keys: string[]) => {
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as EnrichBody;
   const limit = Math.min(50, Math.max(1, Number(body?.limit) || 20));
+  const source = String(body?.source || "auto")
+    .trim()
+    .toLowerCase() as EnrichSource;
   const config = useRuntimeConfig(event);
 
-  const usdaKey = config.usdaFdcApiKey || process.env.USDA_FDC_API_KEY;
-  if (!usdaKey) {
+  const usdaKey =
+    config.usdaFdcApiKey ||
+    process.env.USDA_FDC_API_KEY ||
+    process.env.USDA_API_KEY;
+  if (source === "usda" && !usdaKey) {
     throw createError({
       statusCode: 500,
       statusMessage:
-        "USDA_FDC_API_KEY no configurada. Añádela en variables de entorno del servidor.",
+        "USDA_FDC_API_KEY no configurada para fuente USDA. Añádela en variables de entorno del servidor.",
     });
   }
 
@@ -78,58 +85,63 @@ export default defineEventHandler(async (event) => {
       let bestCandidate: any = null;
       let bestScore = 0;
 
-      const usdaRes = await fetch(
-        `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${usdaKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            query,
-            dataType: ["Foundation", "SR Legacy"],
-            pageSize: 8,
-            pageNumber: 1,
-          }),
-        },
-      );
+      const shouldTryUsda = source === "auto" || source === "usda";
+      const shouldTryOff = source === "auto" || source === "open_food_facts";
 
-      if (usdaRes.ok) {
-        const usdaPayload = await usdaRes.json();
-        for (const food of usdaPayload?.foods || []) {
-          const candidate = {
-            source: "usda",
-            external_id: String(food.fdcId),
-            name: String(food.description || "").trim(),
-            kcal_per_100g: extractUsdaNutrient(food.foodNutrients, [
-              "1008",
-              "Energy",
-            ]),
-            protein_per_100g: extractUsdaNutrient(food.foodNutrients, [
-              "1003",
-              "Protein",
-            ]),
-            carbs_per_100g: extractUsdaNutrient(food.foodNutrients, [
-              "1005",
-              "Carbohydrate",
-            ]),
-            fat_per_100g: extractUsdaNutrient(food.foodNutrients, [
-              "1004",
-              "Total lipid",
-            ]),
-            raw_payload: food,
-          };
-          const score = scoreIngredientCandidate(
-            ingredient.name,
-            candidate.name,
-            aliasQuery,
-          );
-          if (score > bestScore) {
-            bestScore = score;
-            bestCandidate = candidate;
+      if (shouldTryUsda && usdaKey) {
+        const usdaRes = await fetch(
+          `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${usdaKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              query,
+              dataType: ["Foundation", "SR Legacy"],
+              pageSize: 8,
+              pageNumber: 1,
+            }),
+          },
+        );
+
+        if (usdaRes.ok) {
+          const usdaPayload = await usdaRes.json();
+          for (const food of usdaPayload?.foods || []) {
+            const candidate = {
+              source: "usda",
+              external_id: String(food.fdcId),
+              name: String(food.description || "").trim(),
+              kcal_per_100g: extractUsdaNutrient(food.foodNutrients, [
+                "1008",
+                "Energy",
+              ]),
+              protein_per_100g: extractUsdaNutrient(food.foodNutrients, [
+                "1003",
+                "Protein",
+              ]),
+              carbs_per_100g: extractUsdaNutrient(food.foodNutrients, [
+                "1005",
+                "Carbohydrate",
+              ]),
+              fat_per_100g: extractUsdaNutrient(food.foodNutrients, [
+                "1004",
+                "Total lipid",
+              ]),
+              raw_payload: food,
+            };
+            const score = scoreIngredientCandidate(
+              ingredient.name,
+              candidate.name,
+              aliasQuery,
+            );
+            if (score > bestScore) {
+              bestScore = score;
+              bestCandidate = candidate;
+            }
           }
         }
       }
 
-      if (!bestCandidate || bestScore < 0.85) {
+      if (shouldTryOff && (!bestCandidate || bestScore < 0.85)) {
         const offRes = await fetch(
           `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
             ingredient.name,
@@ -240,6 +252,7 @@ export default defineEventHandler(async (event) => {
 
   return {
     success: true,
+    source,
     processed: (ingredients || []).length,
     completed,
     needs_review: needsReview,

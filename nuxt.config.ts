@@ -18,7 +18,10 @@ export default defineNuxtConfig({
     twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
     twilioFromNumber: process.env.TWILIO_FROM_NUMBER,
     twilioWhatsAppFrom: process.env.TWILIO_WHATSAPP_FROM,
-    usdaFdcApiKey: process.env.USDA_FDC_API_KEY,
+    usdaFdcApiKey:
+      process.env.USDA_FDC_API_KEY ||
+      process.env.USDA_API_KEY ||
+      process.env.NUXT_USDA_FDC_API_KEY,
   },
   app: {
     head: {

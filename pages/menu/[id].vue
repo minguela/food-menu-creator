@@ -1160,7 +1160,7 @@ const recipeStatusLabel = (dishName?: string) => {
   if (!dishName) return "";
   const status = recipeStatusByName.value[dishName];
   if (status === "complete") return "Receta completa";
-  if (status === "incomplete_nutrition") return "Receta sin nutrición completa";
+  if (status === "incomplete_nutrition") return "Pendiente de curación";
   if (status === "suggested_ingredients")
     return "Ingredientes sugeridos pendientes";
   if (status === "not_required") return "No requiere ingredientes";

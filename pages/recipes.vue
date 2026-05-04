@@ -26,6 +26,14 @@
 
     <section class="bg-white rounded-lg border p-4">
       <div class="flex flex-wrap items-center gap-2">
+        <label class="min-w-[220px] flex-1">
+          <span class="sr-only">Buscar recetas</span>
+          <input
+            v-model.trim="searchTerm"
+            class="w-full rounded-lg border px-3 py-2 text-sm"
+            placeholder="Buscar receta por nombre..."
+          />
+        </label>
         <label class="inline-flex items-center gap-2 text-sm text-gray-700">
           <input
             type="checkbox"
@@ -415,6 +423,32 @@
           >
             + Añadir ingrediente manual
           </button>
+          <div class="rounded-lg border p-3 space-y-2">
+            <p class="text-xs font-medium text-gray-700">
+              Añadir varios ingredientes (uno por línea)
+            </p>
+            <textarea
+              v-model="bulkIngredientInput"
+              class="w-full min-h-[96px] border rounded-lg px-3 py-2 text-sm"
+              placeholder="Ej:
+arroz
+pollo
+aceite de oliva"
+            />
+            <div class="flex justify-end">
+              <button
+                class="text-xs px-3 py-1.5 rounded border text-indigo-700 disabled:opacity-50"
+                :disabled="!bulkIngredientInput.trim() || savingBulkIngredients"
+                @click="addBulkIngredients(dish.id)"
+              >
+                {{
+                  savingBulkIngredients
+                    ? "Añadiendo..."
+                    : "Añadir ingredientes en bloque"
+                }}
+              </button>
+            </div>
+          </div>
 
           <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
         </div>
@@ -531,6 +565,9 @@ const candidateResults = ref<any[]>([]);
 const candidateLoading = ref(false);
 const selectedDishIds = ref<string[]>([]);
 const savingBatch = ref(false);
+const savingBulkIngredients = ref(false);
+const searchTerm = ref("");
+const bulkIngredientInput = ref("");
 const showMergePanel = ref(false);
 const mergeTargetId = ref("");
 const mergeFinalName = ref("");
@@ -562,6 +599,15 @@ const statusMeta = (dish: DishRow) => {
 
 const filteredDishes = computed(() =>
   dishes.value.filter((dish) => {
+    const query = searchTerm.value.trim().toLowerCase();
+    if (
+      query &&
+      !String(dish.name || "")
+        .toLowerCase()
+        .includes(query)
+    ) {
+      return false;
+    }
     if (filter.value === "all") return true;
     if (filter.value === "pending")
       return dish.recipe_status === "pending_ingredients";
@@ -625,10 +671,10 @@ const refreshEditingDish = async (dishId: string) => {
   recipeForm.description = dish.description || "";
   pendingRows.value = (dish.recipe_ingredients || [])
     .filter((row) => !row.is_confirmed)
-    .map((row) => ({ ...row }));
+    .map((row) => ({ ...row, unit_type: row.unit_type || "g" }));
   confirmedRows.value = (dish.recipe_ingredients || [])
     .filter((row) => row.is_confirmed)
-    .map((row) => ({ ...row }));
+    .map((row) => ({ ...row, unit_type: row.unit_type || "g" }));
 };
 
 const isDishSelected = (dishId: string) =>
@@ -758,6 +804,7 @@ const toggleEdit = async (dishId: string) => {
     confirmedRows.value = [];
     recipeForm.name = "";
     recipeForm.description = "";
+    bulkIngredientInput.value = "";
     return;
   }
   editingDishId.value = dishId;
@@ -1295,7 +1342,7 @@ const mergeSelectedRecipes = async () => {
       .eq("id", mergeTargetId.value);
     if (renameError) throw renameError;
 
-    selectedDishIds.value = [mergeTargetId.value];
+    selectedDishIds.value = [];
     cancelMergePanel();
     await loadRecipes();
   } catch (error) {
@@ -1322,27 +1369,82 @@ const splitRecipe = async () => {
       throw new Error("No hay suficientes partes para dividir la receta.");
     }
 
+    const sourceRecipeId = splitSourceDish.value.id;
+    const { data: sourceIngredients } = await supabase
+      .from("recipe_ingredients")
+      .select("*")
+      .eq("recipe_id", sourceRecipeId);
+
+    const createdOrFound: Array<{ id: string; name: string }> = [];
     for (const partName of parts) {
       const normalized = normalizeIngredientName(partName);
-      const { data: existing } = await supabase
+      const { data: existing, error: existingError } = await supabase
         .from("dishes")
-        .select("id")
+        .select("id,name")
         .eq("user_id", currentUser.id)
         .eq("normalized_name", normalized)
         .maybeSingle();
+      if (existingError) throw existingError;
 
-      if (existing?.id) continue;
+      if (existing?.id) {
+        createdOrFound.push({ id: existing.id, name: existing.name });
+        continue;
+      }
 
-      const { error: insertError } = await supabase.from("dishes").insert({
-        user_id: currentUser.id,
-        name: partName,
-        normalized_name: normalized,
-        description: null,
-        recipe_status: "pending_ingredients",
-        source: "manual",
-        servings_base: 1,
-      });
+      const { data: insertedDish, error: insertError } = await supabase
+        .from("dishes")
+        .insert({
+          user_id: currentUser.id,
+          name: partName,
+          normalized_name: normalized,
+          description: null,
+          recipe_status: "pending_ingredients",
+          source: "manual",
+          servings_base: 1,
+        })
+        .select("id,name")
+        .single();
       if (insertError) throw insertError;
+      if (insertedDish) {
+        createdOrFound.push({ id: insertedDish.id, name: insertedDish.name });
+      }
+    }
+
+    // Reparte sugerencias de ingredientes de la receta original en las nuevas partes
+    for (const targetDish of createdOrFound) {
+      const splitNameTokens = tokenize(
+        normalizeIngredientName(targetDish.name),
+      );
+      const candidates = (sourceIngredients || []).filter((ingredient: any) => {
+        const ingredientTokens = tokenize(
+          normalizeIngredientName(ingredient.name || ""),
+        );
+        return ingredientTokens.some((token) =>
+          splitNameTokens.includes(token),
+        );
+      });
+      if (candidates.length === 0) continue;
+
+      for (const candidate of candidates) {
+        const normalizedName = normalizeIngredientName(candidate.name || "");
+        if (!normalizedName) continue;
+        await supabase.from("recipe_ingredients").upsert(
+          {
+            recipe_id: targetDish.id,
+            ingredient_id: candidate.ingredient_id || null,
+            name: candidate.name,
+            normalized_name: normalizedName,
+            quantity: candidate.quantity ?? 1,
+            unit_type: candidate.unit_type || "g",
+            is_confirmed: false,
+            is_suggested: true,
+            needs_review: true,
+          },
+          {
+            onConflict: "recipe_id,normalized_name",
+          },
+        );
+      }
     }
 
     closeSplitPanel();
@@ -1353,6 +1455,65 @@ const splitRecipe = async () => {
     await logError("web", error, { context: "recipes.splitRecipe" });
   } finally {
     splittingRecipe.value = false;
+  }
+};
+
+const tokenize = (value: string) =>
+  value
+    .split(/[^a-z0-9]+/gi)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 3);
+
+const addBulkIngredients = async (dishId: string) => {
+  if (!bulkIngredientInput.value.trim()) return;
+  savingBulkIngredients.value = true;
+  formError.value = "";
+  try {
+    const parsedRows = bulkIngredientInput.value
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const normalized = normalizeIngredientName(line);
+        return {
+          recipe_id: dishId,
+          ingredient_id: null,
+          name: line,
+          normalized_name: normalized,
+          quantity: 1,
+          unit_type: "g",
+          is_confirmed: true,
+          is_suggested: false,
+          needs_review: false,
+        };
+      })
+      .filter((row) => row.normalized_name);
+
+    if (parsedRows.length === 0) {
+      formError.value = "No se encontraron ingredientes válidos para añadir.";
+      return;
+    }
+
+    const dedupedRows = Array.from(
+      new Map(parsedRows.map((row) => [row.normalized_name, row])).values(),
+    );
+
+    const { error } = await supabase
+      .from("recipe_ingredients")
+      .upsert(dedupedRows, {
+        onConflict: "recipe_id,normalized_name",
+      });
+    if (error) throw error;
+
+    await syncRecipeStatus(dishId);
+    await refreshEditingDish(dishId);
+    bulkIngredientInput.value = "";
+  } catch (error) {
+    formError.value =
+      error instanceof Error ? error.message : "Error añadiendo ingredientes";
+    await logError("web", error, { context: "recipes.addBulkIngredients" });
+  } finally {
+    savingBulkIngredients.value = false;
   }
 };
 

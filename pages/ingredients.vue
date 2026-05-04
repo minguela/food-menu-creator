@@ -308,7 +308,13 @@ const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
 const filtered = computed(() => {
   const q = query.value.toLowerCase();
   if (!q) return rows.value;
-  return rows.value.filter((item) => item.name.toLowerCase().includes(q));
+  return rows.value.filter((item) => {
+    const byName = item.name.toLowerCase().includes(q);
+    const byNormalized = String(item.normalized_name || "")
+      .toLowerCase()
+      .includes(q);
+    return byName || byNormalized;
+  });
 });
 
 const allFilteredSelected = computed(() => {

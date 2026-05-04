@@ -61,6 +61,56 @@
         >
           Eliminar recetas ({{ selectedDishIds.length }})
         </button>
+        <button
+          class="px-3 py-1.5 rounded-lg bg-sky-700 text-white text-sm disabled:opacity-50"
+          :disabled="selectedDishIds.length < 2 || mergingRecipes"
+          @click="openMergePanel"
+        >
+          {{ mergingRecipes ? "Fusionando..." : "Fusionar seleccionadas" }}
+        </button>
+      </div>
+      <div v-if="showMergePanel" class="mt-3 border rounded-lg p-3 space-y-2">
+        <p class="text-sm font-medium text-gray-900">Fusionar recetas</p>
+        <label class="block">
+          <span class="block text-xs text-gray-600 mb-1">Receta destino</span>
+          <select
+            v-model="mergeTargetId"
+            class="w-full border rounded-lg px-3 py-2"
+          >
+            <option
+              v-for="dish in mergeCandidates"
+              :key="`merge-target-${dish.id}`"
+              :value="dish.id"
+            >
+              {{ dish.name }}
+            </option>
+          </select>
+        </label>
+        <label class="block">
+          <span class="block text-xs text-gray-600 mb-1">
+            Nombre final (opcional)
+          </span>
+          <input
+            v-model.trim="mergeFinalName"
+            class="w-full border rounded-lg px-3 py-2"
+            placeholder="Si lo dejas vacío, se mantiene el nombre de la receta destino"
+          />
+        </label>
+        <div class="flex justify-end gap-2">
+          <button
+            class="px-3 py-1.5 rounded-lg border text-sm"
+            @click="cancelMergePanel"
+          >
+            Cancelar
+          </button>
+          <button
+            class="px-3 py-1.5 rounded-lg bg-sky-700 text-white text-sm disabled:opacity-50"
+            :disabled="!mergeTargetId || mergingRecipes"
+            @click="mergeSelectedRecipes"
+          >
+            Confirmar fusión
+          </button>
+        </div>
       </div>
     </section>
 
@@ -95,6 +145,9 @@
               @click="toggleEdit(dish.id)"
             >
               {{ editingDishId === dish.id ? "Cerrar" : "Editar / Curar" }}
+            </button>
+            <button class="text-sm text-sky-700" @click="openSplitPanel(dish)">
+              Dividir
             </button>
             <button class="text-sm text-red-700" @click="deleteRecipe(dish.id)">
               Eliminar
@@ -367,6 +420,58 @@
         </div>
       </article>
     </section>
+    <div
+      v-if="showSplitPanel"
+      class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      @click.self="closeSplitPanel"
+    >
+      <div class="w-full max-w-2xl rounded-lg bg-white p-4 space-y-3">
+        <h3 class="text-lg font-semibold text-gray-900">Dividir receta</h3>
+        <p class="text-sm text-gray-600">
+          Receta original:
+          <span class="font-medium">{{ splitSourceDish?.name }}</span>
+        </p>
+        <div v-if="splitCandidates.length === 0" class="text-sm text-amber-700">
+          No detecté separadores claros (`+`, `de segundo`, `primero/segundo`).
+        </div>
+        <div v-else class="space-y-2">
+          <p class="text-xs text-gray-600">
+            Partes detectadas (editables antes de crear):
+          </p>
+          <div
+            v-for="(part, index) in splitCandidates"
+            :key="`split-${index}`"
+            class="grid grid-cols-[1fr_auto] gap-2"
+          >
+            <input
+              v-model.trim="splitCandidates[index]"
+              class="border rounded-lg px-3 py-2"
+            />
+            <button
+              class="text-xs text-red-700"
+              @click="splitCandidates.splice(index, 1)"
+            >
+              Quitar
+            </button>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button
+            class="px-3 py-1.5 rounded-lg border"
+            @click="closeSplitPanel"
+          >
+            Cancelar
+          </button>
+          <button
+            class="px-3 py-1.5 rounded-lg bg-sky-700 text-white disabled:opacity-50"
+            :disabled="splitCandidates.length < 2 || splittingRecipe"
+            @click="splitRecipe"
+          >
+            {{ splittingRecipe ? "Dividiendo..." : "Crear recetas separadas" }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -426,6 +531,14 @@ const candidateResults = ref<any[]>([]);
 const candidateLoading = ref(false);
 const selectedDishIds = ref<string[]>([]);
 const savingBatch = ref(false);
+const showMergePanel = ref(false);
+const mergeTargetId = ref("");
+const mergeFinalName = ref("");
+const mergingRecipes = ref(false);
+const showSplitPanel = ref(false);
+const splitSourceDish = ref<DishRow | null>(null);
+const splitCandidates = ref<string[]>([]);
+const splittingRecipe = ref(false);
 const recipeForm = reactive({
   name: "",
   description: "",
@@ -547,6 +660,58 @@ const toggleSelectAllFiltered = () => {
 
 const clearSelection = () => {
   selectedDishIds.value = [];
+};
+
+const mergeCandidates = computed(() =>
+  dishes.value.filter((dish) => selectedDishIds.value.includes(dish.id)),
+);
+
+const openMergePanel = () => {
+  if (selectedDishIds.value.length < 2) return;
+  showMergePanel.value = true;
+  mergeTargetId.value = selectedDishIds.value[0];
+  const target = dishes.value.find((dish) => dish.id === mergeTargetId.value);
+  mergeFinalName.value = target?.name || "";
+};
+
+const cancelMergePanel = () => {
+  showMergePanel.value = false;
+  mergeTargetId.value = "";
+  mergeFinalName.value = "";
+};
+
+const normalizeSplitParts = (rawParts: string[]) => {
+  return Array.from(
+    new Set(
+      rawParts
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .map((part) => part.replace(/\s+/g, " ")),
+    ),
+  );
+};
+
+const extractSplitCandidates = (dishName: string) => {
+  const normalized = dishName
+    .replace(/\s+\+\s+/g, " + ")
+    .replace(/\s+y\s+de\s+segundo\s+/gi, " + ")
+    .replace(/\s+de\s+segundo\s+/gi, " + ")
+    .replace(/\s+primero:\s*/gi, "")
+    .replace(/\s+segundo:\s*/gi, " + ");
+  const byPlus = normalized.split("+");
+  return normalizeSplitParts(byPlus);
+};
+
+const openSplitPanel = (dish: DishRow) => {
+  splitSourceDish.value = dish;
+  splitCandidates.value = extractSplitCandidates(String(dish.name || ""));
+  showSplitPanel.value = true;
+};
+
+const closeSplitPanel = () => {
+  showSplitPanel.value = false;
+  splitSourceDish.value = null;
+  splitCandidates.value = [];
 };
 
 const updateOpenDishRows = () => {
@@ -1017,6 +1182,177 @@ const deleteSelectedRecipes = async () => {
     await loadRecipes();
   } catch (error) {
     await logError("web", error, { context: "recipes.deleteSelectedRecipes" });
+  }
+};
+
+const mergeSelectedRecipes = async () => {
+  if (!mergeTargetId.value || selectedDishIds.value.length < 2) return;
+  mergingRecipes.value = true;
+  formError.value = "";
+  try {
+    const targetDish = dishes.value.find(
+      (dish) => dish.id === mergeTargetId.value,
+    );
+    if (!targetDish) throw new Error("Receta destino no encontrada");
+
+    const sourceIds = selectedDishIds.value.filter(
+      (id) => id !== mergeTargetId.value,
+    );
+    const finalName = (mergeFinalName.value || targetDish.name).trim();
+    if (!finalName) throw new Error("Nombre final inválido");
+
+    const { data: targetRows } = await supabase
+      .from("recipe_ingredients")
+      .select("*")
+      .eq("recipe_id", mergeTargetId.value);
+    const targetByNormalized = new Map(
+      (targetRows || []).map((row: any) => [String(row.normalized_name), row]),
+    );
+
+    for (const sourceId of sourceIds) {
+      const sourceDish = dishes.value.find((dish) => dish.id === sourceId);
+      const sourceName = sourceDish?.name?.trim();
+      const { data: sourceRows } = await supabase
+        .from("recipe_ingredients")
+        .select("*")
+        .eq("recipe_id", sourceId);
+
+      for (const row of sourceRows || []) {
+        const key = String(row.normalized_name || "").trim();
+        if (!key) continue;
+        const existing = targetByNormalized.get(key);
+        if (!existing) {
+          const { data: inserted, error: insertError } = await supabase
+            .from("recipe_ingredients")
+            .insert({
+              recipe_id: mergeTargetId.value,
+              ingredient_id: row.ingredient_id || null,
+              name: row.name,
+              normalized_name: key,
+              quantity: row.quantity ?? null,
+              unit_type: row.unit_type ?? null,
+              is_confirmed: !!row.is_confirmed,
+              is_suggested: !!row.is_suggested,
+              needs_review: !!row.needs_review,
+            })
+            .select("*")
+            .single();
+          if (insertError) throw insertError;
+          if (inserted) targetByNormalized.set(key, inserted);
+          continue;
+        }
+
+        const needsUpgrade =
+          (!existing.is_confirmed && row.is_confirmed) ||
+          (!existing.ingredient_id && row.ingredient_id) ||
+          (existing.quantity == null && row.quantity != null) ||
+          (!existing.unit_type && row.unit_type);
+        if (needsUpgrade) {
+          const { error: updateError } = await supabase
+            .from("recipe_ingredients")
+            .update({
+              ingredient_id:
+                existing.ingredient_id || row.ingredient_id || null,
+              quantity: existing.quantity ?? row.quantity ?? null,
+              unit_type: existing.unit_type || row.unit_type || null,
+              is_confirmed: Boolean(existing.is_confirmed || row.is_confirmed),
+              is_suggested: Boolean(existing.is_suggested && !row.is_confirmed),
+              needs_review: Boolean(existing.needs_review && row.needs_review),
+            })
+            .eq("id", existing.id);
+          if (updateError) throw updateError;
+        }
+      }
+
+      if (sourceName) {
+        await supabase
+          .from("weekly_meals")
+          .update({ dish_name: finalName })
+          .eq("dish_name", sourceName);
+        await supabase
+          .from("saved_fixed_meals")
+          .update({ dish_name: finalName })
+          .eq("dish_name", sourceName);
+        await supabase
+          .from("rotating_menu_meals")
+          .update({ dish_name: finalName })
+          .eq("dish_name", sourceName);
+      }
+
+      const { error: deleteSourceError } = await supabase
+        .from("dishes")
+        .delete()
+        .eq("id", sourceId);
+      if (deleteSourceError) throw deleteSourceError;
+    }
+
+    const { error: renameError } = await supabase
+      .from("dishes")
+      .update({
+        name: finalName,
+        normalized_name: normalizeIngredientName(finalName),
+      })
+      .eq("id", mergeTargetId.value);
+    if (renameError) throw renameError;
+
+    selectedDishIds.value = [mergeTargetId.value];
+    cancelMergePanel();
+    await loadRecipes();
+  } catch (error) {
+    formError.value =
+      error instanceof Error ? error.message : "No se pudo fusionar recetas";
+    await logError("web", error, { context: "recipes.mergeSelectedRecipes" });
+  } finally {
+    mergingRecipes.value = false;
+  }
+};
+
+const splitRecipe = async () => {
+  if (!splitSourceDish.value) return;
+  splittingRecipe.value = true;
+  formError.value = "";
+  try {
+    const currentUser = await loadCurrentUser();
+    if (!currentUser) throw new Error("Usuario no disponible");
+
+    const parts = normalizeSplitParts(splitCandidates.value).filter(
+      (part) => part.length >= 3,
+    );
+    if (parts.length < 2) {
+      throw new Error("No hay suficientes partes para dividir la receta.");
+    }
+
+    for (const partName of parts) {
+      const normalized = normalizeIngredientName(partName);
+      const { data: existing } = await supabase
+        .from("dishes")
+        .select("id")
+        .eq("user_id", currentUser.id)
+        .eq("normalized_name", normalized)
+        .maybeSingle();
+
+      if (existing?.id) continue;
+
+      const { error: insertError } = await supabase.from("dishes").insert({
+        user_id: currentUser.id,
+        name: partName,
+        normalized_name: normalized,
+        description: null,
+        recipe_status: "pending_ingredients",
+        source: "manual",
+        servings_base: 1,
+      });
+      if (insertError) throw insertError;
+    }
+
+    closeSplitPanel();
+    await loadRecipes();
+  } catch (error) {
+    formError.value =
+      error instanceof Error ? error.message : "No se pudo dividir la receta";
+    await logError("web", error, { context: "recipes.splitRecipe" });
+  } finally {
+    splittingRecipe.value = false;
   }
 };
 

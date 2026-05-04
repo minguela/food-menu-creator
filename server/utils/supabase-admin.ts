@@ -9,6 +9,8 @@ export const createSupabaseAdminClient = (
     envServiceRole: process.env.SUPABASE_SERVICE_ROLE_KEY,
     envNuxtServiceKey: process.env.NUXT_SUPABASE_SERVICE_KEY,
     envSupabaseKey: process.env.SUPABASE_KEY,
+    envAnonKey: process.env.SUPABASE_ANON_KEY,
+    envNuxtPublicAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
     publicAnonKey: config.public.supabaseAnonKey,
   });
 

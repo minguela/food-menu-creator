@@ -13,6 +13,8 @@ export const resolveSupabaseServerKey = ({
   envServiceRole,
   envNuxtServiceKey,
   envSupabaseKey,
+  envAnonKey,
+  envNuxtPublicAnonKey,
   publicAnonKey,
 }) => {
   return (
@@ -20,6 +22,8 @@ export const resolveSupabaseServerKey = ({
     envServiceRole ||
     envNuxtServiceKey ||
     envSupabaseKey ||
+    envAnonKey ||
+    envNuxtPublicAnonKey ||
     publicAnonKey ||
     ""
   );

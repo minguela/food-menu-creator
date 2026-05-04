@@ -547,7 +547,6 @@ type DishRow = Dish & {
 };
 
 const supabase = useSupabase();
-const runtimeConfig = useRuntimeConfig();
 const { loadCurrentUser } = useCurrentUser();
 
 const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
@@ -919,30 +918,16 @@ const searchCandidatesForTarget = async () => {
   if (!candidateTargetRowId.value || !candidateQuery.value.trim()) return;
   candidateLoading.value = true;
   try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const accessToken =
-      session?.access_token || runtimeConfig.public.supabaseAnonKey;
-    const response = await fetch(
-      `${runtimeConfig.public.supabaseUrl}/functions/v1/ingredient-search`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: runtimeConfig.public.supabaseAnonKey,
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          query: candidateQuery.value.trim(),
-          source: candidateSource.value,
-        }),
+    const payload = await $fetch<{
+      success: boolean;
+      candidates?: any[];
+    }>("/api/ingredient-search", {
+      method: "POST",
+      body: {
+        query: candidateQuery.value.trim(),
+        source: candidateSource.value,
       },
-    );
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload?.error || "No se pudo buscar candidato");
-    }
+    });
     candidateResults.value = Array.isArray(payload?.candidates)
       ? payload.candidates
       : [];
@@ -1000,30 +985,16 @@ const fetchCandidates = async (
   queryText: string,
   source: "usda" | "open_food_facts",
 ) => {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const accessToken =
-    session?.access_token || runtimeConfig.public.supabaseAnonKey;
-  const response = await fetch(
-    `${runtimeConfig.public.supabaseUrl}/functions/v1/ingredient-search`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: runtimeConfig.public.supabaseAnonKey,
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        query: queryText.trim(),
-        source,
-      }),
+  const payload = await $fetch<{
+    success: boolean;
+    candidates?: any[];
+  }>("/api/ingredient-search", {
+    method: "POST",
+    body: {
+      query: queryText.trim(),
+      source,
     },
-  );
-  const payload = await response.json();
-  if (!response.ok) {
-    throw new Error(payload?.error || "No se pudo buscar candidato");
-  }
+  });
   return Array.isArray(payload?.candidates) ? payload.candidates : [];
 };
 

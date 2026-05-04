@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
 
 type CsvRow = {
   name: string;
@@ -61,10 +61,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const config = useRuntimeConfig(event);
-  const supabase = createClient(
-    config.public.supabaseUrl,
-    config.supabaseServiceKey,
-  );
+  const supabase = createSupabaseAdminClient(config);
 
   const rows = parseCsv(csv);
   if (rows.length === 0) {

@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as { candidateId?: string };
@@ -11,10 +11,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const config = useRuntimeConfig(event);
-  const supabase = createClient(
-    config.public.supabaseUrl,
-    config.supabaseServiceKey,
-  );
+  const supabase = createSupabaseAdminClient(config);
 
   const { data: candidate, error: candidateError } = await supabase
     .from("ingredient_nutrition_candidates")

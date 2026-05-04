@@ -16,6 +16,21 @@
     </header>
 
     <section class="bg-white rounded-lg border p-4">
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          class="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+          :disabled="selectedIds.length === 0"
+          @click="deleteSelected"
+        >
+          Eliminar seleccionados ({{ selectedIds.length }})
+        </button>
+        <span class="text-xs text-gray-500">
+          Valores nutricionales expresados por 100 g.
+        </span>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-lg border p-4">
       <div class="grid gap-2 md:grid-cols-[1fr_auto]">
         <input
           v-model.trim="query"
@@ -146,16 +161,31 @@
 
     <section class="bg-white rounded-lg border overflow-hidden">
       <div
-        class="grid grid-cols-[1.2fr_80px_80px_80px_80px_90px_90px_90px] gap-2 p-3 text-xs font-semibold text-gray-600 border-b"
+        class="grid grid-cols-[36px_1.2fr_90px_90px_90px_90px_90px_90px_90px_90px] gap-2 p-3 text-xs font-semibold text-gray-600 border-b"
       >
-        <span>Ingrediente</span><span>kcal</span><span>P</span><span>H</span
-        ><span>G</span><span>Unidad</span><span>Fuente</span><span>Verif.</span>
+        <label class="inline-flex items-center justify-center">
+          <input
+            type="checkbox"
+            :checked="allFilteredSelected"
+            @change="toggleSelectAllFiltered"
+          />
+        </label>
+        <span>Ingrediente</span><span>kcal/100g</span><span>P/100g</span
+        ><span>H/100g</span><span>G/100g</span><span>Unidad</span
+        ><span>Fuente</span><span>Verif.</span><span>Acciones</span>
       </div>
       <div
         v-for="row in filtered"
         :key="row.id"
-        class="grid grid-cols-[1.2fr_80px_80px_80px_80px_90px_90px_90px] gap-2 p-3 border-b items-center"
+        class="grid grid-cols-[36px_1.2fr_90px_90px_90px_90px_90px_90px_90px_90px] gap-2 p-3 border-b items-center"
       >
+        <label class="inline-flex items-center justify-center">
+          <input
+            type="checkbox"
+            :checked="isSelected(row.id)"
+            @change="toggleSelected(row.id)"
+          />
+        </label>
         <input
           v-model.trim="row.name"
           class="border rounded px-2 py-1 text-sm"
@@ -207,9 +237,12 @@
         <label class="inline-flex items-center justify-center">
           <input v-model="row.is_verified" type="checkbox" />
         </label>
-        <div class="col-span-8 flex justify-end gap-2">
+        <div class="flex justify-end gap-2">
           <button class="text-xs text-indigo-700" @click="save(row)">
             Guardar
+          </button>
+          <button class="text-xs text-red-700" @click="deleteOne(row.id)">
+            Eliminar
           </button>
         </div>
       </div>
@@ -261,6 +294,7 @@ const searchSource = ref<"usda" | "open_food_facts" | "bedca">("usda");
 const enriching = ref(false);
 const enrichSummary = ref<EnrichSummary | null>(null);
 const reviewCandidates = ref<ReviewCandidate[]>([]);
+const selectedIds = ref<string[]>([]);
 const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
   "g",
   "kg",
@@ -277,6 +311,14 @@ const filtered = computed(() => {
   return rows.value.filter((item) => item.name.toLowerCase().includes(q));
 });
 
+const allFilteredSelected = computed(() => {
+  const visibleIds = filtered.value
+    .map((row) => row.id)
+    .filter((id) => !String(id).startsWith("tmp-"));
+  if (visibleIds.length === 0) return false;
+  return visibleIds.every((id) => selectedIds.value.includes(id));
+});
+
 const load = async () => {
   const { data } = await supabase
     .from("ingredients")
@@ -289,12 +331,43 @@ const load = async () => {
     is_verified: Boolean(row.is_verified),
     source: row.source || "manual",
   }));
+  selectedIds.value = selectedIds.value.filter((id) =>
+    rows.value.some((row) => row.id === id),
+  );
   const { data: candidateRows } = await supabase
     .from("ingredient_nutrition_candidates")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(60);
   reviewCandidates.value = (candidateRows || []) as ReviewCandidate[];
+};
+
+const isSelected = (id: string) => selectedIds.value.includes(id);
+
+const toggleSelected = (id: string) => {
+  if (isSelected(id)) {
+    selectedIds.value = selectedIds.value.filter((current) => current !== id);
+    return;
+  }
+  if (!String(id).startsWith("tmp-")) {
+    selectedIds.value.push(id);
+  }
+};
+
+const toggleSelectAllFiltered = () => {
+  const visibleIds = filtered.value
+    .map((row) => row.id)
+    .filter((id) => !String(id).startsWith("tmp-"));
+  if (visibleIds.length === 0) return;
+  if (allFilteredSelected.value) {
+    selectedIds.value = selectedIds.value.filter(
+      (id) => !visibleIds.includes(id),
+    );
+    return;
+  }
+  selectedIds.value = Array.from(
+    new Set([...selectedIds.value, ...visibleIds]),
+  );
 };
 
 const ingredientNameById = (ingredientId: string) => {
@@ -450,6 +523,38 @@ const save = async (row: IngredientRow) => {
     await load();
   } catch (error) {
     await logError("web", error, { context: "ingredients.save" });
+  }
+};
+
+const deleteOne = async (id: string) => {
+  if (String(id).startsWith("tmp-")) {
+    rows.value = rows.value.filter((row) => row.id !== id);
+    return;
+  }
+  if (!confirm("¿Eliminar este ingrediente?")) return;
+  try {
+    const { error } = await supabase.from("ingredients").delete().eq("id", id);
+    if (error) throw error;
+    selectedIds.value = selectedIds.value.filter((item) => item !== id);
+    await load();
+  } catch (error) {
+    await logError("web", error, { context: "ingredients.deleteOne" });
+  }
+};
+
+const deleteSelected = async () => {
+  if (selectedIds.value.length === 0) return;
+  if (!confirm(`¿Eliminar ${selectedIds.value.length} ingredientes?`)) return;
+  try {
+    const { error } = await supabase
+      .from("ingredients")
+      .delete()
+      .in("id", selectedIds.value);
+    if (error) throw error;
+    selectedIds.value = [];
+    await load();
+  } catch (error) {
+    await logError("web", error, { context: "ingredients.deleteSelected" });
   }
 };
 

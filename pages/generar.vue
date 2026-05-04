@@ -256,7 +256,19 @@ const generateRotatingMenu = async () => {
 
     generatedDays.value = response.generated_days || [];
   } catch (err) {
-    error.value = err instanceof Error ? err.message : "Error generando menú";
+    const maybeErr = err as
+      | (Error & { data?: any })
+      | { data?: any; message?: string };
+    const uncured = maybeErr?.data?.uncured_recipes;
+    if (Array.isArray(uncured) && uncured.length > 0) {
+      const preview = uncured
+        .slice(0, 6)
+        .map((item: any) => `${item.dish_name} (${item.reason})`)
+        .join(", ");
+      error.value = `No se puede generar todavía: hay recetas/ingredientes sin curar (${preview}).`;
+    } else {
+      error.value = err instanceof Error ? err.message : "Error generando menú";
+    }
     await logError("web", err, {
       context: "generar.generateRotatingMenuMultiProfile",
     });

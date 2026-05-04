@@ -121,6 +121,31 @@
               <h4 class="font-medium text-gray-900 mb-2">
                 {{ mealLabel(type) }} fija
               </h4>
+              <label class="block mb-3">
+                <span class="block text-xs font-medium text-gray-700 mb-1">
+                  Elegir receta guardada (opcional)
+                </span>
+                <select
+                  v-model="fixedMeals[type].selected_recipe_id"
+                  class="w-full border rounded-lg px-3 py-2"
+                  @change="applySavedRecipeToFixedMeal(type)"
+                >
+                  <option value="">Seleccionar receta...</option>
+                  <option
+                    v-for="recipe in savedRecipes"
+                    :key="`${type}-${recipe.id}`"
+                    :value="recipe.id"
+                  >
+                    {{ recipe.name }}
+                  </option>
+                </select>
+                <span
+                  v-if="savedRecipes.length === 0"
+                  class="mt-1 block text-xs text-amber-700"
+                >
+                  No tienes recetas guardadas todavía.
+                </span>
+              </label>
               <div class="grid gap-2 md:grid-cols-2">
                 <label class="md:col-span-2">
                   <span class="block text-xs font-medium text-gray-700 mb-1">
@@ -241,12 +266,26 @@ const showNewMenuModal = ref(false);
 const newMenuName = ref("");
 const mealTypes = ["desayuno", "comida", "cena"] as const;
 const unitTypes = ["g", "kg", "ml", "l", "ud", "pack", "unidad"] as const;
+const savedRecipes = ref<
+  Array<{
+    id: string;
+    name: string;
+    description?: string | null;
+    recipe_ingredients?: Array<{
+      name: string;
+      quantity: number | null;
+      unit_type: string;
+      is_confirmed?: boolean;
+    }>;
+  }>
+>([]);
 const fixedMealTypes = ref<Array<(typeof mealTypes)[number]>>([]);
 const fixedMeals = reactive(
   Object.fromEntries(
     mealTypes.map((type) => [
       type,
       {
+        selected_recipe_id: "",
         dish_name: "",
         dish_description: "",
         ingredients: [{ name: "", quantity: 1, unit_type: "g" as const }],
@@ -255,6 +294,7 @@ const fixedMeals = reactive(
   ) as Record<
     (typeof mealTypes)[number],
     {
+      selected_recipe_id: string;
       dish_name: string;
       dish_description: string;
       ingredients: Array<{ name: string; quantity: number; unit_type: string }>;
@@ -293,6 +333,30 @@ const loadMenus = async () => {
   }
 
   loading.value = false;
+};
+
+const loadSavedRecipes = async () => {
+  const currentUser = await loadCurrentUser();
+  if (!currentUser) {
+    savedRecipes.value = [];
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("dishes")
+    .select(
+      "id, name, description, recipe_ingredients(name, quantity, unit_type, is_confirmed)",
+    )
+    .eq("user_id", currentUser.id)
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("Error cargando recetas guardadas:", error);
+    savedRecipes.value = [];
+    return;
+  }
+
+  savedRecipes.value = data || [];
 };
 
 const createMenu = async () => {
@@ -442,6 +506,33 @@ const addFixedIngredient = (type: (typeof mealTypes)[number]) => {
   });
 };
 
+const applySavedRecipeToFixedMeal = (type: (typeof mealTypes)[number]) => {
+  const recipeId = fixedMeals[type].selected_recipe_id;
+  if (!recipeId) return;
+
+  const selectedRecipe = savedRecipes.value.find(
+    (recipe) => recipe.id === recipeId,
+  );
+  if (!selectedRecipe) return;
+
+  fixedMeals[type].dish_name = selectedRecipe.name || "";
+  fixedMeals[type].dish_description = selectedRecipe.description || "";
+
+  const confirmedIngredients = (selectedRecipe.recipe_ingredients || []).filter(
+    (ingredient) => ingredient.is_confirmed !== false && ingredient.name,
+  );
+
+  fixedMeals[type].ingredients =
+    confirmedIngredients.length > 0
+      ? confirmedIngredients.map((ingredient) => ({
+          name: ingredient.name,
+          quantity:
+            Number(ingredient.quantity) > 0 ? Number(ingredient.quantity) : 1,
+          unit_type: ingredient.unit_type || "g",
+        }))
+      : [{ name: "", quantity: 1, unit_type: "g" }];
+};
+
 const removeFixedIngredient = (
   type: (typeof mealTypes)[number],
   index: number,
@@ -453,6 +544,7 @@ const resetFixedMeals = () => {
   fixedMealTypes.value = [];
   for (const type of mealTypes) {
     fixedMeals[type] = {
+      selected_recipe_id: "",
       dish_name: "",
       dish_description: "",
       ingredients: [{ name: "", quantity: 1, unit_type: "g" }],
@@ -497,5 +589,6 @@ const formatDate = (dateString: string) => {
 
 onMounted(() => {
   loadMenus();
+  loadSavedRecipes();
 });
 </script>

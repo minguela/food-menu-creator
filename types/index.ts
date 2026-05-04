@@ -112,7 +112,7 @@ export interface Ingredient {
   external_id?: string | null;
   barcode?: string | null;
   is_verified?: boolean;
-  nutrition_status?: "complete" | "pending" | "needs_review";
+  nutrition_status?: "complete" | "pending" | "needs_review" | "not_found";
   created_at: string;
   updated_at?: string;
 }

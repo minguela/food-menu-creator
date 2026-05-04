@@ -169,7 +169,7 @@ export default defineEventHandler(async (event) => {
   const { data: ingredientRows } = await supabase
     .from("ingredients")
     .select(
-      "name, normalized_name, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
+      "name, normalized_name, nutrition_status, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
     )
     .in("normalized_name", ingredientNames);
   const nutritionMap = new Map(
@@ -232,6 +232,7 @@ export default defineEventHandler(async (event) => {
         );
         if (
           !n ||
+          n.nutrition_status !== "complete" ||
           normalized === null ||
           n.kcal_per_100g == null ||
           n.protein_per_100g == null
@@ -278,7 +279,7 @@ export default defineEventHandler(async (event) => {
           const normalized = normalizeToGrams(finalQuantity, ing.unit_type);
           const n = nutritionMap.get(String(ing.normalized_name).toLowerCase());
           let nutritionPending = false;
-          if (!n || normalized === null) {
+          if (!n || n.nutrition_status !== "complete" || normalized === null) {
             nutritionPending = true;
             pending = true;
           } else if (

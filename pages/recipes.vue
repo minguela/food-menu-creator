@@ -106,6 +106,19 @@
               </select>
               <div class="flex gap-2">
                 <button
+                  class="text-xs text-indigo-700"
+                  :disabled="candidateLoading"
+                  @click="autoApplyBestCandidate(row)"
+                >
+                  Buscar y aplicar mejor
+                </button>
+                <button
+                  class="text-xs text-sky-700"
+                  @click="openCandidateSearch(row)"
+                >
+                  Buscar fuente
+                </button>
+                <button
                   class="text-xs text-green-700"
                   @click="confirmRow(dish.id, row)"
                 >
@@ -114,6 +127,52 @@
                 <button class="text-xs text-red-700" @click="deleteRow(row.id)">
                   Quitar
                 </button>
+              </div>
+              <div
+                v-if="candidateTargetRowId === row.id"
+                class="col-span-4 rounded-lg border p-2 space-y-2"
+              >
+                <div class="grid grid-cols-[1fr_160px_auto] gap-2">
+                  <input
+                    v-model.trim="candidateQuery"
+                    class="border rounded-lg px-2 py-1 text-sm"
+                    placeholder="Buscar alimento..."
+                  />
+                  <select
+                    v-model="candidateSource"
+                    class="border rounded-lg px-2 py-1 text-sm"
+                  >
+                    <option value="usda">USDA</option>
+                    <option value="open_food_facts">Open Food Facts</option>
+                    <option value="bedca">BEDCA (próximamente)</option>
+                  </select>
+                  <button
+                    class="text-xs px-2 py-1 rounded border"
+                    :disabled="candidateLoading || !candidateQuery"
+                    @click="searchCandidatesForTarget"
+                  >
+                    {{ candidateLoading ? "Buscando..." : "Buscar" }}
+                  </button>
+                </div>
+                <div
+                  v-for="candidate in candidateResults"
+                  :key="`${candidate.source}-${candidate.external_id}`"
+                  class="text-xs border rounded p-2"
+                >
+                  <p class="font-medium">{{ candidate.name }}</p>
+                  <p class="text-gray-500">
+                    {{ candidate.nutrients.kcal_per_100g ?? "?" }} kcal · P
+                    {{ candidate.nutrients.protein_per_100g ?? "?" }} · H
+                    {{ candidate.nutrients.carbs_per_100g ?? "?" }} · G
+                    {{ candidate.nutrients.fat_per_100g ?? "?" }}
+                  </p>
+                  <button
+                    class="mt-1 text-indigo-700"
+                    @click="saveIngredientFromCandidate(candidate, row)"
+                  >
+                    Usar candidato
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -149,6 +208,19 @@
               <div class="flex gap-2">
                 <button
                   class="text-xs text-indigo-700"
+                  :disabled="candidateLoading"
+                  @click="autoApplyBestCandidate(row)"
+                >
+                  Buscar y aplicar mejor
+                </button>
+                <button
+                  class="text-xs text-sky-700"
+                  @click="openCandidateSearch(row)"
+                >
+                  Buscar fuente
+                </button>
+                <button
+                  class="text-xs text-indigo-700"
                   @click="saveConfirmedRow(row)"
                 >
                   Guardar
@@ -156,6 +228,52 @@
                 <button class="text-xs text-red-700" @click="deleteRow(row.id)">
                   Eliminar
                 </button>
+              </div>
+              <div
+                v-if="candidateTargetRowId === row.id"
+                class="col-span-4 rounded-lg border p-2 space-y-2"
+              >
+                <div class="grid grid-cols-[1fr_160px_auto] gap-2">
+                  <input
+                    v-model.trim="candidateQuery"
+                    class="border rounded-lg px-2 py-1 text-sm"
+                    placeholder="Buscar alimento..."
+                  />
+                  <select
+                    v-model="candidateSource"
+                    class="border rounded-lg px-2 py-1 text-sm"
+                  >
+                    <option value="usda">USDA</option>
+                    <option value="open_food_facts">Open Food Facts</option>
+                    <option value="bedca">BEDCA (próximamente)</option>
+                  </select>
+                  <button
+                    class="text-xs px-2 py-1 rounded border"
+                    :disabled="candidateLoading || !candidateQuery"
+                    @click="searchCandidatesForTarget"
+                  >
+                    {{ candidateLoading ? "Buscando..." : "Buscar" }}
+                  </button>
+                </div>
+                <div
+                  v-for="candidate in candidateResults"
+                  :key="`${candidate.source}-${candidate.external_id}`"
+                  class="text-xs border rounded p-2"
+                >
+                  <p class="font-medium">{{ candidate.name }}</p>
+                  <p class="text-gray-500">
+                    {{ candidate.nutrients.kcal_per_100g ?? "?" }} kcal · P
+                    {{ candidate.nutrients.protein_per_100g ?? "?" }} · H
+                    {{ candidate.nutrients.carbs_per_100g ?? "?" }} · G
+                    {{ candidate.nutrients.fat_per_100g ?? "?" }}
+                  </p>
+                  <button
+                    class="mt-1 text-indigo-700"
+                    @click="saveIngredientFromCandidate(candidate, row)"
+                  >
+                    Usar candidato
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -178,6 +296,7 @@
 import { logError } from "~/utils/log-error";
 import { calculateRecipeNutrition } from "~/utils/recipe-nutrition";
 import { normalizeIngredientName } from "~/utils/ingredient-normalize";
+import { saveIngredientFromCandidate as persistCandidate } from "~/utils/save-ingredient-from-candidate";
 import type { Dish, Ingredient, RecipeIngredient } from "~/types";
 
 type DishRow = Dish & {
@@ -187,6 +306,7 @@ type DishRow = Dish & {
 };
 
 const supabase = useSupabase();
+const runtimeConfig = useRuntimeConfig();
 const { loadCurrentUser } = useCurrentUser();
 
 const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
@@ -221,6 +341,11 @@ const editingDishId = ref<string | null>(null);
 const pendingRows = ref<Array<RecipeIngredient>>([]);
 const confirmedRows = ref<Array<RecipeIngredient>>([]);
 const formError = ref("");
+const candidateTargetRowId = ref<string | null>(null);
+const candidateSource = ref<"usda" | "open_food_facts" | "bedca">("usda");
+const candidateQuery = ref("");
+const candidateResults = ref<any[]>([]);
+const candidateLoading = ref(false);
 
 const statusMeta = (dish: DishRow) => {
   const status = dish.recipe_status || "pending_ingredients";
@@ -309,6 +434,157 @@ const upsertMasterIngredient = async (name: string, unitType: string) => {
   return created.data?.id || null;
 };
 
+const openCandidateSearch = (row: RecipeIngredient) => {
+  candidateTargetRowId.value = row.id;
+  candidateQuery.value = row.name || "";
+  candidateResults.value = [];
+};
+
+const searchCandidatesForTarget = async () => {
+  if (!candidateTargetRowId.value || !candidateQuery.value.trim()) return;
+  candidateLoading.value = true;
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const accessToken =
+      session?.access_token || runtimeConfig.public.supabaseAnonKey;
+    const response = await fetch(
+      `${runtimeConfig.public.supabaseUrl}/functions/v1/ingredient-search`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: runtimeConfig.public.supabaseAnonKey,
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          query: candidateQuery.value.trim(),
+          source: candidateSource.value,
+        }),
+      },
+    );
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload?.error || "No se pudo buscar candidato");
+    }
+    candidateResults.value = Array.isArray(payload?.candidates)
+      ? payload.candidates
+      : [];
+  } catch (error) {
+    await logError("web", error, {
+      context: "recipes.searchCandidatesForTarget",
+    });
+  } finally {
+    candidateLoading.value = false;
+  }
+};
+
+const saveIngredientFromCandidate = async (
+  candidate: any,
+  row: RecipeIngredient,
+) => {
+  try {
+    const result = await persistCandidate(candidate);
+    if (!result?.success || !result.ingredient_id) {
+      throw new Error("No se pudo guardar el candidato");
+    }
+    row.ingredient_id = result.ingredient_id;
+    row.name = row.name || candidate.name;
+    row.normalized_name = normalizeIngredientName(row.name);
+    candidateTargetRowId.value = null;
+    candidateResults.value = [];
+  } catch (error) {
+    await logError("web", error, {
+      context: "recipes.saveIngredientFromCandidate",
+    });
+  }
+};
+
+const hasCompleteNutrition = (candidate: any) =>
+  [
+    candidate?.nutrients?.kcal_per_100g,
+    candidate?.nutrients?.protein_per_100g,
+    candidate?.nutrients?.carbs_per_100g,
+    candidate?.nutrients?.fat_per_100g,
+  ].every((value) => value != null);
+
+const pickBestCandidate = (candidates: any[]) => {
+  const fullAndHigh = candidates.filter(
+    (candidate) =>
+      candidate?.reliability === "high" && hasCompleteNutrition(candidate),
+  );
+  if (fullAndHigh.length > 0) return fullAndHigh[0];
+  const fullAny = candidates.filter((candidate) =>
+    hasCompleteNutrition(candidate),
+  );
+  return fullAny[0] || null;
+};
+
+const fetchCandidates = async (
+  queryText: string,
+  source: "usda" | "open_food_facts",
+) => {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const accessToken =
+    session?.access_token || runtimeConfig.public.supabaseAnonKey;
+  const response = await fetch(
+    `${runtimeConfig.public.supabaseUrl}/functions/v1/ingredient-search`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: runtimeConfig.public.supabaseAnonKey,
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        query: queryText.trim(),
+        source,
+      }),
+    },
+  );
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload?.error || "No se pudo buscar candidato");
+  }
+  return Array.isArray(payload?.candidates) ? payload.candidates : [];
+};
+
+const autoApplyBestCandidate = async (row: RecipeIngredient) => {
+  if (!row.name?.trim()) {
+    formError.value =
+      "El ingrediente debe tener nombre para buscar candidatos.";
+    return;
+  }
+
+  formError.value = "";
+  candidateLoading.value = true;
+  try {
+    let candidates = await fetchCandidates(row.name, "usda");
+    let bestCandidate = pickBestCandidate(candidates);
+
+    if (!bestCandidate) {
+      candidates = await fetchCandidates(row.name, "open_food_facts");
+      bestCandidate = pickBestCandidate(candidates);
+    }
+
+    if (!bestCandidate) {
+      formError.value =
+        "No encontré un candidato nutricional claro. Revisa manualmente con 'Buscar fuente'.";
+      return;
+    }
+
+    await saveIngredientFromCandidate(bestCandidate, row);
+  } catch (error) {
+    await logError("web", error, { context: "recipes.autoApplyBestCandidate" });
+    formError.value = "No se pudo aplicar el mejor candidato automáticamente.";
+  } finally {
+    candidateLoading.value = false;
+  }
+};
+
 const syncRecipeStatus = async (dishId: string) => {
   const dish = dishes.value.find((row) => row.id === dishId);
   if (!dish) return;
@@ -353,7 +629,9 @@ const confirmRow = async (dishId: string, row: RecipeIngredient) => {
     formError.value = "Para confirmar, indica nombre, cantidad y unidad.";
     return;
   }
-  const ingredientId = await upsertMasterIngredient(row.name, row.unit_type);
+  const ingredientId =
+    row.ingredient_id ||
+    (await upsertMasterIngredient(row.name, row.unit_type));
   if (!ingredientId) {
     formError.value = "No se pudo asociar el ingrediente maestro.";
     return;
@@ -388,7 +666,9 @@ const saveConfirmedRow = async (row: RecipeIngredient) => {
       "Ingrediente confirmado inválido: revisa nombre/cantidad/unidad.";
     return;
   }
-  const ingredientId = await upsertMasterIngredient(row.name, row.unit_type);
+  const ingredientId =
+    row.ingredient_id ||
+    (await upsertMasterIngredient(row.name, row.unit_type));
   const { error } = await supabase
     .from("recipe_ingredients")
     .update({

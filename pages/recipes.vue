@@ -537,12 +537,9 @@ const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
 ];
 
 const dishes = ref<DishRow[]>([]);
-const filter = ref<
-  "all" | "pending" | "suggested" | "complete" | "not_required"
->("all");
+const filter = ref<"all" | "suggested" | "complete" | "not_required">("all");
 const filterItems = [
   { value: "all", label: "Todas" },
-  { value: "pending", label: "Pendientes" },
   { value: "suggested", label: "Sugeridas" },
   { value: "complete", label: "Completas" },
   { value: "not_required", label: "No requiere" },
@@ -581,11 +578,7 @@ const statusMeta = (dish: DishRow) => {
     return { label: "Completa", color: "text-emerald-700" };
   if (status === "not_required")
     return { label: "No requiere ingredientes", color: "text-gray-500" };
-  if (status === "incomplete_nutrition")
-    return { label: "Pendiente de curación", color: "text-amber-700" };
-  if (status === "suggested_ingredients")
-    return { label: "Sugerencias por confirmar", color: "text-amber-700" };
-  return { label: "Pendiente de ingredientes", color: "text-amber-700" };
+  return { label: "Sugerida", color: "text-amber-700" };
 };
 
 const filteredDishes = computed(() =>
@@ -600,13 +593,12 @@ const filteredDishes = computed(() =>
       return false;
     }
     if (filter.value === "all") return true;
-    if (filter.value === "pending")
+    if (filter.value === "suggested")
       return (
+        dish.recipe_status === "suggested_ingredients" ||
         dish.recipe_status === "pending_ingredients" ||
         dish.recipe_status === "incomplete_nutrition"
       );
-    if (filter.value === "suggested")
-      return dish.recipe_status === "suggested_ingredients";
     if (filter.value === "complete") return dish.recipe_status === "complete";
     return dish.recipe_status === "not_required";
   }),
@@ -1024,18 +1016,13 @@ const syncRecipeStatus = async (dishId: string) => {
     .eq("recipe_id", dishId);
   const confirmed = (recipeRows || []).filter((row: any) => row.is_confirmed);
   if (confirmed.length === 0) {
-    const suggested = (recipeRows || []).some((row: any) => row.is_suggested);
     await supabase
       .from("dishes")
       .update({
-        recipe_status: suggested
-          ? "suggested_ingredients"
-          : "pending_ingredients",
+        recipe_status: "suggested_ingredients",
       })
       .eq("id", dishId);
-    dish.recipe_status = suggested
-      ? "suggested_ingredients"
-      : "pending_ingredients";
+    dish.recipe_status = "suggested_ingredients";
     return;
   }
 
@@ -1043,10 +1030,12 @@ const syncRecipeStatus = async (dishId: string) => {
   await supabase
     .from("dishes")
     .update({
-      recipe_status: nutrition.complete ? "complete" : "incomplete_nutrition",
+      recipe_status: nutrition.complete ? "complete" : "suggested_ingredients",
     })
     .eq("id", dishId);
-  dish.recipe_status = nutrition.complete ? "complete" : "incomplete_nutrition";
+  dish.recipe_status = nutrition.complete
+    ? "complete"
+    : "suggested_ingredients";
 };
 
 const confirmRow = async (dishId: string, row: RecipeIngredient) => {
@@ -1390,7 +1379,7 @@ const splitRecipe = async () => {
           name: partName,
           normalized_name: normalized,
           description: null,
-          recipe_status: "pending_ingredients",
+          recipe_status: "suggested_ingredients",
           source: "manual",
           servings_base: 1,
         })

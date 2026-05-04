@@ -155,23 +155,121 @@ export default defineEventHandler(async (event) => {
     recipeIngredientsByRecipeId.get(row.recipe_id)?.push(row);
   }
 
-  const ingredientNames = Array.from(
+  const ingredientIds = Array.from(
     new Set(
       (recipeRows || [])
-        .filter((row: any) => row.is_confirmed)
-        .map((row: any) => String(row.normalized_name || "").toLowerCase())
-        .filter(Boolean),
+        .filter((row: any) => row.is_confirmed && row.ingredient_id)
+        .map((row: any) => row.ingredient_id),
     ),
   );
   const { data: ingredientRows } = await supabase
     .from("ingredients")
     .select(
-      "name, normalized_name, nutrition_status, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
+      "id, name, normalized_name, nutrition_status, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
     )
-    .in("normalized_name", ingredientNames);
-  const nutritionMap = new Map(
-    (ingredientRows || []).map((row: any) => [row.normalized_name, row]),
+    .in("id", ingredientIds);
+  const nutritionById = new Map(
+    (ingredientRows || []).map((row: any) => [row.id, row]),
   );
+
+  const uncuredRecipes: Array<{
+    dish_id: string;
+    dish_name: string;
+    reason:
+      | "pending_ingredients"
+      | "suggested_ingredients"
+      | "missing_ingredient_link"
+      | "missing_nutrition";
+  }> = [];
+  const uncuredSet = new Set<string>();
+
+  for (const dish of dishRows || []) {
+    const normalizedName = String(
+      dish.normalized_name || dish.name || "",
+    ).toLowerCase();
+    const rows = recipeIngredientsByRecipeId.get(dish.id) || [];
+    const confirmedRows = rows.filter((row: any) => row.is_confirmed);
+
+    if (dish.recipe_status === "pending_ingredients") {
+      uncuredSet.add(
+        `${dish.id}:pending_ingredients:${normalizedName || dish.id}`,
+      );
+      uncuredRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "pending_ingredients",
+      });
+      continue;
+    }
+    if (dish.recipe_status === "suggested_ingredients") {
+      uncuredSet.add(
+        `${dish.id}:suggested_ingredients:${normalizedName || dish.id}`,
+      );
+      uncuredRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "suggested_ingredients",
+      });
+      continue;
+    }
+
+    if (confirmedRows.length === 0) {
+      uncuredSet.add(
+        `${dish.id}:pending_ingredients:${normalizedName || dish.id}`,
+      );
+      uncuredRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "pending_ingredients",
+      });
+      continue;
+    }
+
+    const hasMissingLink = confirmedRows.some((row: any) => !row.ingredient_id);
+    if (hasMissingLink) {
+      uncuredSet.add(
+        `${dish.id}:missing_ingredient_link:${normalizedName || dish.id}`,
+      );
+      uncuredRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "missing_ingredient_link",
+      });
+      continue;
+    }
+
+    const hasMissingNutrition = confirmedRows.some((row: any) => {
+      const ingredient = nutritionById.get(row.ingredient_id);
+      return (
+        !ingredient ||
+        ingredient.nutrition_status !== "complete" ||
+        ingredient.kcal_per_100g == null ||
+        ingredient.protein_per_100g == null ||
+        ingredient.carbs_per_100g == null ||
+        ingredient.fat_per_100g == null
+      );
+    });
+
+    if (hasMissingNutrition) {
+      uncuredSet.add(
+        `${dish.id}:missing_nutrition:${normalizedName || dish.id}`,
+      );
+      uncuredRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "missing_nutrition",
+      });
+    }
+  }
+
+  if (uncuredSet.size > 0) {
+    throw createError({
+      statusCode: 409,
+      statusMessage:
+        "Tienes recetas o ingredientes sin curar. Completa su curación antes de generar el menú rotativo.",
+      data: { uncured_recipes: uncuredRecipes },
+    });
+  }
 
   const shares = {
     desayuno: { kcal: 0.25, protein: 0.3 },
@@ -209,20 +307,21 @@ export default defineEventHandler(async (event) => {
         ? recipeIngredientsByRecipeId.get(linkedDish.id) || []
         : [];
       const ingredientBase = recipeRowsForDish
-        .filter((row: any) => row.is_confirmed)
+        .filter((row: any) => row.is_confirmed && row.ingredient_id)
         .map((ing: any) => ({
+          ingredient_id: ing.ingredient_id,
           name: String(ing.name || ""),
           normalized_name: String(
             ing.normalized_name || ing.name || "",
           ).toLowerCase(),
-          quantity: Number(ing.quantity) || 0,
+          quantity: Number(ing.quantity) || 1,
           unit_type: ing.unit_type,
         }));
 
       let baseKcal = 0;
       let baseProtein = 0;
       for (const baseIng of ingredientBase) {
-        const n = nutritionMap.get(baseIng.normalized_name);
+        const n = nutritionById.get(baseIng.ingredient_id);
         const normalized = normalizeToGrams(
           baseIng.quantity,
           baseIng.unit_type,
@@ -274,7 +373,7 @@ export default defineEventHandler(async (event) => {
         const ingredients = ingredientBase.map((ing: any) => {
           const finalQuantity = round(ing.quantity * multiplier);
           const normalized = normalizeToGrams(finalQuantity, ing.unit_type);
-          const n = nutritionMap.get(String(ing.normalized_name).toLowerCase());
+          const n = nutritionById.get(ing.ingredient_id);
           let nutritionPending = false;
           if (!n || n.nutrition_status !== "complete" || normalized === null) {
             nutritionPending = true;

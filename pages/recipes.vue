@@ -25,7 +25,7 @@
     </header>
 
     <section class="bg-white rounded-lg border p-4">
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <button
           v-for="item in filterItems"
           :key="item.value"
@@ -39,6 +39,13 @@
         >
           {{ item.label }}
         </button>
+        <button
+          class="ml-auto px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm disabled:opacity-50"
+          :disabled="selectedDishIds.length === 0"
+          @click="deleteSelectedRecipes"
+        >
+          Eliminar recetas ({{ selectedDishIds.length }})
+        </button>
       </div>
     </section>
 
@@ -49,18 +56,35 @@
         class="bg-white rounded-lg border p-4"
       >
         <div class="flex flex-wrap justify-between gap-3">
-          <div>
-            <h2 class="font-semibold text-gray-900">{{ dish.name }}</h2>
-            <p class="text-sm text-gray-500">
-              {{ dish.description || "Sin descripción" }}
-            </p>
-            <p class="text-xs mt-1" :class="statusMeta(dish).color">
-              {{ statusMeta(dish).label }}
-            </p>
+          <div class="flex items-start gap-3">
+            <label class="mt-1 inline-flex items-center">
+              <input
+                type="checkbox"
+                :checked="isDishSelected(dish.id)"
+                @change="toggleDishSelected(dish.id)"
+              />
+            </label>
+            <div>
+              <h2 class="font-semibold text-gray-900">{{ dish.name }}</h2>
+              <p class="text-sm text-gray-500">
+                {{ dish.description || "Sin descripción" }}
+              </p>
+              <p class="text-xs mt-1" :class="statusMeta(dish).color">
+                {{ statusMeta(dish).label }}
+              </p>
+            </div>
           </div>
-          <button class="text-sm text-indigo-700" @click="toggleEdit(dish.id)">
-            {{ editingDishId === dish.id ? "Cerrar" : "Editar / Curar" }}
-          </button>
+          <div class="flex gap-3">
+            <button
+              class="text-sm text-indigo-700"
+              @click="toggleEdit(dish.id)"
+            >
+              {{ editingDishId === dish.id ? "Cerrar" : "Editar / Curar" }}
+            </button>
+            <button class="text-sm text-red-700" @click="deleteRecipe(dish.id)">
+              Eliminar
+            </button>
+          </div>
         </div>
 
         <div v-if="editingDishId === dish.id" class="mt-4 space-y-3">
@@ -81,19 +105,11 @@
             <div
               v-for="row in pendingRows"
               :key="row.id"
-              class="grid grid-cols-[1fr_120px_100px_140px] gap-2"
+              class="grid grid-cols-[1fr_150px_1fr] gap-2"
             >
               <input
                 v-model.trim="row.name"
                 class="border rounded-lg px-3 py-2"
-              />
-              <input
-                v-model.number="row.quantity"
-                type="number"
-                min="0.01"
-                step="0.01"
-                class="border rounded-lg px-3 py-2"
-                placeholder="Cantidad"
               />
               <select
                 v-model="row.unit_type"
@@ -184,17 +200,10 @@
             <div
               v-for="row in confirmedRows"
               :key="row.id"
-              class="grid grid-cols-[1fr_120px_100px_140px] gap-2"
+              class="grid grid-cols-[1fr_150px_1fr] gap-2"
             >
               <input
                 v-model.trim="row.name"
-                class="border rounded-lg px-3 py-2"
-              />
-              <input
-                v-model.number="row.quantity"
-                type="number"
-                min="0.01"
-                step="0.01"
                 class="border rounded-lg px-3 py-2"
               />
               <select
@@ -346,6 +355,7 @@ const candidateSource = ref<"usda" | "open_food_facts" | "bedca">("usda");
 const candidateQuery = ref("");
 const candidateResults = ref<any[]>([]);
 const candidateLoading = ref(false);
+const selectedDishIds = ref<string[]>([]);
 
 const statusMeta = (dish: DishRow) => {
   const status = dish.recipe_status || "pending_ingredients";
@@ -390,9 +400,23 @@ const loadRecipes = async () => {
     return;
   }
   dishes.value = (data || []) as DishRow[];
+  selectedDishIds.value = selectedDishIds.value.filter((id) =>
+    dishes.value.some((dish) => dish.id === id),
+  );
 };
 
-const toggleEdit = (dishId: string) => {
+const isDishSelected = (dishId: string) =>
+  selectedDishIds.value.includes(dishId);
+
+const toggleDishSelected = (dishId: string) => {
+  if (isDishSelected(dishId)) {
+    selectedDishIds.value = selectedDishIds.value.filter((id) => id !== dishId);
+    return;
+  }
+  selectedDishIds.value.push(dishId);
+};
+
+const toggleEdit = async (dishId: string) => {
   formError.value = "";
   if (editingDishId.value === dishId) {
     editingDishId.value = null;
@@ -400,6 +424,8 @@ const toggleEdit = (dishId: string) => {
     confirmedRows.value = [];
     return;
   }
+  await ensureRecipeIngredientLinks(dishId);
+  await loadRecipes();
   editingDishId.value = dishId;
   const dish = dishes.value.find((row) => row.id === dishId);
   pendingRows.value = (dish?.recipe_ingredients || [])
@@ -408,6 +434,30 @@ const toggleEdit = (dishId: string) => {
   confirmedRows.value = (dish?.recipe_ingredients || [])
     .filter((row) => row.is_confirmed)
     .map((row) => ({ ...row }));
+};
+
+const ensureRecipeIngredientLinks = async (dishId: string) => {
+  const dish = dishes.value.find((row) => row.id === dishId);
+  if (!dish) return;
+  const toLink = (dish.recipe_ingredients || []).filter(
+    (row) => row.is_confirmed && !row.ingredient_id && row.name,
+  );
+  if (toLink.length === 0) return;
+
+  for (const row of toLink) {
+    const ingredientId = await upsertMasterIngredient(
+      row.name,
+      row.unit_type || "g",
+    );
+    if (!ingredientId) continue;
+    await supabase
+      .from("recipe_ingredients")
+      .update({
+        ingredient_id: ingredientId,
+        normalized_name: normalizeIngredientName(row.name),
+      })
+      .eq("id", row.id);
+  }
 };
 
 const upsertMasterIngredient = async (name: string, unitType: string) => {
@@ -625,8 +675,8 @@ const syncRecipeStatus = async (dishId: string) => {
 
 const confirmRow = async (dishId: string, row: RecipeIngredient) => {
   formError.value = "";
-  if (!row.name || !row.quantity || row.quantity <= 0 || !row.unit_type) {
-    formError.value = "Para confirmar, indica nombre, cantidad y unidad.";
+  if (!row.name || !row.unit_type) {
+    formError.value = "Para confirmar, indica nombre y unidad.";
     return;
   }
   const ingredientId =
@@ -642,7 +692,7 @@ const confirmRow = async (dishId: string, row: RecipeIngredient) => {
       ingredient_id: ingredientId,
       name: row.name,
       normalized_name: normalizeIngredientName(row.name),
-      quantity: row.quantity,
+      quantity: 1,
       unit_type: row.unit_type,
       is_confirmed: true,
       is_suggested: false,
@@ -661,21 +711,24 @@ const confirmRow = async (dishId: string, row: RecipeIngredient) => {
 
 const saveConfirmedRow = async (row: RecipeIngredient) => {
   formError.value = "";
-  if (!row.name || !row.quantity || row.quantity <= 0 || !row.unit_type) {
-    formError.value =
-      "Ingrediente confirmado inválido: revisa nombre/cantidad/unidad.";
+  if (!row.name || !row.unit_type) {
+    formError.value = "Ingrediente confirmado inválido: revisa nombre/unidad.";
     return;
   }
   const ingredientId =
     row.ingredient_id ||
     (await upsertMasterIngredient(row.name, row.unit_type));
+  if (!ingredientId) {
+    formError.value = "No se pudo asociar el ingrediente maestro.";
+    return;
+  }
   const { error } = await supabase
     .from("recipe_ingredients")
     .update({
       ingredient_id: ingredientId,
       name: row.name,
       normalized_name: normalizeIngredientName(row.name),
-      quantity: row.quantity,
+      quantity: 1,
       unit_type: row.unit_type,
       is_confirmed: true,
       is_suggested: false,
@@ -713,6 +766,38 @@ const addManualConfirmed = async (dishId: string) => {
   await syncRecipeStatus(dishId);
   await loadRecipes();
   toggleEdit(dishId);
+};
+
+const deleteRecipe = async (dishId: string) => {
+  if (!confirm("¿Eliminar esta receta y sus ingredientes?")) return;
+  try {
+    const { error } = await supabase.from("dishes").delete().eq("id", dishId);
+    if (error) throw error;
+    selectedDishIds.value = selectedDishIds.value.filter((id) => id !== dishId);
+    if (editingDishId.value === dishId) {
+      editingDishId.value = null;
+    }
+    await loadRecipes();
+  } catch (error) {
+    await logError("web", error, { context: "recipes.deleteRecipe" });
+  }
+};
+
+const deleteSelectedRecipes = async () => {
+  if (selectedDishIds.value.length === 0) return;
+  if (!confirm(`¿Eliminar ${selectedDishIds.value.length} recetas?`)) return;
+  try {
+    const { error } = await supabase
+      .from("dishes")
+      .delete()
+      .in("id", selectedDishIds.value);
+    if (error) throw error;
+    selectedDishIds.value = [];
+    editingDishId.value = null;
+    await loadRecipes();
+  } catch (error) {
+    await logError("web", error, { context: "recipes.deleteSelectedRecipes" });
+  }
 };
 
 onMounted(loadRecipes);

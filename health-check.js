@@ -15,7 +15,7 @@ const routes = [
   },
   {
     path: "/generar",
-    expected: ["Generar Menú Rotativo"],
+    expected: ["Menú rotativo multi-perfil"],
   },
   {
     path: "/shopping",

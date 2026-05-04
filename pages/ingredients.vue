@@ -32,6 +32,28 @@
       </div>
     </section>
 
+    <section class="bg-white rounded-lg border p-4 space-y-2">
+      <h2 class="font-semibold text-gray-900">Importar CSV</h2>
+      <p class="text-xs text-gray-500">
+        Cabeceras:
+        `name,normalized_name,default_unit_type,kcal_per_100g,protein_per_100g,carbs_per_100g,fat_per_100g,source,external_id,barcode,is_verified`
+      </p>
+      <textarea
+        v-model="csvInput"
+        class="w-full min-h-[140px] border rounded-lg px-3 py-2 text-sm"
+        placeholder="name,normalized_name,default_unit_type,kcal_per_100g,protein_per_100g,carbs_per_100g,fat_per_100g,source,external_id,barcode,is_verified"
+      />
+      <div class="flex gap-2">
+        <button
+          class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+          :disabled="importingCsv || !csvInput.trim()"
+          @click="importCsv"
+        >
+          {{ importingCsv ? "Importando..." : "Importar CSV" }}
+        </button>
+      </div>
+    </section>
+
     <section
       v-if="usdaCandidates.length > 0"
       class="bg-white rounded-lg border p-4 space-y-2"
@@ -154,6 +176,8 @@ const supabase = useSupabase();
 const runtimeConfig = useRuntimeConfig();
 const query = ref("");
 const rows = ref<IngredientRow[]>([]);
+const csvInput = ref("");
+const importingCsv = ref(false);
 const usdaCandidates = ref<any[]>([]);
 const searchingUsda = ref(false);
 const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
@@ -296,6 +320,23 @@ const save = async (row: IngredientRow) => {
     await load();
   } catch (error) {
     await logError("web", error, { context: "ingredients.save" });
+  }
+};
+
+const importCsv = async () => {
+  if (!csvInput.value.trim()) return;
+  importingCsv.value = true;
+  try {
+    await $fetch("/api/ingredients-import-csv", {
+      method: "POST",
+      body: { csv: csvInput.value },
+    });
+    csvInput.value = "";
+    await load();
+  } catch (error) {
+    await logError("web", error, { context: "ingredients.importCsv" });
+  } finally {
+    importingCsv.value = false;
   }
 };
 

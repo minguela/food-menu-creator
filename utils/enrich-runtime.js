@@ -17,16 +17,21 @@ export const resolveSupabaseServerKey = ({
   envNuxtPublicAnonKey,
   publicAnonKey,
 }) => {
-  return (
-    runtimeServiceKey ||
-    envServiceRole ||
-    envNuxtServiceKey ||
-    envSupabaseKey ||
-    envAnonKey ||
-    envNuxtPublicAnonKey ||
-    publicAnonKey ||
-    ""
-  );
+  const candidates = [
+    runtimeServiceKey,
+    envServiceRole,
+    envNuxtServiceKey,
+    envSupabaseKey,
+    envAnonKey,
+    envNuxtPublicAnonKey,
+    publicAnonKey,
+  ];
+  return candidates.find((value) => isSupabaseJwt(value)) || "";
+};
+
+export const isSupabaseJwt = (value) => {
+  const token = String(value || "").trim();
+  return token.split(".").length === 3;
 };
 
 export const resolveUsdaKey = ({

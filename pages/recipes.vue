@@ -266,13 +266,13 @@
                   :disabled="candidateLoading"
                   @click="autoApplyBestCandidate(row)"
                 >
-                  Buscar y aplicar mejor
+                  Curar con OFF
                 </button>
                 <button
                   class="text-xs text-sky-700"
                   @click="openCandidateSearch(row)"
                 >
-                  Buscar fuente
+                  Buscar/curar fuente
                 </button>
                 <button
                   class="text-xs text-green-700"
@@ -329,7 +329,7 @@
                     class="mt-1 text-indigo-700"
                     @click="saveIngredientFromCandidate(candidate, row)"
                   >
-                    Usar candidato
+                    Curar ingrediente
                   </button>
                 </div>
               </div>
@@ -372,13 +372,13 @@
                   :disabled="candidateLoading"
                   @click="autoApplyBestCandidate(row)"
                 >
-                  Buscar y aplicar mejor
+                  Curar con OFF
                 </button>
                 <button
                   class="text-xs text-sky-700"
                   @click="openCandidateSearch(row)"
                 >
-                  Buscar fuente
+                  Buscar/curar fuente
                 </button>
                 <button
                   class="text-xs text-indigo-700"
@@ -435,7 +435,7 @@
                     class="mt-1 text-indigo-700"
                     @click="saveIngredientFromCandidate(candidate, row)"
                   >
-                    Usar candidato
+                    Curar ingrediente
                   </button>
                 </div>
               </div>
@@ -942,6 +942,38 @@ const searchCandidatesForTarget = async () => {
   }
 };
 
+const removeDuplicateSuggestedRows = async (
+  dishId: string,
+  row: RecipeIngredient,
+) => {
+  const normalizedName = normalizeIngredientName(row.name || "");
+  if (!normalizedName) return;
+
+  const duplicateRows = pendingRows.value.filter(
+    (item) =>
+      item.id !== row.id &&
+      normalizeIngredientName(item.name || "") === normalizedName,
+  );
+  if (duplicateRows.length === 0) return;
+
+  const duplicateIds = duplicateRows.map((item) => item.id);
+  const { error } = await supabase
+    .from("recipe_ingredients")
+    .delete()
+    .in("id", duplicateIds);
+  if (error) throw error;
+
+  pendingRows.value = pendingRows.value.filter(
+    (item) => !duplicateIds.includes(item.id),
+  );
+  const dish = dishes.value.find((item) => item.id === dishId);
+  if (dish?.recipe_ingredients) {
+    dish.recipe_ingredients = dish.recipe_ingredients.filter(
+      (item) => !duplicateIds.includes(item.id),
+    );
+  }
+};
+
 const saveIngredientFromCandidate = async (
   candidate: any,
   row: RecipeIngredient,
@@ -951,9 +983,43 @@ const saveIngredientFromCandidate = async (
     if (!result?.success || !result.ingredient_id) {
       throw new Error("No se pudo guardar el candidato");
     }
+    const name = row.name || candidate.name;
+    const normalizedName = normalizeIngredientName(name);
+    const { error } = await supabase
+      .from("recipe_ingredients")
+      .update({
+        ingredient_id: result.ingredient_id,
+        name,
+        normalized_name: normalizedName,
+        unit_type: row.unit_type || "g",
+        quantity: row.quantity ?? 1,
+        is_confirmed: true,
+        is_suggested: false,
+        needs_review: false,
+      })
+      .eq("id", row.id);
+    if (error) throw error;
+
     row.ingredient_id = result.ingredient_id;
-    row.name = row.name || candidate.name;
-    row.normalized_name = normalizeIngredientName(row.name);
+    row.name = name;
+    row.normalized_name = normalizedName;
+    row.unit_type = row.unit_type || "g";
+    row.quantity = row.quantity ?? 1;
+    row.is_confirmed = true;
+    row.is_suggested = false;
+    row.needs_review = false;
+    await removeDuplicateSuggestedRows(row.recipe_id, row);
+    await syncRecipeStatus(row.recipe_id);
+    pendingRows.value = pendingRows.value.filter((item) => item.id !== row.id);
+    const confirmedIndex = confirmedRows.value.findIndex(
+      (item) => item.id === row.id,
+    );
+    if (confirmedIndex >= 0) {
+      confirmedRows.value[confirmedIndex] = { ...row };
+    } else {
+      confirmedRows.value.unshift({ ...row });
+    }
+    updateOpenDishRows();
     candidateTargetRowId.value = null;
     candidateResults.value = [];
   } catch (error) {

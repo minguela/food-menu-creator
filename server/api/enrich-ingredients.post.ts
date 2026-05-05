@@ -14,7 +14,13 @@ import {
   shouldTryUsda,
 } from "~/utils/enrich-runtime";
 
-type EnrichBody = { limit?: number; source?: EnrichSource };
+type EnrichBody = {
+  ingredientId?: string;
+  ingredientIds?: string[];
+  limit?: number;
+  query?: string;
+  source?: EnrichSource;
+};
 type EnrichSource = "auto" | "usda" | "open_food_facts" | "bedca";
 
 const extractUsdaNutrient = (foodNutrients: any[], keys: string[]) => {
@@ -37,7 +43,21 @@ const OFF_MIN_CONFIDENCE = 0.75;
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as EnrichBody;
-  const limit = Math.min(50, Math.max(1, Number(body?.limit) || 20));
+  const ingredientIds = Array.from(
+    new Set(
+      [
+        body?.ingredientId,
+        ...(Array.isArray(body?.ingredientIds) ? body.ingredientIds : []),
+      ]
+        .map((id) => String(id || "").trim())
+        .filter(Boolean),
+    ),
+  );
+  const queryText = String(body?.query || "").trim();
+  const limit = Math.min(
+    10,
+    Math.max(1, Number(body?.limit) || ingredientIds.length || 1),
+  );
   const source = normalizeEnrichSource(body?.source) as EnrichSource;
   const effectiveSource: EnrichSource =
     source === "auto" || source === "bedca" ? "open_food_facts" : source;
@@ -76,13 +96,23 @@ export default defineEventHandler(async (event) => {
 
   const supabase = createClient(config.public.supabaseUrl, supabaseKey);
 
-  const { data: ingredients, error } = await supabase
+  let ingredientsQuery = supabase
     .from("ingredients")
     .select("*")
-    .or(
-      "nutrition_status.is.null,nutrition_status.eq.pending,kcal_per_100g.is.null,protein_per_100g.is.null,carbs_per_100g.is.null,fat_per_100g.is.null",
-    )
+    .order("updated_at", { ascending: true, nullsFirst: true })
     .limit(limit);
+
+  if (ingredientIds.length > 0) {
+    ingredientsQuery = ingredientsQuery.in("id", ingredientIds);
+  } else if (queryText) {
+    ingredientsQuery = ingredientsQuery.ilike("name", `%${queryText}%`);
+  } else {
+    ingredientsQuery = ingredientsQuery.or(
+      "nutrition_status.is.null,nutrition_status.eq.pending,nutrition_status.eq.needs_review",
+    );
+  }
+
+  const { data: ingredients, error } = await ingredientsQuery;
 
   if (error) {
     throw createError({ statusCode: 500, statusMessage: error.message });
@@ -105,7 +135,8 @@ export default defineEventHandler(async (event) => {
 
       const normalized = normalizeIngredientName(ingredient.name);
       const aliasQuery = USDA_ALIASES[normalized];
-      const query = aliasQuery || ingredient.name;
+      const usdaQuery = aliasQuery || ingredient.name;
+      const offQuery = queryText || ingredient.name;
 
       let bestCandidate: any = null;
       let bestScore = 0;
@@ -117,7 +148,7 @@ export default defineEventHandler(async (event) => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              query,
+              query: usdaQuery,
               dataType: ["Foundation", "SR Legacy"],
               pageSize: 8,
               pageNumber: 1,
@@ -163,11 +194,14 @@ export default defineEventHandler(async (event) => {
         }
       }
 
-      if (shouldTryOff(effectiveSource) && (!bestCandidate || bestScore < OFF_MIN_CONFIDENCE)) {
+      if (
+        shouldTryOff(effectiveSource) &&
+        (!bestCandidate || bestScore < OFF_MIN_CONFIDENCE)
+      ) {
         const offRes = await fetch(
           `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
-            query,
-          )}&search_simple=1&action=process&json=1&page_size=25`,
+            offQuery,
+          )}&search_simple=1&action=process&json=1&page_size=10&fields=code,id,product_name,generic_name,nutriments`,
         );
         if (offRes.ok) {
           const offPayload = await offRes.json();
@@ -196,7 +230,6 @@ export default defineEventHandler(async (event) => {
             const score = scoreIngredientCandidate(
               ingredient.name,
               candidate.name,
-              aliasQuery,
             );
             if (score > bestScore) {
               bestScore = score;

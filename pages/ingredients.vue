@@ -62,7 +62,15 @@
           :disabled="enriching"
           @click="runEnrichment"
         >
-          {{ enriching ? "Enriqueciendo..." : "Enriquecer pendientes" }}
+          {{
+            enriching
+              ? "Enriqueciendo..."
+              : selectedIds.length > 0
+                ? `Enriquecer seleccionados (${selectedIds.length})`
+                : query
+                  ? "Enriquecer por búsqueda"
+                  : "Enriquecer siguiente pendiente"
+          }}
         </button>
         <button
           class="px-3 py-2 border rounded-lg text-xs text-gray-700 disabled:opacity-50"
@@ -364,6 +372,7 @@ const load = async () => {
   const { data: candidateRows } = await supabase
     .from("ingredient_nutrition_candidates")
     .select("*")
+    .gte("confidence", 0.75)
     .order("created_at", { ascending: false })
     .limit(60);
   reviewCandidates.value = (candidateRows || []) as ReviewCandidate[];
@@ -444,43 +453,28 @@ const saveIngredientFromCandidate = async (candidate: any) => {
 const runEnrichment = async () => {
   enriching.value = true;
   try {
-    const accumulated = {
-      processed: 0,
-      completed: 0,
-      needs_review: 0,
-      not_found: 0,
-    };
-
-    for (let round = 0; round < 25; round += 1) {
-      const result = await $fetch<{
-        success: boolean;
-        source: "auto" | "usda" | "open_food_facts" | "bedca";
-        processed: number;
-        completed: number;
-        needs_review: number;
-        not_found: number;
-      }>("/api/enrich-ingredients", {
-        method: "POST",
-        body: {
-          limit: 50,
-          source:
-            searchSource.value === "usda" ? "usda" : "open_food_facts",
-        },
-      });
-
-      accumulated.processed += result.processed || 0;
-      accumulated.completed += result.completed || 0;
-      accumulated.needs_review += result.needs_review || 0;
-      accumulated.not_found += result.not_found || 0;
-
-      if (!result.processed) break;
-    }
+    const result = await $fetch<{
+      success: boolean;
+      source: "auto" | "usda" | "open_food_facts" | "bedca";
+      processed: number;
+      completed: number;
+      needs_review: number;
+      not_found: number;
+    }>("/api/enrich-ingredients", {
+      method: "POST",
+      body: {
+        ingredientIds: selectedIds.value,
+        limit: selectedIds.value.length > 0 ? selectedIds.value.length : 1,
+        query: selectedIds.value.length === 0 ? query.value.trim() : "",
+        source: searchSource.value === "usda" ? "usda" : "open_food_facts",
+      },
+    });
 
     enrichSummary.value = {
-      processed: accumulated.processed,
-      completed: accumulated.completed,
-      needs_review: accumulated.needs_review,
-      not_found: accumulated.not_found,
+      processed: result.processed || 0,
+      completed: result.completed || 0,
+      needs_review: result.needs_review || 0,
+      not_found: result.not_found || 0,
     };
     await load();
   } catch (error) {

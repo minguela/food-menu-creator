@@ -41,6 +41,28 @@ const extractUsdaNutrient = (foodNutrients: any[], keys: string[]) => {
 
 const OFF_MIN_CONFIDENCE = 0.75;
 
+const hasCompleteCandidateNutrition = (candidate: any) =>
+  [
+    candidate?.kcal_per_100g,
+    candidate?.protein_per_100g,
+    candidate?.carbs_per_100g,
+    candidate?.fat_per_100g,
+  ].every((value) => value !== null);
+
+const shouldReplaceBestCandidate = (
+  candidate: any,
+  score: number,
+  bestCandidate: any,
+  bestScore: number,
+) => {
+  if (score > bestScore) return true;
+  if (score < bestScore) return false;
+  return (
+    hasCompleteCandidateNutrition(candidate) &&
+    !hasCompleteCandidateNutrition(bestCandidate)
+  );
+};
+
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as EnrichBody;
   const ingredientIds = Array.from(
@@ -186,7 +208,14 @@ export default defineEventHandler(async (event) => {
               candidate.name,
               aliasQuery,
             );
-            if (score > bestScore) {
+            if (
+              shouldReplaceBestCandidate(
+                candidate,
+                score,
+                bestCandidate,
+                bestScore,
+              )
+            ) {
               bestScore = score;
               bestCandidate = candidate;
             }
@@ -237,7 +266,14 @@ export default defineEventHandler(async (event) => {
               ingredient.name,
               candidate.name,
             );
-            if (score > bestScore) {
+            if (
+              shouldReplaceBestCandidate(
+                candidate,
+                score,
+                bestCandidate,
+                bestScore,
+              )
+            ) {
               bestScore = score;
               bestCandidate = candidate;
             }
@@ -257,12 +293,7 @@ export default defineEventHandler(async (event) => {
         continue;
       }
 
-      const hasFull = [
-        bestCandidate.kcal_per_100g,
-        bestCandidate.protein_per_100g,
-        bestCandidate.carbs_per_100g,
-        bestCandidate.fat_per_100g,
-      ].every((v) => v !== null);
+      const hasFull = hasCompleteCandidateNutrition(bestCandidate);
 
       if (bestScore >= OFF_MIN_CONFIDENCE && hasFull) {
         await supabase

@@ -78,6 +78,10 @@ export default defineEventHandler(async (event) => {
           error?.statusMessage ||
           error?.message ||
           "Error generando menú",
+        result_payload: {
+          error_data: error?.data || null,
+          status_code: error?.statusCode || 500,
+        },
         completed_at: new Date().toISOString(),
       })
       .eq("id", jobId);
@@ -89,4 +93,3 @@ export default defineEventHandler(async (event) => {
     });
   }
 });
-

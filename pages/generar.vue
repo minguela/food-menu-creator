@@ -119,41 +119,6 @@
           </div>
         </div>
 
-        <div v-if="sourceMeals.length > 0" class="mt-4">
-          <p class="mb-2 text-sm font-medium text-gray-700">
-            Etiquetar comidas libres/especiales
-          </p>
-          <div class="max-h-56 space-y-2 overflow-auto rounded-lg border p-2">
-            <div
-              v-for="meal in sourceMeals"
-              :key="meal.id"
-              class="grid items-center gap-2 rounded border p-2 md:grid-cols-[auto_1fr_120px]"
-            >
-              <label class="inline-flex items-center gap-2 text-xs">
-                <input
-                  :checked="Boolean(meal.is_special)"
-                  type="checkbox"
-                  @change="toggleSourceMealSpecial(meal, $event)"
-                />
-                <span>Libre</span>
-              </label>
-              <p class="text-xs text-gray-700">
-                Día {{ meal.day_number }} · {{ mealLabel(meal.meal_type) }} ·
-                {{ meal.dish_name }}
-              </p>
-              <input
-                :value="meal.special_kcal_reserved || specialMealKcal"
-                type="number"
-                min="0"
-                max="2000"
-                step="10"
-                class="w-full rounded border px-2 py-1 text-xs"
-                @change="updateSourceMealSpecialKcal(meal, $event)"
-              />
-            </div>
-          </div>
-        </div>
-
         <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
 
         <div class="mt-4 flex flex-wrap gap-2">
@@ -468,16 +433,6 @@ type RotatingDay = {
   profile_totals: DayProfileTotal[];
 };
 
-type SourceMeal = {
-  id: string;
-  weekly_menu_id: string;
-  day_number: number;
-  meal_type: "desayuno" | "comida" | "cena";
-  dish_name: string;
-  is_special?: boolean;
-  special_kcal_reserved?: number;
-};
-
 const supabase = useSupabase();
 const { loadCurrentUser } = useCurrentUser();
 
@@ -489,7 +444,6 @@ const menus = ref<WeeklyMenu[]>([]);
 const profiles = ref<PersonProfile[]>([]);
 const selectedMenuIds = ref<string[]>([]);
 const selectedProfileIds = ref<string[]>([]);
-const sourceMeals = ref<SourceMeal[]>([]);
 const generatedDays = ref<RotatingDay[]>([]);
 const profilesSummary = ref<RotatingProfileTarget[]>([]);
 const shoppingItemsCreated = ref<number | null>(null);
@@ -540,64 +494,12 @@ const loadBaseData = async () => {
   profiles.value = (profilesData || []) as PersonProfile[];
   selectedMenuIds.value = (weeklyMenus || []).map((menu) => menu.id);
   selectedProfileIds.value = (profilesData || []).map((profile) => profile.id);
-  await loadSourceMeals();
 
   if ((profilesData || []).length === 0) {
     error.value = "Necesitas crear al menos un perfil en Config antes de generar.";
   }
 };
 
-const loadSourceMeals = async () => {
-  if (selectedMenuIds.value.length === 0) {
-    sourceMeals.value = [];
-    return;
-  }
-  const { data } = await supabase
-    .from("weekly_meals")
-    .select(
-      "id,weekly_menu_id,day_number,meal_type,dish_name,is_special,special_kcal_reserved",
-    )
-    .in("weekly_menu_id", selectedMenuIds.value)
-    .order("day_number", { ascending: true });
-  sourceMeals.value = (data || []) as SourceMeal[];
-};
-
-const toggleSourceMealSpecial = async (
-  meal: SourceMeal,
-  event: Event,
-) => {
-  const checked = (event.target as HTMLInputElement).checked;
-  const { error: updateError } = await supabase
-    .from("weekly_meals")
-    .update({
-      is_special: checked,
-      special_kcal_reserved: checked
-        ? Math.max(0, Math.min(2000, Number(meal.special_kcal_reserved || specialMealKcal.value) || 700))
-        : 0,
-    })
-    .eq("id", meal.id);
-  if (updateError) {
-    error.value = updateError.message;
-    return;
-  }
-  await loadSourceMeals();
-};
-
-const updateSourceMealSpecialKcal = async (meal: SourceMeal, event: Event) => {
-  const value = Math.max(
-    0,
-    Math.min(2000, Number((event.target as HTMLInputElement).value) || 700),
-  );
-  const { error: updateError } = await supabase
-    .from("weekly_meals")
-    .update({ special_kcal_reserved: value })
-    .eq("id", meal.id);
-  if (updateError) {
-    error.value = updateError.message;
-    return;
-  }
-  await loadSourceMeals();
-};
 
 const generateRotatingMenu = async () => {
   error.value = "";
@@ -757,7 +659,6 @@ const formatDate = (value: string) =>
   });
 
 onMounted(loadBaseData);
-watch(selectedMenuIds, loadSourceMeals, { deep: true });
 onUnmounted(() => {
   if (jobChannel.value) {
     supabase.removeChannel(jobChannel.value);

@@ -156,6 +156,12 @@
                 >
                   {{ ingredientCount(dish) }} ingredientes
                 </span>
+                <span
+                  v-if="dish.is_special"
+                  class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800"
+                >
+                  Comida libre · {{ dish.special_kcal_reserved || 700 }} kcal
+                </span>
               </div>
               <p class="text-sm text-gray-500">
                 {{ dish.description || "Sin descripción" }}
@@ -205,6 +211,25 @@
                 >
                 <input
                   v-model.trim="recipeForm.description"
+                  class="w-full border rounded-lg px-3 py-2"
+                />
+              </label>
+              <label class="md:col-span-2">
+                <span class="inline-flex items-center gap-2 text-xs text-gray-700">
+                  <input v-model="recipeForm.is_special" type="checkbox" />
+                  <span>Marcar receta como comida libre/especial</span>
+                </span>
+              </label>
+              <label v-if="recipeForm.is_special" class="md:col-span-2">
+                <span class="block text-xs text-gray-600 mb-1">
+                  kcal reservadas comida libre
+                </span>
+                <input
+                  v-model.number="recipeForm.special_kcal_reserved"
+                  type="number"
+                  min="0"
+                  max="2000"
+                  step="10"
                   class="w-full border rounded-lg px-3 py-2"
                 />
               </label>
@@ -598,6 +623,8 @@ const splittingRecipe = ref(false);
 const recipeForm = reactive({
   name: "",
   description: "",
+  is_special: false,
+  special_kcal_reserved: 700,
 });
 
 const statusMeta = (dish: DishRow) => {
@@ -696,6 +723,8 @@ const refreshEditingDish = async (dishId: string) => {
   const dish = data as DishRow;
   recipeForm.name = dish.name || "";
   recipeForm.description = dish.description || "";
+  recipeForm.is_special = Boolean(dish.is_special);
+  recipeForm.special_kcal_reserved = Number(dish.special_kcal_reserved || 700);
   pendingRows.value = (dish.recipe_ingredients || [])
     .filter((row) => !row.is_confirmed)
     .map((row) => ({ ...row, unit_type: row.unit_type || "g" }));
@@ -839,6 +868,11 @@ const saveRecipeMeta = async (dishId: string) => {
       name: recipeForm.name.trim(),
       normalized_name: normalizeIngredientName(recipeForm.name),
       description: recipeForm.description.trim() || null,
+      is_special: Boolean(recipeForm.is_special),
+      special_kcal_reserved: Math.max(
+        0,
+        Math.min(2000, Number(recipeForm.special_kcal_reserved) || 700),
+      ),
     })
     .eq("id", dishId);
   if (error) {
@@ -850,6 +884,11 @@ const saveRecipeMeta = async (dishId: string) => {
   if (dish) {
     dish.name = recipeForm.name.trim();
     dish.description = recipeForm.description.trim() || undefined;
+    dish.is_special = Boolean(recipeForm.is_special);
+    dish.special_kcal_reserved = Math.max(
+      0,
+      Math.min(2000, Number(recipeForm.special_kcal_reserved) || 700),
+    );
   }
 };
 
@@ -861,6 +900,8 @@ const toggleEdit = async (dishId: string) => {
     confirmedRows.value = [];
     recipeForm.name = "";
     recipeForm.description = "";
+    recipeForm.is_special = false;
+    recipeForm.special_kcal_reserved = 700;
     bulkIngredientInput.value = "";
     return;
   }

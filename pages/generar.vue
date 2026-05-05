@@ -2,165 +2,312 @@
   <div class="space-y-6">
     <header class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">
-          Menú rotativo multi-perfil
-        </h1>
+        <h1 class="text-2xl font-bold text-gray-900">Generar menú rotativo</h1>
         <p class="text-sm text-gray-500">
-          Calcula cantidades y macros por perfil usando ingredientes reales.
+          Mismas recetas para todos los perfiles, cantidades ajustadas por
+          objetivos.
         </p>
       </div>
-      <button
-        class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-        :disabled="generatedDays.length === 0"
-        @click="printMenu"
-      >
-        PDF / Imprimir
-      </button>
+      <div class="flex gap-2">
+        <NuxtLink
+          href="/shopping"
+          class="rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+        >
+          Ir a compra
+        </NuxtLink>
+        <button
+          class="rounded-lg bg-gray-700 px-4 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-50"
+          :disabled="generatedDays.length === 0"
+          @click="printMenu"
+        >
+          PDF / Imprimir
+        </button>
+      </div>
     </header>
 
-    <section class="bg-white rounded-lg border p-4">
-      <h2 class="font-semibold text-gray-900 mb-3">Configuración</h2>
-
-      <div class="grid gap-3 lg:grid-cols-2">
-        <label>
-          <span class="block text-sm font-medium text-gray-700 mb-1"
-            >Nombre</span
-          >
-          <input
-            v-model.trim="name"
-            class="w-full border rounded-lg px-3 py-2"
-          />
-        </label>
-        <label>
-          <span class="block text-sm font-medium text-gray-700 mb-1"
-            >Duración (días)</span
-          >
-          <input
-            v-model.number="days"
-            type="number"
-            min="1"
-            max="90"
-            class="w-full border rounded-lg px-3 py-2"
-          />
-        </label>
-        <label>
-          <span class="block text-sm font-medium text-gray-700 mb-1"
-            >Fecha inicio</span
-          >
-          <input
-            v-model="startDate"
-            type="date"
-            class="w-full border rounded-lg px-3 py-2"
-          />
-        </label>
-      </div>
-
-      <div class="mt-4">
-        <p class="text-sm font-medium text-gray-700 mb-2">Perfiles</p>
-        <label
-          class="inline-flex items-center gap-2 border rounded-lg px-3 py-2 text-sm mb-2"
-        >
-          <input v-model="useGlobalProfileFallback" type="checkbox" />
-          <span>Incluir perfil global del usuario</span>
-        </label>
-        <div class="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-          <label
-            v-for="profile in profiles"
-            :key="profile.id"
-            class="inline-flex items-center gap-2 border rounded-lg px-3 py-2 text-sm"
-          >
+    <section class="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+      <article class="rounded-lg border bg-white p-4">
+        <h2 class="mb-3 font-semibold text-gray-900">Configuración</h2>
+        <div class="grid gap-3 md:grid-cols-2">
+          <label>
+            <span class="mb-1 block text-xs font-medium text-gray-600">
+              Nombre
+            </span>
             <input
-              v-model="selectedProfileIds"
-              type="checkbox"
-              :value="profile.id"
+              v-model.trim="name"
+              class="w-full rounded-lg border px-3 py-2"
             />
-            <span>{{ profile.name }}</span>
+          </label>
+          <label>
+            <span class="mb-1 block text-xs font-medium text-gray-600">
+              Duración (días)
+            </span>
+            <input
+              v-model.number="days"
+              type="number"
+              min="1"
+              max="90"
+              class="w-full rounded-lg border px-3 py-2"
+            />
+          </label>
+          <label>
+            <span class="mb-1 block text-xs font-medium text-gray-600">
+              Inicio
+            </span>
+            <input
+              v-model="startDate"
+              type="date"
+              class="w-full rounded-lg border px-3 py-2"
+            />
           </label>
         </div>
-      </div>
 
-      <div class="mt-4">
-        <p class="text-sm font-medium text-gray-700 mb-2">Menús fuente</p>
-        <div class="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+        <div class="mt-4">
+          <p class="mb-2 text-sm font-medium text-gray-700">Perfiles</p>
           <label
-            v-for="menu in menus"
-            :key="menu.id"
-            class="inline-flex items-center gap-2 border rounded-lg px-3 py-2 text-sm"
+            class="mb-2 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
           >
-            <input v-model="selectedMenuIds" type="checkbox" :value="menu.id" />
-            <span>{{ menu.name }}</span>
+            <input v-model="useGlobalProfileFallback" type="checkbox" />
+            <span>Incluir perfil global</span>
           </label>
+          <div class="grid gap-2 md:grid-cols-2">
+            <label
+              v-for="profile in profiles"
+              :key="profile.id"
+              class="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
+            >
+              <input
+                v-model="selectedProfileIds"
+                type="checkbox"
+                :value="profile.id"
+              />
+              <span>
+                {{ profile.name }} · {{ profile.daily_kcal_target }} kcal ·
+                {{ profile.daily_protein_target }}g P
+              </span>
+            </label>
+          </div>
         </div>
-      </div>
 
-      <p v-if="error" class="text-sm text-red-600 mt-3">{{ error }}</p>
-      <div class="mt-4 flex flex-wrap gap-2">
-        <button
-          class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-          :disabled="loading"
-          @click="generateRotatingMenu"
-        >
-          {{ loading ? "Generando..." : "Generar y guardar" }}
-        </button>
-        <button
-          class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
-          :disabled="generatedDays.length === 0"
-          @click="copySummary"
-        >
-          Copiar resumen
-        </button>
+        <div class="mt-4">
+          <p class="mb-2 text-sm font-medium text-gray-700">Menús fuente</p>
+          <div class="grid gap-2 md:grid-cols-2">
+            <label
+              v-for="menu in menus"
+              :key="menu.id"
+              class="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
+            >
+              <input v-model="selectedMenuIds" type="checkbox" :value="menu.id" />
+              <span>{{ menu.name }}</span>
+            </label>
+          </div>
+        </div>
+
+        <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
+
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button
+            class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
+            :disabled="loading"
+            @click="generateRotatingMenu"
+          >
+            {{ loading ? "Generando..." : "Generar menú + compra" }}
+          </button>
+          <button
+            class="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            :disabled="generatedDays.length === 0"
+            @click="copySummary"
+          >
+            Copiar resumen
+          </button>
+        </div>
+      </article>
+
+      <article class="rounded-lg border bg-white p-4">
+        <h2 class="mb-3 font-semibold text-gray-900">Flujo</h2>
+        <ol class="space-y-2 text-sm text-gray-700">
+          <li class="rounded-md bg-gray-50 px-3 py-2">
+            1. Selecciona perfiles y menús fuente
+          </li>
+          <li class="rounded-md bg-gray-50 px-3 py-2">
+            2. Genera recetas comunes con cantidades por perfil
+          </li>
+          <li class="rounded-md bg-gray-50 px-3 py-2">
+            3. Revisa desviaciones de macros y kcal
+          </li>
+          <li class="rounded-md bg-gray-50 px-3 py-2">
+            4. Ajusta en recetas/ingredientes si hace falta
+          </li>
+          <li class="rounded-md bg-gray-50 px-3 py-2">
+            5. Lista de compra creada automáticamente
+          </li>
+        </ol>
+        <div v-if="shoppingItemsCreated !== null" class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+          Lista de compra generada con {{ shoppingItemsCreated }} líneas.
+        </div>
+      </article>
+    </section>
+
+    <section
+      v-if="profilesSummary.length > 0"
+      class="rounded-lg border bg-white p-4"
+    >
+      <h2 class="mb-3 font-semibold text-gray-900">Objetivos por perfil</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-[760px] w-full text-sm">
+          <thead class="text-left text-gray-600">
+            <tr>
+              <th class="px-2 py-2">Perfil</th>
+              <th class="px-2 py-2">kcal</th>
+              <th class="px-2 py-2">Proteína</th>
+              <th class="px-2 py-2">Hidratos</th>
+              <th class="px-2 py-2">Grasa</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="profile in profilesSummary"
+              :key="profile.key"
+              class="border-t"
+            >
+              <td class="px-2 py-2 font-medium">{{ profile.profile_name }}</td>
+              <td class="px-2 py-2">{{ Math.round(profile.target_kcal) }}</td>
+              <td class="px-2 py-2">{{ profile.target_protein_g.toFixed(1) }}g</td>
+              <td class="px-2 py-2">{{ profile.target_carbs_g.toFixed(1) }}g</td>
+              <td class="px-2 py-2">{{ profile.target_fat_g.toFixed(1) }}g</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
     <section
       v-if="generatedDays.length > 0"
-      class="bg-white rounded-lg border p-4"
+      class="space-y-4"
     >
-      <h2 class="font-semibold text-gray-900 mb-3">Resultado por perfil</h2>
-      <div class="space-y-3">
-        <article
-          v-for="day in generatedDays"
-          :key="day.day_number"
-          class="border rounded-lg p-3"
-        >
-          <p class="font-medium text-gray-900 mb-2">
-            Día {{ day.day_number }} · {{ formatDate(day.day_date) }}
-          </p>
-          <div class="space-y-2">
-            <div
-              v-for="meal in day.meals"
-              :key="meal.meal_type"
-              class="rounded border p-2"
-            >
-              <p class="text-sm font-medium text-gray-900">
-                {{ mealLabel(meal.meal_type) }}: {{ meal.dish_name }}
-              </p>
-              <div class="text-xs text-gray-600 mt-1 space-y-1">
-                <p
-                  v-for="portion in meal.profile_portions"
-                  :key="`${meal.meal_type}-${portion.profile_key}`"
-                >
-                  {{ portion.profile_name }}: x{{
-                    portion.serving_multiplier.toFixed(2)
-                  }}
-                  · {{ Math.round(portion.final_kcal) }} kcal ·
-                  {{ portion.final_protein_g.toFixed(1) }}g P
-                  <span v-if="portion.nutrition_pending" class="text-amber-700">
-                    · Pendiente de datos nutricionales
-                  </span>
-                </p>
-              </div>
+      <article
+        v-for="day in generatedDays"
+        :key="day.day_number"
+        class="rounded-lg border bg-white p-4"
+      >
+        <h3 class="mb-3 text-lg font-semibold text-gray-900">
+          Día {{ day.day_number }} · {{ formatDate(day.day_date) }}
+        </h3>
+
+        <div class="space-y-3">
+          <div
+            v-for="meal in day.meals"
+            :key="`${day.day_number}-${meal.meal_type}`"
+            class="rounded-lg border p-3"
+          >
+            <p class="font-medium text-gray-900">
+              {{ mealLabel(meal.meal_type) }}: {{ meal.dish_name }}
+            </p>
+            <div class="mt-2 overflow-x-auto">
+              <table class="min-w-[880px] w-full text-xs">
+                <thead class="text-left text-gray-600">
+                  <tr>
+                    <th class="px-2 py-1">Perfil</th>
+                    <th class="px-2 py-1">x ración</th>
+                    <th class="px-2 py-1">kcal</th>
+                    <th class="px-2 py-1">P/H/G</th>
+                    <th class="px-2 py-1">Desviación kcal</th>
+                    <th class="px-2 py-1">Cantidades</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="portion in meal.profile_portions"
+                    :key="`${meal.meal_type}-${portion.profile_key}`"
+                    class="border-t"
+                  >
+                    <td class="px-2 py-1 font-medium">{{ portion.profile_name }}</td>
+                    <td class="px-2 py-1">{{ portion.serving_multiplier.toFixed(2) }}</td>
+                    <td class="px-2 py-1">{{ Math.round(portion.final_kcal) }}</td>
+                    <td class="px-2 py-1">
+                      {{ portion.final_protein_g.toFixed(1) }} /
+                      {{ portion.final_carbs_g.toFixed(1) }} /
+                      {{ portion.final_fat_g.toFixed(1) }}
+                    </td>
+                    <td
+                      class="px-2 py-1"
+                      :class="deltaClass(portion.kcal_delta)"
+                    >
+                      {{ signed(portion.kcal_delta) }}
+                    </td>
+                    <td class="px-2 py-1">
+                      <div class="flex flex-wrap gap-1">
+                        <span
+                          v-for="ingredient in portion.ingredients"
+                          :key="`${portion.profile_key}-${ingredient.name}`"
+                          class="rounded bg-gray-100 px-1.5 py-0.5"
+                        >
+                          {{ ingredient.name }}:
+                          {{ ingredient.final_quantity.toFixed(1) }}
+                          {{ ingredient.unit_type }}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
-        </article>
-      </div>
+        </div>
+
+        <div class="mt-4 overflow-x-auto">
+          <table class="min-w-[760px] w-full text-sm rounded-lg border">
+            <thead class="text-left text-gray-600">
+              <tr>
+                <th class="px-2 py-2">Perfil</th>
+                <th class="px-2 py-2">Totales kcal</th>
+                <th class="px-2 py-2">Totales P/H/G</th>
+                <th class="px-2 py-2">Δ kcal</th>
+                <th class="px-2 py-2">Δ proteína</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="total in day.profile_totals"
+                :key="`${day.day_number}-${total.profile_key}`"
+                class="border-t"
+              >
+                <td class="px-2 py-2 font-medium">{{ total.profile_name }}</td>
+                <td class="px-2 py-2">
+                  {{ total.total_kcal }} / {{ Math.round(total.target_kcal) }}
+                </td>
+                <td class="px-2 py-2">
+                  {{ total.total_protein_g.toFixed(1) }} /
+                  {{ total.total_carbs_g.toFixed(1) }} /
+                  {{ total.total_fat_g.toFixed(1) }}
+                </td>
+                <td class="px-2 py-2" :class="deltaClass(total.kcal_delta)">
+                  {{ signed(total.kcal_delta) }}
+                </td>
+                <td
+                  class="px-2 py-2"
+                  :class="deltaClass(total.protein_delta_g)"
+                >
+                  {{ signed(total.protein_delta_g) }}g
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { logError } from "~/utils/log-error";
-import type { PersonProfile, WeeklyMenu } from "~/types";
+import type { PersonProfile, RotatingProfileTarget, WeeklyMenu } from "~/types";
+
+type RotatingIngredient = {
+  name: string;
+  final_quantity: number;
+  unit_type: string;
+};
 
 type ProfilePortion = {
   profile_key: string;
@@ -168,7 +315,10 @@ type ProfilePortion = {
   serving_multiplier: number;
   final_kcal: number;
   final_protein_g: number;
-  nutrition_pending: boolean;
+  final_carbs_g: number;
+  final_fat_g: number;
+  kcal_delta: number;
+  ingredients: RotatingIngredient[];
 };
 
 type RotatingMeal = {
@@ -177,10 +327,23 @@ type RotatingMeal = {
   profile_portions: ProfilePortion[];
 };
 
+type DayProfileTotal = {
+  profile_key: string;
+  profile_name: string;
+  target_kcal: number;
+  total_kcal: number;
+  total_protein_g: number;
+  total_carbs_g: number;
+  total_fat_g: number;
+  kcal_delta: number;
+  protein_delta_g: number;
+};
+
 type RotatingDay = {
   day_number: number;
   day_date: string;
   meals: RotatingMeal[];
+  profile_totals: DayProfileTotal[];
 };
 
 const supabase = useSupabase();
@@ -195,11 +358,25 @@ const selectedMenuIds = ref<string[]>([]);
 const selectedProfileIds = ref<string[]>([]);
 const useGlobalProfileFallback = ref(true);
 const generatedDays = ref<RotatingDay[]>([]);
+const profilesSummary = ref<RotatingProfileTarget[]>([]);
+const shoppingItemsCreated = ref<number | null>(null);
 const loading = ref(false);
 const error = ref("");
 
 const mealLabel = (type: string) =>
   type === "desayuno" ? "Desayuno" : type === "comida" ? "Comida" : "Cena";
+
+const signed = (value: number) => {
+  const rounded = Math.round((Number(value) || 0) * 10) / 10;
+  return rounded > 0 ? `+${rounded}` : `${rounded}`;
+};
+
+const deltaClass = (value: number) => {
+  const abs = Math.abs(Number(value) || 0);
+  if (abs <= 30) return "text-emerald-700";
+  if (abs <= 90) return "text-amber-700";
+  return "text-red-700";
+};
 
 const loadBaseData = async () => {
   const currentUser = await loadCurrentUser();
@@ -219,12 +396,13 @@ const loadBaseData = async () => {
   ]);
 
   menus.value = weeklyMenus || [];
-  profiles.value = profilesData || [];
+  profiles.value = (profilesData || []) as PersonProfile[];
   selectedMenuIds.value = (weeklyMenus || []).map((menu) => menu.id);
 };
 
 const generateRotatingMenu = async () => {
   error.value = "";
+  shoppingItemsCreated.value = null;
   loading.value = true;
 
   try {
@@ -237,6 +415,8 @@ const generateRotatingMenu = async () => {
     const response = await $fetch<{
       success: boolean;
       generated_days: RotatingDay[];
+      profiles: RotatingProfileTarget[];
+      shopping_list_items: number;
     }>("/api/rotating-menu-generate", {
       method: "POST",
       body: {
@@ -255,6 +435,8 @@ const generateRotatingMenu = async () => {
     }
 
     generatedDays.value = response.generated_days || [];
+    profilesSummary.value = response.profiles || [];
+    shoppingItemsCreated.value = Number(response.shopping_list_items || 0);
   } catch (err) {
     const maybeErr = err as
       | (Error & { data?: any })
@@ -287,7 +469,7 @@ const copySummary = async () => {
         lines.push(
           `  · ${portion.profile_name}: x${portion.serving_multiplier.toFixed(2)} · ${Math.round(
             portion.final_kcal,
-          )} kcal · ${portion.final_protein_g.toFixed(1)}g P${portion.nutrition_pending ? " · pendiente nutricional" : ""}`,
+          )} kcal · P:${portion.final_protein_g.toFixed(1)} H:${portion.final_carbs_g.toFixed(1)} G:${portion.final_fat_g.toFixed(1)} · Δkcal ${signed(portion.kcal_delta)}`,
         );
       }
     }
@@ -309,3 +491,4 @@ const formatDate = (value: string) =>
 
 onMounted(loadBaseData);
 </script>
+

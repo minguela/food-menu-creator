@@ -32,6 +32,20 @@
 
           <label class="block">
             <span class="block text-sm font-medium text-gray-700 mb-1"
+              >Proteína objetivo (g/día)</span
+            >
+            <input
+              v-model.number="config.daily_protein_target"
+              type="number"
+              min="20"
+              max="400"
+              step="1"
+              class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+          </label>
+
+          <label class="block">
+            <span class="block text-sm font-medium text-gray-700 mb-1"
               >Personas para cantidades</span
             >
             <input
@@ -151,6 +165,16 @@
             placeholder="kcal"
             required
           />
+          <input
+            v-model.number="profileForm.daily_protein_target"
+            type="number"
+            min="20"
+            max="400"
+            step="1"
+            class="border rounded-lg px-3 py-2"
+            placeholder="proteína g"
+            required
+          />
           <button
             type="submit"
             :disabled="!profileFormValid || profileSaving"
@@ -176,7 +200,8 @@
               <p class="font-medium text-gray-900">{{ profile.name }}</p>
               <p class="text-sm text-gray-500">
                 {{ sexLabel(profile.sex) }} · {{ profile.age }} años ·
-                {{ profile.daily_kcal_target }} kcal
+                {{ profile.daily_kcal_target }} kcal ·
+                {{ profile.daily_protein_target }}g proteína
               </p>
             </div>
             <div class="flex gap-2">
@@ -212,6 +237,7 @@ const { user, loadCurrentUser } = useCurrentUser();
 
 const config = ref({
   daily_kcal_target: 1900,
+  daily_protein_target: 120,
   persons_count: 2,
   fat_pct_target: 30,
   carbs_pct_target: 45,
@@ -229,6 +255,7 @@ const profileForm = ref({
   sex: "other" as PersonProfile["sex"],
   age: 35,
   daily_kcal_target: 1900,
+  daily_protein_target: 120,
 });
 
 const macroValidation = computed(() =>
@@ -250,6 +277,7 @@ const isDirty = computed(() => {
   if (!user.value) return false;
   return (
     config.value.daily_kcal_target !== user.value.daily_kcal_target ||
+    config.value.daily_protein_target !== user.value.daily_protein_target ||
     config.value.persons_count !== user.value.persons_count ||
     config.value.fat_pct_target !== (user.value.fat_pct_target || 30) ||
     config.value.carbs_pct_target !== (user.value.carbs_pct_target || 45)
@@ -262,7 +290,9 @@ const profileFormValid = computed(
     profileForm.value.age >= 1 &&
     profileForm.value.age <= 120 &&
     profileForm.value.daily_kcal_target >= 800 &&
-    profileForm.value.daily_kcal_target <= 6000,
+    profileForm.value.daily_kcal_target <= 6000 &&
+    profileForm.value.daily_protein_target >= 20 &&
+    profileForm.value.daily_protein_target <= 400,
 );
 
 const showStatus = (message: string, type: "success" | "error" = "success") => {
@@ -285,6 +315,7 @@ const loadData = async () => {
 
   config.value = {
     daily_kcal_target: currentUser.daily_kcal_target || 1900,
+    daily_protein_target: currentUser.daily_protein_target || 120,
     persons_count: currentUser.persons_count || 2,
     fat_pct_target: currentUser.fat_pct_target || 30,
     carbs_pct_target: currentUser.carbs_pct_target || 45,
@@ -309,19 +340,11 @@ const saveConfig = async () => {
   if (!currentUser || !macroValidation.value.valid) return;
 
   saving.value = true;
-  const proteinTarget = macroTargetsFromCalories(
-    config.value.daily_kcal_target,
-    {
-      fatPct: config.value.fat_pct_target,
-      carbsPct: config.value.carbs_pct_target,
-    },
-  ).protein_g;
-
   const { error } = await supabase
     .from("users")
     .update({
       daily_kcal_target: config.value.daily_kcal_target,
-      daily_protein_target: proteinTarget,
+      daily_protein_target: config.value.daily_protein_target,
       persons_count: config.value.persons_count,
       fat_pct_target: config.value.fat_pct_target,
       carbs_pct_target: config.value.carbs_pct_target,
@@ -339,7 +362,7 @@ const saveConfig = async () => {
   user.value = {
     ...currentUser,
     daily_kcal_target: config.value.daily_kcal_target,
-    daily_protein_target: proteinTarget,
+    daily_protein_target: config.value.daily_protein_target,
     persons_count: config.value.persons_count,
     fat_pct_target: config.value.fat_pct_target,
     carbs_pct_target: config.value.carbs_pct_target,
@@ -358,6 +381,7 @@ const saveProfile = async () => {
     sex: profileForm.value.sex,
     age: profileForm.value.age,
     daily_kcal_target: profileForm.value.daily_kcal_target,
+    daily_protein_target: profileForm.value.daily_protein_target,
     fat_pct_target: config.value.fat_pct_target,
     carbs_pct_target: config.value.carbs_pct_target,
   };
@@ -389,6 +413,7 @@ const editProfile = (profile: PersonProfile) => {
     sex: profile.sex,
     age: profile.age,
     daily_kcal_target: profile.daily_kcal_target,
+    daily_protein_target: profile.daily_protein_target || 120,
   };
 };
 
@@ -416,6 +441,7 @@ const resetProfileForm = () => {
     sex: "other",
     age: 35,
     daily_kcal_target: config.value.daily_kcal_target,
+    daily_protein_target: config.value.daily_protein_target,
   };
 };
 

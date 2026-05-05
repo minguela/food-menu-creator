@@ -18,10 +18,13 @@
     </div>
 
     <section class="bg-white rounded-lg border p-4 mb-6">
-      <h2 class="font-semibold text-gray-900 mb-3">
-        Generar desde menú rotativo
-      </h2>
-      <div class="flex flex-wrap gap-2 items-end">
+        <h2 class="font-semibold text-gray-900 mb-3">
+          Generar desde menú rotativo
+        </h2>
+        <p class="mb-3 text-xs text-gray-500">
+          También se genera automáticamente al crear el menú en `/generar`.
+        </p>
+        <div class="flex flex-wrap gap-2 items-end">
         <label class="min-w-[260px] flex-1">
           <span class="block text-sm text-gray-700 mb-1">Menú rotativo</span>
           <select
@@ -370,83 +373,13 @@ const buildFromRotatingMenu = async () => {
   if (!currentUser || !selectedRotatingMenuId.value) return;
   loading.value = true;
   try {
-    const { data: dayRows } = await supabase
-      .from("rotating_menu_days")
-      .select("id")
-      .eq("rotating_menu_id", selectedRotatingMenuId.value);
-
-    const dayIds = (dayRows || []).map((row) => row.id);
-    if (dayIds.length === 0) throw new Error("El menú rotativo no tiene días");
-
-    const { data: portionRows } = await supabase
-      .from("rotating_menu_meal_profile_portions")
-      .select("rotating_menu_meal_profile_ingredients(*)")
-      .in(
-        "rotating_menu_meal_id",
-        (
-          await supabase
-            .from("rotating_menu_meals")
-            .select("id")
-            .in("rotating_menu_day_id", dayIds)
-        ).data?.map((row: any) => row.id) || [],
-      );
-
-    const consolidated: Record<
-      string,
-      {
-        item_name: string;
-        quantity_grams: number;
-        conversion_status: string;
-        conversion_note: string;
-      }
-    > = {};
-
-    for (const portion of portionRows || []) {
-      for (const ingredient of portion.rotating_menu_meal_profile_ingredients ||
-        []) {
-        const conversion = convertToGrams({
-          name: ingredient.name,
-          quantity: ingredient.final_quantity,
-          unitType: ingredient.unit_type,
-        });
-        const key = `${ingredient.name.toLowerCase()}::${ingredient.unit_type}`;
-        if (!consolidated[key]) {
-          consolidated[key] = {
-            item_name: ingredient.name,
-            quantity_grams: 0,
-            conversion_status: conversion.status,
-            conversion_note: conversion.note,
-          };
-        }
-        consolidated[key].quantity_grams += conversion.grams;
-      }
-    }
-
-    const weekStart = new Date().toISOString().split("T")[0];
-    await supabase
-      .from("shopping_lists")
-      .delete()
-      .eq("user_id", currentUser.id)
-      .eq("week_start", weekStart);
-
-    const rows = Object.values(consolidated).map((item) => ({
-      user_id: currentUser.id,
-      week_start: weekStart,
-      item_name: item.item_name,
-      quantity_needed: Math.round(item.quantity_grams),
-      quantity_grams: Math.round(item.quantity_grams),
-      original_quantity: Math.round(item.quantity_grams),
-      original_unit_type: "g",
-      conversion_status: item.conversion_status,
-      conversion_note: item.conversion_note || "Generado desde menú rotativo",
-      is_extra: true,
-      purchased: false,
-      estimated_price: 0,
-    }));
-
-    if (rows.length > 0) {
-      await supabase.from("shopping_lists").insert(rows);
-    }
+    await $fetch("/api/shopping-from-rotating", {
+      method: "POST",
+      body: {
+        userId: currentUser.id,
+        rotatingMenuId: selectedRotatingMenuId.value,
+      },
+    });
     await loadShoppingList();
   } catch (err) {
     await logError("web", err, { context: "shopping.buildFromRotatingMenu" });

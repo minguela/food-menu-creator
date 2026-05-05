@@ -87,7 +87,16 @@ export const scoreIngredientCandidate = (
   const candidateWords = new Set(candidate.split("_"));
   const intersection = [...originalWords].filter((w) => candidateWords.has(w));
   const overlap = intersection.length / Math.max(originalWords.size, 1);
+  const startsWithOriginal = candidate.startsWith(`${original}_`) || candidate === original;
+  const startsWithAlias =
+    aliasNormalized &&
+    (candidate.startsWith(`${aliasNormalized}_`) || candidate === aliasNormalized);
 
+  if (originalWords.size === 1 && overlap > 0 && !startsWithOriginal && !startsWithAlias) {
+    return 0.74;
+  }
+
+  if (startsWithOriginal || startsWithAlias) return 0.92;
   if (overlap >= 0.8) return 0.88;
   if (overlap >= 0.5) return 0.7;
   if (overlap > 0) return 0.55;

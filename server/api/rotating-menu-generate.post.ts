@@ -10,7 +10,6 @@ type GeneratePayload = {
   startDate: string;
   sourceWeeklyMenuIds: string[];
   profileIds: string[];
-  includeGlobalProfile: boolean;
 };
 
 export default defineEventHandler(async (event) => {
@@ -28,6 +27,12 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 400,
       statusMessage: "sourceWeeklyMenuIds requerido",
+    });
+  }
+  if (!Array.isArray(body.profileIds) || body.profileIds.length === 0) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "profileIds requerido",
     });
   }
 
@@ -79,31 +84,6 @@ export default defineEventHandler(async (event) => {
       ),
     };
   });
-
-  if (body.includeGlobalProfile) {
-    const proteinPct =
-      100 - Number(user.fat_pct_target) - Number(user.carbs_pct_target);
-    const inferredProteinG = Number(
-      (Number(user.daily_kcal_target) * proteinPct) / 100 / 4,
-    );
-    profileTargets.push({
-      key: "global",
-      profile_id: null,
-      profile_name: "Perfil global",
-      target_kcal: Number(user.daily_kcal_target),
-      target_protein_g: Number(user.daily_protein_target || inferredProteinG),
-      target_carbs_g: Number(
-        (Number(user.daily_kcal_target) * Number(user.carbs_pct_target)) /
-          100 /
-          4,
-      ),
-      target_fat_g: Number(
-        (Number(user.daily_kcal_target) * Number(user.fat_pct_target)) /
-          100 /
-          9,
-      ),
-    });
-  }
 
   if (profileTargets.length === 0) {
     throw createError({

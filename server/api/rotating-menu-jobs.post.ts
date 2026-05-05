@@ -7,7 +7,6 @@ type CreateJobPayload = {
   startDate: string;
   sourceWeeklyMenuIds: string[];
   profileIds: string[];
-  includeGlobalProfile: boolean;
 };
 
 export default defineEventHandler(async (event) => {
@@ -20,6 +19,12 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 400,
       statusMessage: "Selecciona al menos un menú fuente",
+    });
+  }
+  if (!Array.isArray(body?.profileIds) || body.profileIds.length === 0) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Selecciona al menos un perfil",
     });
   }
 
@@ -50,7 +55,6 @@ export default defineEventHandler(async (event) => {
     startDate: String(body?.startDate || "").trim(),
     sourceWeeklyMenuIds: body.sourceWeeklyMenuIds || [],
     profileIds: Array.isArray(body?.profileIds) ? body.profileIds : [],
-    includeGlobalProfile: Boolean(body?.includeGlobalProfile),
   };
 
   const { data: createdJob, error: createErrorJob } = await supabase
@@ -84,4 +88,3 @@ export default defineEventHandler(async (event) => {
     deduplicated: false,
   };
 });
-

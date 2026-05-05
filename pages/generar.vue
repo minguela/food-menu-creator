@@ -64,12 +64,15 @@
 
         <div class="mt-4">
           <p class="mb-2 text-sm font-medium text-gray-700">Perfiles</p>
-          <label
-            class="mb-2 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
+          <p
+            v-if="profiles.length === 0"
+            class="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800"
           >
-            <input v-model="useGlobalProfileFallback" type="checkbox" />
-            <span>Incluir perfil global</span>
-          </label>
+            No tienes perfiles creados.
+            <NuxtLink href="/config" class="font-semibold underline">
+              Crear perfil ahora
+            </NuxtLink>
+          </p>
           <div class="grid gap-2 md:grid-cols-2">
             <label
               v-for="profile in profiles"
@@ -117,6 +120,13 @@
                 : "Generar menú + compra"
             }}
           </button>
+          <NuxtLink
+            v-if="profiles.length === 0"
+            href="/config"
+            class="rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Ir a crear perfiles
+          </NuxtLink>
           <button
             class="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             :disabled="generatedDays.length === 0"
@@ -398,7 +408,6 @@ const menus = ref<WeeklyMenu[]>([]);
 const profiles = ref<PersonProfile[]>([]);
 const selectedMenuIds = ref<string[]>([]);
 const selectedProfileIds = ref<string[]>([]);
-const useGlobalProfileFallback = ref(true);
 const generatedDays = ref<RotatingDay[]>([]);
 const profilesSummary = ref<RotatingProfileTarget[]>([]);
 const shoppingItemsCreated = ref<number | null>(null);
@@ -448,6 +457,11 @@ const loadBaseData = async () => {
   menus.value = weeklyMenus || [];
   profiles.value = (profilesData || []) as PersonProfile[];
   selectedMenuIds.value = (weeklyMenus || []).map((menu) => menu.id);
+  selectedProfileIds.value = (profilesData || []).map((profile) => profile.id);
+
+  if ((profilesData || []).length === 0) {
+    error.value = "Necesitas crear al menos un perfil en Config antes de generar.";
+  }
 };
 
 const generateRotatingMenu = async () => {
@@ -460,6 +474,9 @@ const generateRotatingMenu = async () => {
     if (!currentUser) throw new Error("Usuario no disponible");
     if (selectedMenuIds.value.length === 0) {
       throw new Error("Selecciona al menos un menú fuente");
+    }
+    if (selectedProfileIds.value.length === 0) {
+      throw new Error("Selecciona al menos un perfil");
     }
 
     const response = await $fetch<{
@@ -479,7 +496,6 @@ const generateRotatingMenu = async () => {
         startDate: startDate.value,
         sourceWeeklyMenuIds: selectedMenuIds.value,
         profileIds: selectedProfileIds.value,
-        includeGlobalProfile: useGlobalProfileFallback.value,
       },
     });
 

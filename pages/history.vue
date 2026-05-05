@@ -16,7 +16,15 @@
     </header>
 
     <section class="rounded-lg border bg-white p-4">
-      <h2 class="mb-3 font-semibold text-gray-900">En creación</h2>
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 class="font-semibold text-gray-900">En creación</h2>
+        <button
+          class="rounded border px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+          @click="cleanupFinishedJobs"
+        >
+          Limpiar completados/errores
+        </button>
+      </div>
       <div v-if="loadingJobs" class="text-sm text-gray-500">Cargando jobs...</div>
       <div
         v-else-if="activeJobs.length === 0"
@@ -34,9 +42,17 @@
             <p class="font-medium text-gray-900">
               {{ job.input_payload?.name || "Menú rotativo" }}
             </p>
-            <span class="rounded-full px-2 py-1 text-xs" :class="statusClass(job.status)">
-              {{ statusLabel(job.status) }}
-            </span>
+            <div class="flex items-center gap-2">
+              <span class="rounded-full px-2 py-1 text-xs" :class="statusClass(job.status)">
+                {{ statusLabel(job.status) }}
+              </span>
+              <button
+                class="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
+                @click="deleteJob(job)"
+              >
+                Eliminar job
+              </button>
+            </div>
           </div>
           <p class="mt-1 text-xs text-gray-500">
             {{ formatDateTime(job.created_at) }} · progreso {{ job.progress || 0 }}%
@@ -44,6 +60,25 @@
           <p v-if="job.error_message" class="mt-1 text-xs text-red-600">
             {{ job.error_message }}
           </p>
+          <div
+            v-if="job.status === 'failed' && failedRecipes(job).length > 0"
+            class="mt-2 rounded border border-red-200 bg-red-50 p-2 text-xs text-red-800"
+          >
+            <p class="font-medium">Recetas bloqueando la generación:</p>
+            <ul class="mt-1 space-y-1">
+              <li
+                v-for="recipe in failedRecipes(job)"
+                :key="`${job.id}-${recipe.dish_id}-${recipe.reason}`"
+              >
+                {{ recipe.dish_name }} ({{ recipe.reason }})
+              </li>
+            </ul>
+            <div class="mt-2 flex gap-2">
+              <NuxtLink href="/recipes" class="underline">Ir a Recetas</NuxtLink>
+              <NuxtLink href="/ingredients" class="underline">Ir a Ingredientes</NuxtLink>
+              <NuxtLink href="/generar" class="underline">Volver a generar</NuxtLink>
+            </div>
+          </div>
           <div class="mt-2 h-2 w-full overflow-hidden rounded bg-gray-100">
             <div
               class="h-2 rounded bg-indigo-600 transition-all"
@@ -108,6 +143,7 @@ type MenuGenerationJob = {
   progress: number;
   error_message?: string | null;
   input_payload?: Record<string, any> | null;
+  result_payload?: Record<string, any> | null;
   result_menu_id?: string | null;
   created_at: string;
 };
@@ -214,6 +250,49 @@ const openShoppingForMenu = async (rotatingMenuId: string) => {
     await router.push("/shopping");
   } catch (error) {
     await logError("web", error, { context: "history.openShoppingForMenu" });
+  }
+};
+
+const failedRecipes = (job: MenuGenerationJob) =>
+  (job.result_payload?.error_data?.uncured_recipes || []) as Array<{
+    dish_id: string;
+    dish_name: string;
+    reason: string;
+  }>;
+
+const deleteJob = async (job: MenuGenerationJob) => {
+  const confirmed = confirm("¿Eliminar este job?");
+  if (!confirmed) return;
+  try {
+    const currentUser = await loadCurrentUser();
+    if (!currentUser) return;
+    await $fetch("/api/rotating-menu-jobs-delete", {
+      method: "POST",
+      body: { userId: currentUser.id, jobId: job.id },
+    });
+    await loadData();
+  } catch (error) {
+    await logError("web", error, { context: "history.deleteJob" });
+    alert("No se pudo eliminar el job.");
+  }
+};
+
+const cleanupFinishedJobs = async () => {
+  const confirmed = confirm(
+    "¿Eliminar jobs completados y con error del panel de seguimiento?",
+  );
+  if (!confirmed) return;
+  try {
+    const currentUser = await loadCurrentUser();
+    if (!currentUser) return;
+    await $fetch("/api/rotating-menu-jobs-cleanup", {
+      method: "POST",
+      body: { userId: currentUser.id },
+    });
+    await loadData();
+  } catch (error) {
+    await logError("web", error, { context: "history.cleanupFinishedJobs" });
+    alert("No se pudieron limpiar los jobs.");
   }
 };
 

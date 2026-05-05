@@ -1,280 +1,219 @@
 <template>
   <div class="space-y-6">
-    <header class="flex flex-wrap justify-between gap-3 items-end">
+    <header class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">
-          Histórico de menús mensuales
-        </h1>
+        <h1 class="text-2xl font-bold text-gray-900">Menús rotativos</h1>
         <p class="text-sm text-gray-500">
-          Busca, revisa, reutiliza y exporta menús ya generados.
+          Estado de generación y acceso rápido a menús creados.
         </p>
       </div>
-      <input
-        v-model.trim="search"
-        class="border rounded-lg px-3 py-2 min-w-[260px]"
-        placeholder="Buscar por nombre o plato"
-        @input="page = 1"
-      />
+      <NuxtLink
+        href="/generar"
+        class="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
+      >
+        Nuevo menú rotativo
+      </NuxtLink>
     </header>
 
-    <div v-if="loading" class="text-center py-12">
+    <section class="rounded-lg border bg-white p-4">
+      <h2 class="mb-3 font-semibold text-gray-900">En creación</h2>
+      <div v-if="loadingJobs" class="text-sm text-gray-500">Cargando jobs...</div>
       <div
-        class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"
-      ></div>
-      <p class="mt-4 text-gray-600">Cargando histórico...</p>
-    </div>
-
-    <div
-      v-else-if="pagedMenus.length === 0"
-      class="text-center py-12 bg-white rounded-lg border"
-    >
-      <p class="text-gray-600">Todavía no hay menús mensuales guardados.</p>
-    </div>
-
-    <section v-else class="space-y-4">
-      <article
-        v-for="menu in pagedMenus"
-        :key="menu.id"
-        class="bg-white rounded-lg border shadow-sm p-4"
+        v-else-if="activeJobs.length === 0"
+        class="rounded-lg border border-dashed p-4 text-sm text-gray-500"
       >
-        <div class="flex flex-wrap justify-between gap-3">
-          <div>
-            <h2 class="font-semibold text-gray-900">{{ menu.name }}</h2>
-            <p class="text-sm text-gray-500">
-              {{ formatDate(menu.start_date) }} -
-              {{ formatDate(menu.end_date) }} ·
-              {{ menu.menu_data?.length || 0 }} días
+        No hay menús en proceso ahora mismo.
+      </div>
+      <div v-else class="space-y-3">
+        <article
+          v-for="job in activeJobs"
+          :key="job.id"
+          class="rounded-lg border p-3"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <p class="font-medium text-gray-900">
+              {{ job.input_payload?.name || "Menú rotativo" }}
             </p>
+            <span class="rounded-full px-2 py-1 text-xs" :class="statusClass(job.status)">
+              {{ statusLabel(job.status) }}
+            </span>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <button
-              @click="selected = menu"
-              class="px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-            >
-              Ver
-            </button>
-            <button
-              @click="reuseMenu(menu)"
-              class="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-            >
-              Volver a usar
-            </button>
-            <button
-              @click="downloadCsv(menu)"
-              class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-            >
-              CSV
-            </button>
-            <button
-              @click="printMenu(menu)"
-              class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-            >
-              PDF
-            </button>
+          <p class="mt-1 text-xs text-gray-500">
+            {{ formatDateTime(job.created_at) }} · progreso {{ job.progress || 0 }}%
+          </p>
+          <p v-if="job.error_message" class="mt-1 text-xs text-red-600">
+            {{ job.error_message }}
+          </p>
+          <div class="mt-2 h-2 w-full overflow-hidden rounded bg-gray-100">
+            <div
+              class="h-2 rounded bg-indigo-600 transition-all"
+              :style="{ width: `${Math.max(0, Math.min(100, job.progress || 0))}%` }"
+            />
           </div>
-        </div>
-      </article>
+        </article>
+      </div>
     </section>
 
-    <footer
-      v-if="totalPages > 1"
-      class="flex justify-center items-center gap-3"
-    >
-      <button
-        :disabled="page === 1"
-        @click="page--"
-        class="px-3 py-2 rounded-lg hover:bg-gray-100 disabled:opacity-40"
+    <section class="rounded-lg border bg-white p-4">
+      <h2 class="mb-3 font-semibold text-gray-900">Creados</h2>
+      <div v-if="loadingMenus" class="text-sm text-gray-500">Cargando menús...</div>
+      <div
+        v-else-if="rotatingMenus.length === 0"
+        class="rounded-lg border border-dashed p-4 text-sm text-gray-500"
       >
-        Anterior
-      </button>
-      <span class="text-sm text-gray-600"
-        >Página {{ page }} de {{ totalPages }}</span
-      >
-      <button
-        :disabled="page === totalPages"
-        @click="page++"
-        class="px-3 py-2 rounded-lg hover:bg-gray-100 disabled:opacity-40"
-      >
-        Siguiente
-      </button>
-    </footer>
-
-    <div
-      v-if="selected"
-      class="fixed inset-0 bg-black bg-opacity-50 z-50 p-4 overflow-y-auto"
-      @click.self="selected = null"
-    >
-      <div class="bg-white rounded-lg max-w-4xl mx-auto p-6">
-        <div class="flex justify-between gap-3 mb-4">
-          <h2 class="text-xl font-bold text-gray-900">{{ selected.name }}</h2>
-          <button
-            @click="selected = null"
-            class="text-gray-500 hover:text-gray-800"
-          >
-            Cerrar
-          </button>
-        </div>
-        <div class="grid gap-3 md:grid-cols-2">
-          <div
-            v-for="day in selected.menu_data"
-            :key="day.day"
-            class="border rounded-lg p-3"
-          >
-            <p class="font-medium text-gray-900">
-              Día {{ day.day }} · {{ formatDate(day.date) }}
-            </p>
-            <p class="text-sm text-gray-600">Desayuno: {{ day.desayuno }}</p>
-            <p class="text-sm text-gray-600">Comida: {{ day.comida }}</p>
-            <p class="text-sm text-gray-600">Cena: {{ day.cena }}</p>
-          </div>
-        </div>
+        Todavía no tienes menús rotativos creados.
       </div>
-    </div>
+      <div v-else class="space-y-3">
+        <article
+          v-for="menu in rotatingMenus"
+          :key="menu.id"
+          class="rounded-lg border p-3"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p class="font-medium text-gray-900">{{ menu.name }}</p>
+              <p class="text-xs text-gray-500">
+                {{ menu.duration_days }} días · {{ formatDateTime(menu.created_at) }}
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button
+                class="rounded border px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                @click="openShoppingForMenu(menu.id)"
+              >
+                Ver compra asociada
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { buildShoppingCsv } from "~/utils/shopping-conversions.js";
-import type { MonthlyMenu } from "~/types";
+import { logError } from "~/utils/log-error";
+import type { RotatingMenu } from "~/types";
+
+type MenuGenerationJob = {
+  id: string;
+  user_id: string;
+  status: "pending" | "processing" | "completed" | "failed";
+  progress: number;
+  error_message?: string | null;
+  input_payload?: Record<string, any> | null;
+  result_menu_id?: string | null;
+  created_at: string;
+};
 
 const supabase = useSupabase();
 const { loadCurrentUser } = useCurrentUser();
+const router = useRouter();
 
-const menus = ref<MonthlyMenu[]>([]);
-const loading = ref(true);
-const search = ref("");
-const page = ref(1);
-const pageSize = 8;
-const selected = ref<MonthlyMenu | null>(null);
+const loadingJobs = ref(true);
+const loadingMenus = ref(true);
+const activeJobs = ref<MenuGenerationJob[]>([]);
+const rotatingMenus = ref<RotatingMenu[]>([]);
+const jobsChannel = ref<any>(null);
 
-const filteredMenus = computed(() => {
-  const term = search.value.toLowerCase();
-  if (!term) return menus.value;
-
-  return menus.value.filter((menu) => {
-    const haystack = [
-      menu.name,
-      ...(menu.menu_data || []).flatMap((day: any) => [
-        day.desayuno,
-        day.comida,
-        day.cena,
-        day.menu_name,
-      ]),
-    ]
-      .join(" ")
-      .toLowerCase();
-    return haystack.includes(term);
-  });
-});
-
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredMenus.value.length / pageSize)),
-);
-const pagedMenus = computed(() =>
-  filteredMenus.value.slice((page.value - 1) * pageSize, page.value * pageSize),
-);
-
-const loadHistory = async () => {
-  loading.value = true;
-  const currentUser = await loadCurrentUser();
-  if (!currentUser) {
-    menus.value = [];
-    loading.value = false;
-    return;
-  }
-
-  const { data, error } = await supabase
-    .from("monthly_menus")
-    .select("*")
-    .eq("user_id", currentUser.id)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Error cargando histórico:", error);
-    menus.value = [];
-  } else {
-    menus.value = data || [];
-  }
-  loading.value = false;
+const statusLabel = (status: MenuGenerationJob["status"]) => {
+  if (status === "pending") return "Pendiente";
+  if (status === "processing") return "Procesando";
+  if (status === "completed") return "Completado";
+  return "Error";
 };
 
-const reuseMenu = async (menu: MonthlyMenu) => {
-  const currentUser = await loadCurrentUser();
-  if (!currentUser) return;
-
-  const today = new Date();
-  const end = new Date(today);
-  end.setDate(today.getDate() + Math.max(0, (menu.menu_data?.length || 1) - 1));
-
-  const { error } = await supabase.from("monthly_menus").insert({
-    user_id: currentUser.id,
-    name: `${menu.name} reutilizado`,
-    month: today.getMonth() + 1,
-    year: today.getFullYear(),
-    start_date: today.toISOString().split("T")[0],
-    end_date: end.toISOString().split("T")[0],
-    menu_data: (menu.menu_data || []).map((day: any, index: number) => {
-      const date = new Date(today);
-      date.setDate(today.getDate() + index);
-      return { ...day, day: index + 1, date: date.toISOString() };
-    }),
-    shopping_list: menu.shopping_list || [],
-    reused_from: menu.id,
-  });
-
-  if (error) return alert("Error reutilizando menú: " + error.message);
-
-  await supabase
-    .from("shopping_lists")
-    .delete()
-    .eq("user_id", currentUser.id)
-    .eq("week_start", today.toISOString().split("T")[0]);
-  const rows = (menu.shopping_list || []).map((item: any) => ({
-    user_id: currentUser.id,
-    week_start: today.toISOString().split("T")[0],
-    item_name: item.item_name || item.ingredients?.name || "Artículo",
-    quantity_needed: item.quantity_grams || item.quantity_needed || 1,
-    quantity_grams: item.quantity_grams || item.quantity_needed || 1,
-    original_quantity: item.quantity_grams || item.quantity_needed || 1,
-    original_unit_type: "g",
-    conversion_status: item.conversion_status || "manual",
-    conversion_note: item.conversion_note || "Reutilizado desde histórico.",
-    is_extra: true,
-    purchased: false,
-    estimated_price: item.estimated_price || 0,
-  }));
-
-  if (rows.length > 0) {
-    await supabase.from("shopping_lists").insert(rows);
-  }
-
-  alert("Menú reutilizado y lista de compra cargada para hoy.");
-  await loadHistory();
+const statusClass = (status: MenuGenerationJob["status"]) => {
+  if (status === "completed") return "bg-emerald-100 text-emerald-800";
+  if (status === "failed") return "bg-red-100 text-red-800";
+  return "bg-amber-100 text-amber-800";
 };
 
-const downloadCsv = (menu: MonthlyMenu) => {
-  const blob = new Blob([buildShoppingCsv(menu.shopping_list || [])], {
-    type: "text/csv;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${menu.name.replaceAll(/\s+/g, "-").toLowerCase()}-compra.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
-};
-
-const printMenu = (menu: MonthlyMenu) => {
-  selected.value = menu;
-  nextTick(() => window.print());
-};
-
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString("es-ES", {
-    day: "numeric",
-    month: "short",
+const formatDateTime = (value: string) =>
+  new Date(value).toLocaleString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
-onMounted(loadHistory);
+const loadData = async () => {
+  loadingJobs.value = true;
+  loadingMenus.value = true;
+  try {
+    const currentUser = await loadCurrentUser();
+    if (!currentUser) {
+      activeJobs.value = [];
+      rotatingMenus.value = [];
+      return;
+    }
+
+    const [{ data: jobs }, { data: menus }] = await Promise.all([
+      supabase
+        .from("menu_generation_jobs")
+        .select("*")
+        .eq("user_id", currentUser.id)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      supabase
+        .from("rotating_menus")
+        .select("*")
+        .eq("user_id", currentUser.id)
+        .order("created_at", { ascending: false })
+        .limit(50),
+    ]);
+
+    activeJobs.value = ((jobs || []) as MenuGenerationJob[]).filter((job) =>
+      ["pending", "processing", "failed"].includes(job.status),
+    );
+    rotatingMenus.value = (menus || []) as RotatingMenu[];
+    subscribeRealtime(currentUser.id);
+  } catch (error) {
+    await logError("web", error, { context: "history.loadData" });
+  } finally {
+    loadingJobs.value = false;
+    loadingMenus.value = false;
+  }
+};
+
+const subscribeRealtime = (userId: string) => {
+  if (jobsChannel.value) supabase.removeChannel(jobsChannel.value);
+
+  jobsChannel.value = supabase
+    .channel(`menu-generation-jobs-${userId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "menu_generation_jobs",
+        filter: `user_id=eq.${userId}`,
+      },
+      async () => {
+        await loadData();
+      },
+    )
+    .subscribe();
+};
+
+const openShoppingForMenu = async (rotatingMenuId: string) => {
+  try {
+    await $fetch("/api/shopping-from-rotating", {
+      method: "POST",
+      body: { rotatingMenuId },
+    });
+    await router.push("/shopping");
+  } catch (error) {
+    await logError("web", error, { context: "history.openShoppingForMenu" });
+  }
+};
+
+onMounted(loadData);
+onUnmounted(() => {
+  if (jobsChannel.value) {
+    supabase.removeChannel(jobsChannel.value);
+    jobsChannel.value = null;
+  }
+});
 </script>

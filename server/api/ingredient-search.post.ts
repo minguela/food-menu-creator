@@ -1,5 +1,8 @@
 import { resolveSupabaseServerKey } from "~/utils/enrich-runtime";
-import { scoreIngredientCandidate } from "~/server/utils/ingredient-enrichment";
+import {
+  scoreIngredientCandidate,
+  toNutrientNumberOrNull,
+} from "~/server/utils/ingredient-enrichment";
 
 type SearchSource = "usda" | "open_food_facts" | "bedca";
 
@@ -18,6 +21,79 @@ export default defineEventHandler(async (event) => {
       statusCode: 400,
       statusMessage: "query es obligatorio",
     });
+  }
+
+  if (source === "open_food_facts") {
+    const offResponse = await fetch(
+      `https://search.openfoodfacts.org/search?q=${encodeURIComponent(
+        query,
+      )}&page_size=10&langs=es,en&fields=code,id,product_name,generic_name,nutriments`,
+      {
+        headers: {
+          "User-Agent": "FoodMenuCreator/1.0 (https://food-menu-creator-lyart.vercel.app)",
+        },
+      },
+    );
+    const offPayload = await offResponse.json().catch(() => ({}));
+    if (!offResponse.ok) {
+      throw createError({
+        statusCode: 502,
+        statusMessage:
+          String(offPayload?.error || "").trim() ||
+          `Open Food Facts search error (${offResponse.status})`,
+        data: offPayload,
+      });
+    }
+
+    const candidates = (Array.isArray(offPayload?.hits)
+      ? offPayload.hits
+      : []
+    )
+      .map((product: any) => {
+        const candidate = {
+          name: String(
+            product?.product_name || product?.generic_name || "",
+          ).trim(),
+          source: "open_food_facts",
+          external_id: String(product?.id || product?.code || ""),
+          barcode: product?.code || null,
+          nutrients: {
+            kcal_per_100g: toNutrientNumberOrNull(
+              product?.nutriments?.["energy-kcal_100g"],
+            ),
+            protein_per_100g: toNutrientNumberOrNull(
+              product?.nutriments?.proteins_100g,
+            ),
+            carbs_per_100g: toNutrientNumberOrNull(
+              product?.nutriments?.carbohydrates_100g,
+            ),
+            fat_per_100g: toNutrientNumberOrNull(
+              product?.nutriments?.fat_100g,
+            ),
+          },
+        };
+        const confidence = scoreIngredientCandidate(query, candidate.name);
+        const hasFullNutrition = [
+          candidate.nutrients.kcal_per_100g,
+          candidate.nutrients.protein_per_100g,
+          candidate.nutrients.carbs_per_100g,
+          candidate.nutrients.fat_per_100g,
+        ].every((value) => value !== null);
+        return {
+          ...candidate,
+          confidence,
+          reliability: hasFullNutrition ? "high" : "needs_review",
+        };
+      })
+      .filter((candidate: any) => Number(candidate.confidence || 0) >= 0.75);
+
+    return {
+      success: true,
+      query,
+      source,
+      effective_query: query,
+      candidates,
+    };
   }
 
   const config = useRuntimeConfig(event);

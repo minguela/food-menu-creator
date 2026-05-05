@@ -199,13 +199,19 @@ export default defineEventHandler(async (event) => {
         (!bestCandidate || bestScore < OFF_MIN_CONFIDENCE)
       ) {
         const offRes = await fetch(
-          `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
+          `https://search.openfoodfacts.org/search?q=${encodeURIComponent(
             offQuery,
-          )}&search_simple=1&action=process&json=1&page_size=10&fields=code,id,product_name,generic_name,nutriments`,
+          )}&page_size=10&langs=es,en&fields=code,id,product_name,generic_name,nutriments`,
+          {
+            headers: {
+              "User-Agent":
+                "FoodMenuCreator/1.0 (https://food-menu-creator-lyart.vercel.app)",
+            },
+          },
         );
         if (offRes.ok) {
           const offPayload = await offRes.json();
-          for (const product of offPayload?.products || []) {
+          for (const product of offPayload?.hits || []) {
             const candidate = {
               source: "open_food_facts",
               external_id: String(product?.id || product?.code || ""),

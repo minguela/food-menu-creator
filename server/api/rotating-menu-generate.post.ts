@@ -115,7 +115,9 @@ export default defineEventHandler(async (event) => {
   );
   const { data: dishRows } = await supabase
     .from("dishes")
-    .select("id,name,normalized_name,recipe_status")
+    .select(
+      "id,name,normalized_name,recipe_status,is_special,special_kcal_reserved",
+    )
     .eq("user_id", body.userId)
     .in(
       "normalized_name",
@@ -336,21 +338,30 @@ export default defineEventHandler(async (event) => {
       baseKcal = Math.max(1, baseKcal || 1);
       baseProtein = Math.max(1, baseProtein || 1);
 
+      const dishSpecial = Boolean(linkedDish?.is_special);
+      const weeklyMealSpecial = Boolean(picked.is_special);
+      const isSpecial = weeklyMealSpecial || dishSpecial;
+      const specialKcalReserved = isSpecial
+        ? Math.max(
+            0,
+            Math.min(
+              2000,
+              Number(
+                picked.special_kcal_reserved ||
+                  linkedDish?.special_kcal_reserved ||
+                  defaultSpecialMealKcal,
+              ),
+            ),
+          )
+        : 0;
+
       dayPlannedMeals.push({
         meal_type: mealType,
         source_weekly_meal_id: picked.id,
         dish_name: picked.dish_name,
         dish_description: picked.dish_description || null,
-        is_special: Boolean(picked.is_special),
-        special_kcal_reserved: Boolean(picked.is_special)
-          ? Math.max(
-              0,
-              Math.min(
-                2000,
-                Number(picked.special_kcal_reserved || defaultSpecialMealKcal),
-              ),
-            )
-          : 0,
+        is_special: isSpecial,
+        special_kcal_reserved: specialKcalReserved,
         base_kcal: baseKcal,
         base_protein: baseProtein,
         recipe_status: recipeStatus,

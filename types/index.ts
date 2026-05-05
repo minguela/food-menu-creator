@@ -95,6 +95,8 @@ export interface Dish {
   protein_g?: number;
   carbs_g?: number;
   fat_g?: number;
+  is_special?: boolean;
+  special_kcal_reserved?: number;
   servings_base: number;
   created_at: string;
 }

@@ -83,6 +83,12 @@
               >
                 Ver compra asociada
               </button>
+              <button
+                class="rounded border border-red-200 px-3 py-1.5 text-xs text-red-700 hover:bg-red-50"
+                @click="deleteRotatingMenu(menu)"
+              >
+                Eliminar
+              </button>
             </div>
           </div>
         </article>
@@ -208,6 +214,27 @@ const openShoppingForMenu = async (rotatingMenuId: string) => {
     await router.push("/shopping");
   } catch (error) {
     await logError("web", error, { context: "history.openShoppingForMenu" });
+  }
+};
+
+const deleteRotatingMenu = async (menu: RotatingMenu) => {
+  const confirmed = confirm(
+    `¿Eliminar el menú rotativo "${menu.name}" y sus datos asociados?`,
+  );
+  if (!confirmed) return;
+  try {
+    const currentUser = await loadCurrentUser();
+    if (!currentUser) return;
+    const { error } = await supabase
+      .from("rotating_menus")
+      .delete()
+      .eq("id", menu.id)
+      .eq("user_id", currentUser.id);
+    if (error) throw error;
+    await loadData();
+  } catch (error) {
+    await logError("web", error, { context: "history.deleteRotatingMenu" });
+    alert("No se pudo eliminar el menú rotativo.");
   }
 };
 

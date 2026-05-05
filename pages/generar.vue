@@ -60,6 +60,19 @@
               class="w-full rounded-lg border px-3 py-2"
             />
           </label>
+          <label>
+            <span class="mb-1 block text-xs font-medium text-gray-600">
+              kcal comida libre (por defecto)
+            </span>
+            <input
+              v-model.number="specialMealKcal"
+              type="number"
+              min="0"
+              max="2000"
+              step="10"
+              class="w-full rounded-lg border px-3 py-2"
+            />
+          </label>
         </div>
 
         <div class="mt-4">
@@ -254,6 +267,12 @@
           >
             <p class="font-medium text-gray-900">
               {{ mealLabel(meal.meal_type) }}: {{ meal.dish_name }}
+              <span
+                v-if="meal.is_special"
+                class="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] text-amber-800"
+              >
+                Comida libre · {{ meal.special_kcal_reserved || specialMealKcal }} kcal
+              </span>
             </p>
             <div class="mt-2 overflow-x-auto">
               <table class="min-w-[880px] w-full text-xs">
@@ -313,6 +332,7 @@
               <tr>
                 <th class="px-2 py-2">Perfil</th>
                 <th class="px-2 py-2">Totales kcal</th>
+                <th class="px-2 py-2">kcal libres</th>
                 <th class="px-2 py-2">Totales P/H/G</th>
                 <th class="px-2 py-2">Δ kcal</th>
                 <th class="px-2 py-2">Δ proteína</th>
@@ -324,9 +344,20 @@
                 :key="`${day.day_number}-${total.profile_key}`"
                 class="border-t"
               >
-                <td class="px-2 py-2 font-medium">{{ total.profile_name }}</td>
+                <td class="px-2 py-2 font-medium">
+                  {{ total.profile_name }}
+                  <span
+                    v-if="total.all_special_day"
+                    class="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-800"
+                  >
+                    Día libre completo
+                  </span>
+                </td>
                 <td class="px-2 py-2">
                   {{ total.total_kcal }} / {{ Math.round(total.target_kcal) }}
+                </td>
+                <td class="px-2 py-2">
+                  {{ Math.round(total.special_kcal_reserved || 0) }}
                 </td>
                 <td class="px-2 py-2">
                   {{ total.total_protein_g.toFixed(1) }} /
@@ -376,6 +407,8 @@ type ProfilePortion = {
 type RotatingMeal = {
   meal_type: "desayuno" | "comida" | "cena";
   dish_name: string;
+  is_special?: boolean;
+  special_kcal_reserved?: number;
   profile_portions: ProfilePortion[];
 };
 
@@ -387,8 +420,10 @@ type DayProfileTotal = {
   total_protein_g: number;
   total_carbs_g: number;
   total_fat_g: number;
+  special_kcal_reserved?: number;
   kcal_delta: number;
   protein_delta_g: number;
+  all_special_day?: boolean;
 };
 
 type RotatingDay = {
@@ -403,6 +438,7 @@ const { loadCurrentUser } = useCurrentUser();
 
 const name = ref("Menú rotativo");
 const days = ref(30);
+const specialMealKcal = ref(700);
 const startDate = ref(new Date().toISOString().split("T")[0]);
 const menus = ref<WeeklyMenu[]>([]);
 const profiles = ref<PersonProfile[]>([]);
@@ -496,6 +532,7 @@ const generateRotatingMenu = async () => {
         startDate: startDate.value,
         sourceWeeklyMenuIds: selectedMenuIds.value,
         profileIds: selectedProfileIds.value,
+        specialMealKcal: Math.max(0, Math.min(2000, Number(specialMealKcal.value) || 700)),
       },
     });
 
@@ -536,7 +573,11 @@ const copySummary = async () => {
   for (const day of generatedDays.value) {
     lines.push(`Día ${day.day_number} (${formatDate(day.day_date)})`);
     for (const meal of day.meals) {
-      lines.push(`- ${mealLabel(meal.meal_type)}: ${meal.dish_name}`);
+      lines.push(
+        `- ${mealLabel(meal.meal_type)}: ${meal.dish_name}${
+          meal.is_special ? ` [libre ${meal.special_kcal_reserved || specialMealKcal.value} kcal]` : ""
+        }`,
+      );
       for (const portion of meal.profile_portions) {
         lines.push(
           `  · ${portion.profile_name}: x${portion.serving_multiplier.toFixed(2)} · ${Math.round(

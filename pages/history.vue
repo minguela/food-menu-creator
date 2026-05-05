@@ -199,9 +199,11 @@ const subscribeRealtime = (userId: string) => {
 
 const openShoppingForMenu = async (rotatingMenuId: string) => {
   try {
+    const currentUser = await loadCurrentUser();
+    if (!currentUser) return;
     await $fetch("/api/shopping-from-rotating", {
       method: "POST",
-      body: { rotatingMenuId },
+      body: { userId: currentUser.id, rotatingMenuId },
     });
     await router.push("/shopping");
   } catch (error) {

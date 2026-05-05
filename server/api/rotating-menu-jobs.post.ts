@@ -7,6 +7,7 @@ type CreateJobPayload = {
   startDate: string;
   sourceWeeklyMenuIds: string[];
   profileIds: string[];
+  specialMealKcal?: number;
 };
 
 export default defineEventHandler(async (event) => {
@@ -55,6 +56,10 @@ export default defineEventHandler(async (event) => {
     startDate: String(body?.startDate || "").trim(),
     sourceWeeklyMenuIds: body.sourceWeeklyMenuIds || [],
     profileIds: Array.isArray(body?.profileIds) ? body.profileIds : [],
+    specialMealKcal: Math.max(
+      0,
+      Math.min(2000, Number(body?.specialMealKcal) || 700),
+    ),
   };
 
   const { data: createdJob, error: createErrorJob } = await supabase

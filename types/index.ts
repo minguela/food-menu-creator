@@ -48,6 +48,8 @@ export interface WeeklyMeal {
   protein_g: number;
   carbs_g: number;
   fat_g: number;
+  is_special?: boolean;
+  special_kcal_reserved?: number;
   created_at: string;
   weekly_meal_ingredients?: WeeklyMealIngredient[];
 }

@@ -1,4 +1,5 @@
 import { resolveSupabaseServerKey } from "~/utils/enrich-runtime";
+import { scoreIngredientCandidate } from "~/server/utils/ingredient-enrichment";
 
 type SearchSource = "usda" | "open_food_facts" | "bedca";
 
@@ -62,6 +63,17 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  return payload;
-});
+  const candidates = Array.isArray(payload?.candidates)
+    ? payload.candidates
+        .map((candidate: any) => ({
+          ...candidate,
+          confidence: scoreIngredientCandidate(
+            query,
+            String(candidate?.name || ""),
+          ),
+        }))
+        .filter((candidate: any) => Number(candidate.confidence || 0) >= 0.75)
+    : [];
 
+  return { ...payload, candidates };
+});

@@ -73,6 +73,19 @@ const ingredientMergeKey = (name: string) => {
   return simplified;
 };
 
+const mergeRecipeRowPayload = (
+  existing: any,
+  source: any,
+  target: IngredientRow,
+) => ({
+  ingredient_id: existing.ingredient_id || target.id,
+  quantity: existing.quantity ?? source.quantity ?? null,
+  unit_type: existing.unit_type || source.unit_type || null,
+  is_confirmed: Boolean(existing.is_confirmed || source.is_confirmed),
+  is_suggested: Boolean(existing.is_suggested && !source.is_confirmed),
+  needs_review: Boolean(existing.needs_review || source.needs_review),
+});
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event);
   const supabase = createSupabaseAdminClient(config);
@@ -103,22 +116,77 @@ export default defineEventHandler(async (event) => {
     );
     const target = sorted[0];
     const sources = sorted.slice(1);
+    const targetNormalized =
+      target.normalized_name || normalizeIngredientName(target.name);
 
     for (const source of sources) {
-      const { error: recipeUpdateError } = await supabase
+      const { data: linkedRecipeRows, error: linkedRowsError } = await supabase
         .from("recipe_ingredients")
-        .update({
-          ingredient_id: target.id,
-          name: target.name,
-          normalized_name:
-            target.normalized_name || normalizeIngredientName(target.name),
-        })
+        .select("*")
         .eq("ingredient_id", source.id);
-      if (recipeUpdateError) {
+      if (linkedRowsError) {
         throw createError({
           statusCode: 500,
-          statusMessage: recipeUpdateError.message,
+          statusMessage: linkedRowsError.message,
         });
+      }
+
+      for (const row of linkedRecipeRows || []) {
+        const { data: existingTargetRow, error: existingTargetError } =
+          await supabase
+            .from("recipe_ingredients")
+            .select("*")
+            .eq("recipe_id", row.recipe_id)
+            .eq("normalized_name", targetNormalized)
+            .neq("id", row.id)
+            .maybeSingle();
+        if (existingTargetError) {
+          throw createError({
+            statusCode: 500,
+            statusMessage: existingTargetError.message,
+          });
+        }
+
+        if (existingTargetRow?.id) {
+          const { error: updateExistingError } = await supabase
+            .from("recipe_ingredients")
+            .update(mergeRecipeRowPayload(existingTargetRow, row, target))
+            .eq("id", existingTargetRow.id);
+          if (updateExistingError) {
+            throw createError({
+              statusCode: 500,
+              statusMessage: updateExistingError.message,
+            });
+          }
+
+          const { error: deleteDuplicateRowError } = await supabase
+            .from("recipe_ingredients")
+            .delete()
+            .eq("id", row.id);
+          if (deleteDuplicateRowError) {
+            throw createError({
+              statusCode: 500,
+              statusMessage: deleteDuplicateRowError.message,
+            });
+          }
+        } else {
+          const { error: recipeUpdateError } = await supabase
+            .from("recipe_ingredients")
+            .update({
+              ingredient_id: target.id,
+              name: target.name,
+              normalized_name: targetNormalized,
+            })
+            .eq("id", row.id);
+          if (recipeUpdateError) {
+            throw createError({
+              statusCode: 500,
+              statusMessage: recipeUpdateError.message,
+            });
+          }
+        }
+
+        updatedRecipeLinks += 1;
       }
 
       const { error: aliasUpdateError } = await supabase
@@ -143,21 +211,74 @@ export default defineEventHandler(async (event) => {
         });
       }
 
-      const { error: orphanRecipeRowsError } = await supabase
+      const { data: orphanRows, error: orphanRowsError } = await supabase
         .from("recipe_ingredients")
-        .update({
-          ingredient_id: target.id,
-          name: target.name,
-          normalized_name:
-            target.normalized_name || normalizeIngredientName(target.name),
-        })
+        .select("*")
         .is("ingredient_id", null)
         .eq("normalized_name", normalizeIngredientName(source.name));
-      if (orphanRecipeRowsError) {
+      if (orphanRowsError) {
         throw createError({
           statusCode: 500,
-          statusMessage: orphanRecipeRowsError.message,
+          statusMessage: orphanRowsError.message,
         });
+      }
+
+      for (const row of orphanRows || []) {
+        const { data: existingTargetRow, error: existingTargetError } =
+          await supabase
+            .from("recipe_ingredients")
+            .select("*")
+            .eq("recipe_id", row.recipe_id)
+            .eq("normalized_name", targetNormalized)
+            .neq("id", row.id)
+            .maybeSingle();
+        if (existingTargetError) {
+          throw createError({
+            statusCode: 500,
+            statusMessage: existingTargetError.message,
+          });
+        }
+
+        if (existingTargetRow?.id) {
+          const { error: updateExistingError } = await supabase
+            .from("recipe_ingredients")
+            .update(mergeRecipeRowPayload(existingTargetRow, row, target))
+            .eq("id", existingTargetRow.id);
+          if (updateExistingError) {
+            throw createError({
+              statusCode: 500,
+              statusMessage: updateExistingError.message,
+            });
+          }
+
+          const { error: deleteDuplicateRowError } = await supabase
+            .from("recipe_ingredients")
+            .delete()
+            .eq("id", row.id);
+          if (deleteDuplicateRowError) {
+            throw createError({
+              statusCode: 500,
+              statusMessage: deleteDuplicateRowError.message,
+            });
+          }
+        } else {
+          const { error: orphanRecipeRowsError } = await supabase
+            .from("recipe_ingredients")
+            .update({
+              ingredient_id: target.id,
+              name: target.name,
+              normalized_name: targetNormalized,
+            })
+            .eq("id", row.id);
+          if (orphanRecipeRowsError) {
+            throw createError({
+              statusCode: 500,
+              statusMessage: orphanRecipeRowsError.message,
+            });
+          }
+        }
+
+        updatedRecipeLinks += 1;
       }
 
       const { error: deleteError } = await supabase
@@ -165,11 +286,13 @@ export default defineEventHandler(async (event) => {
         .delete()
         .eq("id", source.id);
       if (deleteError) {
-        throw createError({ statusCode: 500, statusMessage: deleteError.message });
+        throw createError({
+          statusCode: 500,
+          statusMessage: deleteError.message,
+        });
       }
 
       mergedIngredients += 1;
-      updatedRecipeLinks += 1;
     }
   }
 

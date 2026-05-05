@@ -33,6 +33,8 @@ const extractUsdaNutrient = (foodNutrients: any[], keys: string[]) => {
   return null;
 };
 
+const OFF_MIN_CONFIDENCE = 0.75;
+
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as EnrichBody;
   const limit = Math.min(50, Math.max(1, Number(body?.limit) || 20));
@@ -161,11 +163,11 @@ export default defineEventHandler(async (event) => {
         }
       }
 
-      if (shouldTryOff(effectiveSource) && (!bestCandidate || bestScore < 0.85)) {
+      if (shouldTryOff(effectiveSource) && (!bestCandidate || bestScore < OFF_MIN_CONFIDENCE)) {
         const offRes = await fetch(
           `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
-            ingredient.name,
-          )}&search_simple=1&action=process&json=1&page_size=8`,
+            query,
+          )}&search_simple=1&action=process&json=1&page_size=25`,
         );
         if (offRes.ok) {
           const offPayload = await offRes.json();
@@ -204,7 +206,7 @@ export default defineEventHandler(async (event) => {
         }
       }
 
-      if (!bestCandidate) {
+      if (!bestCandidate || bestScore < OFF_MIN_CONFIDENCE) {
         await supabase
           .from("ingredients")
           .update({
@@ -223,7 +225,7 @@ export default defineEventHandler(async (event) => {
         bestCandidate.fat_per_100g,
       ].every((v) => v !== null);
 
-      if (bestScore >= 0.85 && hasFull) {
+      if (bestScore >= OFF_MIN_CONFIDENCE && hasFull) {
         await supabase
           .from("ingredients")
           .update({
@@ -240,18 +242,45 @@ export default defineEventHandler(async (event) => {
           .eq("id", ingredient.id);
         completed += 1;
       } else {
-        await supabase.from("ingredient_nutrition_candidates").insert({
-          ingredient_id: ingredient.id,
-          source: bestCandidate.source,
-          external_id: bestCandidate.external_id,
-          name: bestCandidate.name || ingredient.name,
-          kcal_per_100g: bestCandidate.kcal_per_100g,
-          protein_per_100g: bestCandidate.protein_per_100g,
-          carbs_per_100g: bestCandidate.carbs_per_100g,
-          fat_per_100g: bestCandidate.fat_per_100g,
-          confidence: bestScore,
-          raw_payload: bestCandidate.raw_payload ?? null,
-        });
+        const candidateKey = String(bestCandidate.external_id || "").trim();
+        const { data: existingCandidate } = await supabase
+          .from("ingredient_nutrition_candidates")
+          .select("id, confidence")
+          .eq("ingredient_id", ingredient.id)
+          .eq("source", bestCandidate.source)
+          .eq("external_id", candidateKey)
+          .maybeSingle();
+
+        if (existingCandidate?.id) {
+          await supabase
+            .from("ingredient_nutrition_candidates")
+            .update({
+              name: bestCandidate.name || ingredient.name,
+              kcal_per_100g: bestCandidate.kcal_per_100g,
+              protein_per_100g: bestCandidate.protein_per_100g,
+              carbs_per_100g: bestCandidate.carbs_per_100g,
+              fat_per_100g: bestCandidate.fat_per_100g,
+              confidence: Math.max(
+                Number(existingCandidate.confidence || 0),
+                bestScore,
+              ),
+              raw_payload: bestCandidate.raw_payload ?? null,
+            })
+            .eq("id", existingCandidate.id);
+        } else {
+          await supabase.from("ingredient_nutrition_candidates").insert({
+            ingredient_id: ingredient.id,
+            source: bestCandidate.source,
+            external_id: candidateKey,
+            name: bestCandidate.name || ingredient.name,
+            kcal_per_100g: bestCandidate.kcal_per_100g,
+            protein_per_100g: bestCandidate.protein_per_100g,
+            carbs_per_100g: bestCandidate.carbs_per_100g,
+            fat_per_100g: bestCandidate.fat_per_100g,
+            confidence: bestScore,
+            raw_payload: bestCandidate.raw_payload ?? null,
+          });
+        }
         await supabase
           .from("ingredients")
           .update({

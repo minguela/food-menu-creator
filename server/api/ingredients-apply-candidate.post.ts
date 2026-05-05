@@ -49,5 +49,19 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: updateError.message });
   }
 
+  if (candidate.source && candidate.external_id) {
+    await supabase
+      .from("ingredient_nutrition_candidates")
+      .delete()
+      .eq("ingredient_id", candidate.ingredient_id)
+      .eq("source", candidate.source)
+      .eq("external_id", candidate.external_id);
+  } else {
+    await supabase
+      .from("ingredient_nutrition_candidates")
+      .delete()
+      .eq("id", candidateId);
+  }
+
   return { success: true, ingredient_id: candidate.ingredient_id };
 });

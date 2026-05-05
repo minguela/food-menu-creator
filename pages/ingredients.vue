@@ -72,7 +72,7 @@
           {{
             mergingDuplicates
               ? "Fusionando..."
-              : "Fusionar duplicados (sing/plural)"
+              : "Fusionar duplicados/equivalentes"
           }}
         </button>
         <span v-if="enrichSummary" class="text-xs text-gray-600">

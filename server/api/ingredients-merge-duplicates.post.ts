@@ -20,6 +20,59 @@ const ingredientScore = (row: IngredientRow) => {
   return score;
 };
 
+const singularizeToken = (token: string) => {
+  if (token.endsWith("es") && token.length > 4) return token.slice(0, -2);
+  if (token.endsWith("s") && token.length > 3) return token.slice(0, -1);
+  return token;
+};
+
+const simplifyMergeKey = (name: string) =>
+  normalizeIngredientName(name)
+    .split(" ")
+    .filter(Boolean)
+    .map(singularizeToken)
+    .join(" ");
+
+const exactEquivalentKeys = new Map(
+  [
+    ["atun", "atun bonito conserva"],
+    ["atun lata", "atun bonito conserva"],
+    ["atun en lata", "atun bonito conserva"],
+    ["atun conserva", "atun bonito conserva"],
+    ["atun en conserva", "atun bonito conserva"],
+    ["bonito", "atun bonito conserva"],
+    ["bonito lata", "atun bonito conserva"],
+    ["bonito en lata", "atun bonito conserva"],
+    ["bonito conserva", "atun bonito conserva"],
+    ["bonito en conserva", "atun bonito conserva"],
+    ["bonito del norte", "atun bonito conserva"],
+    ["escarola", "escarola canonigos"],
+    ["canonigo", "escarola canonigos"],
+    ["canonigos", "escarola canonigos"],
+    ["canonigos escarola", "escarola canonigos"],
+    ["escarola canonigos", "escarola canonigos"],
+  ].map(([alias, key]) => [simplifyMergeKey(alias), key]),
+);
+
+const ingredientMergeKey = (name: string) => {
+  const simplified = simplifyMergeKey(name);
+  if (!simplified) return "";
+  const exactKey = exactEquivalentKeys.get(simplified);
+  if (exactKey) return exactKey;
+
+  const words = new Set(simplified.split(" "));
+  const hasTunaLike = words.has("atun") || words.has("bonito");
+  const hasConserveLike =
+    words.has("lata") || words.has("conserva") || words.has("natural");
+  if (hasTunaLike && hasConserveLike) return "atun bonito conserva";
+
+  const hasEscarola = words.has("escarola");
+  const hasCanonigos = words.has("canonigo");
+  if (hasEscarola || hasCanonigos) return "escarola canonigos";
+
+  return simplified;
+};
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event);
   const supabase = createSupabaseAdminClient(config);
@@ -34,7 +87,7 @@ export default defineEventHandler(async (event) => {
 
   const groups = new Map<string, IngredientRow[]>();
   for (const item of (ingredients || []) as IngredientRow[]) {
-    const key = normalizeIngredientName(item.name || "");
+    const key = ingredientMergeKey(item.name || "");
     if (!key) continue;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(item);
@@ -126,4 +179,3 @@ export default defineEventHandler(async (event) => {
     updated_recipe_links: updatedRecipeLinks,
   };
 });
-

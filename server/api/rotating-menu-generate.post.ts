@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+import { buildShoppingListFromRotatingMenu } from "~/server/utils/shopping-from-rotating";
 
 type MealType = "desayuno" | "comida" | "cena";
 
@@ -53,16 +54,19 @@ export default defineEventHandler(async (event) => {
   }
 
   const profileTargets = (profiles || []).map((profile: any) => {
-    const proteinPct =
-      100 - Number(profile.fat_pct_target) - Number(profile.carbs_pct_target);
+    const inferredProteinG = Number(
+      (Number(profile.daily_kcal_target) *
+        (100 - Number(profile.fat_pct_target) - Number(profile.carbs_pct_target))) /
+        100 /
+        4,
+    );
+    const proteinTarget = Number(profile.daily_protein_target || inferredProteinG);
     return {
       key: profile.id,
       profile_id: profile.id,
       profile_name: profile.name,
       target_kcal: Number(profile.daily_kcal_target),
-      target_protein_g: Number(
-        (Number(profile.daily_kcal_target) * proteinPct) / 100 / 4,
-      ),
+      target_protein_g: proteinTarget,
       target_carbs_g: Number(
         (Number(profile.daily_kcal_target) * Number(profile.carbs_pct_target)) /
           100 /
@@ -79,14 +83,15 @@ export default defineEventHandler(async (event) => {
   if (body.includeGlobalProfile) {
     const proteinPct =
       100 - Number(user.fat_pct_target) - Number(user.carbs_pct_target);
+    const inferredProteinG = Number(
+      (Number(user.daily_kcal_target) * proteinPct) / 100 / 4,
+    );
     profileTargets.push({
       key: "global",
       profile_id: null,
       profile_name: "Perfil global",
       target_kcal: Number(user.daily_kcal_target),
-      target_protein_g: Number(
-        (Number(user.daily_kcal_target) * proteinPct) / 100 / 4,
-      ),
+      target_protein_g: Number(user.daily_protein_target || inferredProteinG),
       target_carbs_g: Number(
         (Number(user.daily_kcal_target) * Number(user.carbs_pct_target)) /
           100 /
@@ -346,6 +351,8 @@ export default defineEventHandler(async (event) => {
         const targetMealKcal = profile.target_kcal * shares[mealType].kcal;
         const targetMealProtein =
           profile.target_protein_g * shares[mealType].protein;
+        const targetMealCarbs = profile.target_carbs_g * shares[mealType].kcal;
+        const targetMealFat = profile.target_fat_g * shares[mealType].kcal;
         const multiplier = Math.max(
           0.55,
           Math.min(
@@ -406,11 +413,19 @@ export default defineEventHandler(async (event) => {
           profile_key: profile.key,
           profile_id: profile.profile_id,
           profile_name: profile.profile_name,
+          target_meal_kcal: round(targetMealKcal),
+          target_meal_protein_g: round(targetMealProtein),
+          target_meal_carbs_g: round(targetMealCarbs),
+          target_meal_fat_g: round(targetMealFat),
           serving_multiplier: round(multiplier, 3),
           final_kcal: Math.round(kcal),
           final_protein_g: round(protein),
           final_carbs_g: round(carbs),
           final_fat_g: round(fat),
+          kcal_delta: round(kcal - targetMealKcal),
+          protein_delta_g: round(protein - targetMealProtein),
+          carbs_delta_g: round(carbs - targetMealCarbs),
+          fat_delta_g: round(fat - targetMealFat),
           nutrition_pending: pending,
           ingredients,
         };
@@ -425,10 +440,50 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    const dailyProfileTotals = profileTargets.map((profile) => {
+      const profileMeals = dayMeals.map((meal) =>
+        meal.profile_portions.find((portion: any) => portion.profile_key === profile.key),
+      );
+      const kcal = profileMeals.reduce(
+        (acc: number, meal: any) => acc + Number(meal?.final_kcal || 0),
+        0,
+      );
+      const protein = profileMeals.reduce(
+        (acc: number, meal: any) => acc + Number(meal?.final_protein_g || 0),
+        0,
+      );
+      const carbs = profileMeals.reduce(
+        (acc: number, meal: any) => acc + Number(meal?.final_carbs_g || 0),
+        0,
+      );
+      const fat = profileMeals.reduce(
+        (acc: number, meal: any) => acc + Number(meal?.final_fat_g || 0),
+        0,
+      );
+      return {
+        profile_key: profile.key,
+        profile_id: profile.profile_id,
+        profile_name: profile.profile_name,
+        target_kcal: round(profile.target_kcal),
+        target_protein_g: round(profile.target_protein_g),
+        target_carbs_g: round(profile.target_carbs_g),
+        target_fat_g: round(profile.target_fat_g),
+        total_kcal: Math.round(kcal),
+        total_protein_g: round(protein),
+        total_carbs_g: round(carbs),
+        total_fat_g: round(fat),
+        kcal_delta: round(kcal - profile.target_kcal),
+        protein_delta_g: round(protein - profile.target_protein_g),
+        carbs_delta_g: round(carbs - profile.target_carbs_g),
+        fat_delta_g: round(fat - profile.target_fat_g),
+      };
+    });
+
     generatedDays.push({
       day_number: day,
       day_date: date.toISOString().split("T")[0],
       meals: dayMeals,
+      profile_totals: dailyProfileTotals,
     });
   }
 
@@ -632,11 +687,18 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  const shoppingBuild = await buildShoppingListFromRotatingMenu({
+    supabase,
+    userId: body.userId,
+    rotatingMenuId: rotatingMenu.id,
+  });
+
   return {
     success: true,
     rotating_menu_id: rotatingMenu.id,
     generated_days: generatedDays,
     profiles: profileTargets,
+    shopping_list_items: shoppingBuild.inserted,
   };
 });
 

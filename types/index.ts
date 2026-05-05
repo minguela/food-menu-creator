@@ -20,6 +20,7 @@ export interface PersonProfile {
   sex: "female" | "male" | "other";
   age: number;
   daily_kcal_target: number;
+  daily_protein_target: number;
   fat_pct_target: number;
   carbs_pct_target: number;
   created_at: string;
@@ -254,4 +255,14 @@ export interface RotatingMenu {
   target_fat_g: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface RotatingProfileTarget {
+  key: string;
+  profile_id?: string | null;
+  profile_name: string;
+  target_kcal: number;
+  target_protein_g: number;
+  target_carbs_g: number;
+  target_fat_g: number;
 }

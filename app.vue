@@ -49,7 +49,7 @@
         v{{ appVersion
         }}<span v-if="appCommitShort"> · {{ appCommitShort }}</span>
       </div>
-      <ul class="grid grid-cols-7 gap-2">
+      <ul class="grid grid-cols-6 gap-2">
         <li v-for="item in navItems" :key="`mobile-${item.path}`">
           <NuxtLink
             :href="item.path"
@@ -89,8 +89,7 @@ const navItems = [
     icon: "I",
   },
   { path: "/generar", label: "Generar", shortLabel: "Generar", icon: "G" },
-  { path: "/shopping", label: "Compra", shortLabel: "Compra", icon: "C" },
-  { path: "/history", label: "Histórico", shortLabel: "Hist.", icon: "H" },
+  { path: "/history", label: "Rotativos", shortLabel: "Rota", icon: "T" },
   { path: "/config", label: "Config", shortLabel: "Config", icon: "A" },
 ];
 </script>

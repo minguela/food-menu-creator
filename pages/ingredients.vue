@@ -185,9 +185,9 @@
       </div>
     </section>
 
-    <section class="bg-white rounded-lg border overflow-hidden">
+    <section class="bg-white rounded-lg border overflow-x-auto">
       <div
-        class="grid grid-cols-[36px_1.2fr_90px_90px_90px_90px_90px_90px_90px_90px] gap-2 p-3 text-xs font-semibold text-gray-600 border-b"
+        class="grid min-w-[1280px] grid-cols-[36px_minmax(180px,1.2fr)_90px_90px_90px_90px_90px_100px_70px_minmax(180px,1fr)_150px] gap-2 p-3 text-xs font-semibold text-gray-600 border-b"
       >
         <label class="inline-flex items-center justify-center">
           <input
@@ -198,12 +198,13 @@
         </label>
         <span>Ingrediente</span><span>kcal/100g</span><span>P/100g</span
         ><span>H/100g</span><span>G/100g</span><span>Unidad</span
-        ><span>Fuente</span><span>Verif.</span><span>Acciones</span>
+        ><span>Fuente</span><span>Verif.</span><span>Recetas</span
+        ><span>Acciones</span>
       </div>
       <div
         v-for="row in filtered"
         :key="row.id"
-        class="grid grid-cols-[36px_1.2fr_90px_90px_90px_90px_90px_90px_90px_90px] gap-2 p-3 border-b items-center"
+        class="grid min-w-[1280px] grid-cols-[36px_minmax(180px,1.2fr)_90px_90px_90px_90px_90px_100px_70px_minmax(180px,1fr)_150px] gap-2 p-3 border-b items-center"
       >
         <label class="inline-flex items-center justify-center">
           <input
@@ -263,7 +264,39 @@
         <label class="inline-flex items-center justify-center">
           <input v-model="row.is_verified" type="checkbox" />
         </label>
-        <div class="flex justify-end gap-2">
+        <div class="flex flex-wrap gap-1 text-xs">
+          <NuxtLink
+            v-for="recipe in recipesForIngredient(row.id).slice(0, 3)"
+            :key="`${row.id}-${recipe.id}`"
+            :to="{ path: '/recipes', query: { recipe: recipe.id } }"
+            class="rounded border px-2 py-1 text-sky-700 hover:bg-sky-50"
+            :title="recipe.name"
+          >
+            {{ recipe.name }}
+          </NuxtLink>
+          <span
+            v-if="recipesForIngredient(row.id).length > 3"
+            class="rounded bg-gray-100 px-2 py-1 text-gray-600"
+          >
+            +{{ recipesForIngredient(row.id).length - 3 }}
+          </span>
+          <span
+            v-if="recipesForIngredient(row.id).length === 0"
+            class="text-gray-400"
+          >
+            Sin recetas
+          </span>
+        </div>
+        <div class="flex flex-wrap justify-end gap-2">
+          <button
+            class="text-xs text-amber-700 disabled:opacity-50"
+            :disabled="
+              isRowEnriching(row.id) || String(row.id).startsWith('tmp-')
+            "
+            @click="enrichOne(row)"
+          >
+            {{ isRowEnriching(row.id) ? "Curando..." : "Curar OFF" }}
+          </button>
           <button class="text-xs text-indigo-700" @click="save(row)">
             Guardar
           </button>
@@ -307,6 +340,10 @@ type ReviewCandidate = {
   fat_per_100g: number | null;
   confidence: number;
 };
+type RecipeLink = {
+  id: string;
+  name: string;
+};
 
 const supabase = useSupabase();
 const query = ref("");
@@ -324,6 +361,8 @@ const mergingDuplicates = ref(false);
 const backfillingAliases = ref(false);
 const reviewCandidates = ref<ReviewCandidate[]>([]);
 const selectedIds = ref<string[]>([]);
+const enrichingRowIds = ref<string[]>([]);
+const recipeLinksByIngredientId = ref<Record<string, RecipeLink[]>>({});
 const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
   "g",
   "kg",
@@ -376,7 +415,49 @@ const load = async () => {
     .order("created_at", { ascending: false })
     .limit(60);
   reviewCandidates.value = (candidateRows || []) as ReviewCandidate[];
+
+  const ingredientIds = rows.value
+    .map((row) => row.id)
+    .filter((id) => !String(id).startsWith("tmp-"));
+  if (ingredientIds.length === 0) {
+    recipeLinksByIngredientId.value = {};
+    return;
+  }
+
+  const { data: recipeRows, error: recipeRowsError } = await supabase
+    .from("recipe_ingredients")
+    .select("ingredient_id, dishes(id, name)")
+    .in("ingredient_id", ingredientIds)
+    .not("ingredient_id", "is", null);
+  if (recipeRowsError) {
+    await logError("web", recipeRowsError, {
+      context: "ingredients.loadRecipeLinks",
+    });
+    recipeLinksByIngredientId.value = {};
+    return;
+  }
+
+  const nextLinks: Record<string, RecipeLink[]> = {};
+  for (const item of recipeRows || []) {
+    const ingredientId = String((item as any).ingredient_id || "");
+    const dish = (item as any).dishes;
+    if (!ingredientId || !dish?.id) continue;
+    if (!nextLinks[ingredientId]) nextLinks[ingredientId] = [];
+    if (!nextLinks[ingredientId].some((recipe) => recipe.id === dish.id)) {
+      nextLinks[ingredientId].push({
+        id: dish.id,
+        name: dish.name || "Receta",
+      });
+    }
+  }
+  recipeLinksByIngredientId.value = nextLinks;
 };
+
+const recipesForIngredient = (ingredientId: string) =>
+  recipeLinksByIngredientId.value[ingredientId] || [];
+
+const isRowEnriching = (ingredientId: string) =>
+  enrichingRowIds.value.includes(ingredientId);
 
 const isSelected = (id: string) => selectedIds.value.includes(id);
 
@@ -481,6 +562,39 @@ const runEnrichment = async () => {
     await logError("web", error, { context: "ingredients.runEnrichment" });
   } finally {
     enriching.value = false;
+  }
+};
+
+const enrichOne = async (row: IngredientRow) => {
+  if (String(row.id).startsWith("tmp-") || isRowEnriching(row.id)) return;
+  enrichingRowIds.value.push(row.id);
+  try {
+    const result = await $fetch<{
+      success: boolean;
+      processed: number;
+      completed: number;
+      needs_review: number;
+      not_found: number;
+    }>("/api/enrich-ingredients", {
+      method: "POST",
+      body: {
+        ingredientId: row.id,
+        limit: 1,
+        source: "open_food_facts",
+      },
+    });
+
+    enrichSummary.value = {
+      processed: result.processed || 0,
+      completed: result.completed || 0,
+      needs_review: result.needs_review || 0,
+      not_found: result.not_found || 0,
+    };
+    await load();
+  } catch (error) {
+    await logError("web", error, { context: "ingredients.enrichOne" });
+  } finally {
+    enrichingRowIds.value = enrichingRowIds.value.filter((id) => id !== row.id);
   }
 };
 

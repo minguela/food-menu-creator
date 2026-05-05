@@ -547,6 +547,7 @@ type DishRow = Dish & {
 };
 
 const supabase = useSupabase();
+const route = useRoute();
 const { loadCurrentUser } = useCurrentUser();
 
 const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
@@ -660,6 +661,15 @@ const loadRecipes = async () => {
   selectedDishIds.value = selectedDishIds.value.filter((id) =>
     dishes.value.some((dish) => dish.id === id),
   );
+};
+
+const openRecipeFromRoute = async () => {
+  const recipeId = String(route.query.recipe || "").trim();
+  if (!recipeId || editingDishId.value === recipeId) return;
+  const dish = dishes.value.find((item) => item.id === recipeId);
+  if (!dish) return;
+  searchTerm.value = dish.name || "";
+  await toggleEdit(recipeId);
 };
 
 const refreshEditingDish = async (dishId: string) => {
@@ -1591,5 +1601,15 @@ const addBulkIngredients = async (dishId: string) => {
   }
 };
 
-onMounted(loadRecipes);
+onMounted(async () => {
+  await loadRecipes();
+  await openRecipeFromRoute();
+});
+
+watch(
+  () => route.query.recipe,
+  async () => {
+    await openRecipeFromRoute();
+  },
+);
 </script>

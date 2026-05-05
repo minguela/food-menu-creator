@@ -1,5 +1,6 @@
 import { normalizeIngredientName } from "~/utils/ingredient-normalize";
 import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+import { validateIngredientNutritionQuality } from "~/utils/ingredient-nutrition-quality";
 
 type CandidatePayload = {
   name?: string;
@@ -39,9 +40,12 @@ export default defineEventHandler(async (event) => {
   const protein = toNumberOrNull(candidate?.nutrients?.protein_per_100g);
   const carbs = toNumberOrNull(candidate?.nutrients?.carbs_per_100g);
   const fat = toNumberOrNull(candidate?.nutrients?.fat_per_100g);
-  const hasCompleteNutrition = [kcal, protein, carbs, fat].every(
-    (value) => value !== null,
-  );
+  const nutritionQuality = validateIngredientNutritionQuality({
+    kcal_per_100g: kcal,
+    protein_per_100g: protein,
+    carbs_per_100g: carbs,
+    fat_per_100g: fat,
+  });
 
   const config = useRuntimeConfig(event);
   const supabase = createSupabaseAdminClient(config);
@@ -58,8 +62,8 @@ export default defineEventHandler(async (event) => {
     source,
     external_id: externalId,
     barcode: candidate?.barcode || null,
-    is_verified: hasCompleteNutrition,
-    nutrition_status: hasCompleteNutrition ? "complete" : "needs_review",
+    is_verified: !nutritionQuality.needsReview,
+    nutrition_status: nutritionQuality.needsReview ? "needs_review" : "complete",
     updated_at: new Date().toISOString(),
   };
 

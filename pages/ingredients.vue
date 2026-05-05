@@ -312,6 +312,7 @@
 <script setup lang="ts">
 import { logError } from "~/utils/log-error";
 import { normalizeIngredientName } from "~/utils/ingredient-normalize";
+import { validateIngredientNutritionQuality } from "~/utils/ingredient-nutrition-quality";
 import { saveIngredientFromCandidate as persistCandidate } from "~/utils/save-ingredient-from-candidate";
 import type { Ingredient } from "~/types";
 
@@ -321,7 +322,7 @@ type IngredientRow = Ingredient & {
   source: string;
   external_id?: string | null;
   barcode?: string | null;
-  nutrition_status?: "complete" | "pending" | "needs_review";
+  nutrition_status?: "complete" | "pending" | "needs_review" | "not_found";
 };
 type EnrichSummary = {
   processed: number;
@@ -662,6 +663,12 @@ const addIngredient = () => {
 
 const save = async (row: IngredientRow) => {
   if (!row.name.trim()) return;
+  const nutritionQuality = validateIngredientNutritionQuality({
+    kcal_per_100g: row.kcal_per_100g,
+    protein_per_100g: row.protein_per_100g,
+    carbs_per_100g: row.carbs_per_100g,
+    fat_per_100g: row.fat_per_100g,
+  });
   const payload = {
     name: row.name.trim(),
     normalized_name: normalizeIngredientName(row.name),
@@ -674,14 +681,12 @@ const save = async (row: IngredientRow) => {
     source: row.source || "manual",
     external_id: row.external_id || null,
     barcode: row.barcode || null,
-    is_verified: !!row.is_verified,
-    nutrition_status:
-      row.kcal_per_100g != null &&
-      row.protein_per_100g != null &&
-      row.carbs_per_100g != null &&
-      row.fat_per_100g != null
-        ? "complete"
-        : "pending",
+    is_verified: !!row.is_verified && !nutritionQuality.needsReview,
+    nutrition_status: !nutritionQuality.hasCompleteNutrition
+      ? "pending"
+      : nutritionQuality.needsReview
+        ? "needs_review"
+        : "complete",
   };
   try {
     if (String(row.id).startsWith("tmp-")) {

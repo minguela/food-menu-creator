@@ -13,6 +13,7 @@ import {
   shouldTryOff,
   shouldTryUsda,
 } from "~/utils/enrich-runtime";
+import { validateIngredientNutritionQuality } from "~/utils/ingredient-nutrition-quality";
 
 type EnrichBody = {
   ingredientId?: string;
@@ -42,12 +43,10 @@ const extractUsdaNutrient = (foodNutrients: any[], keys: string[]) => {
 const OFF_MIN_CONFIDENCE = 0.75;
 
 const hasCompleteCandidateNutrition = (candidate: any) =>
-  [
-    candidate?.kcal_per_100g,
-    candidate?.protein_per_100g,
-    candidate?.carbs_per_100g,
-    candidate?.fat_per_100g,
-  ].every((value) => value !== null);
+  !validateIngredientNutritionQuality(candidate).needsReview;
+
+const candidateNeedsReview = (candidate: any) =>
+  validateIngredientNutritionQuality(candidate).needsReview;
 
 const shouldReplaceBestCandidate = (
   candidate: any,
@@ -293,9 +292,9 @@ export default defineEventHandler(async (event) => {
         continue;
       }
 
-      const hasFull = hasCompleteCandidateNutrition(bestCandidate);
+      const needsNutritionReview = candidateNeedsReview(bestCandidate);
 
-      if (bestScore >= OFF_MIN_CONFIDENCE && hasFull) {
+      if (bestScore >= OFF_MIN_CONFIDENCE && !needsNutritionReview) {
         await supabase
           .from("ingredients")
           .update({

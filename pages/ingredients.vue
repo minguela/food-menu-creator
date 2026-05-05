@@ -64,6 +64,17 @@
         >
           {{ enriching ? "Enriqueciendo..." : "Enriquecer pendientes" }}
         </button>
+        <button
+          class="px-3 py-2 border rounded-lg text-xs text-gray-700 disabled:opacity-50"
+          :disabled="mergingDuplicates"
+          @click="mergeDuplicateIngredients"
+        >
+          {{
+            mergingDuplicates
+              ? "Fusionando..."
+              : "Fusionar duplicados (sing/plural)"
+          }}
+        </button>
         <span v-if="enrichSummary" class="text-xs text-gray-600">
           Procesados {{ enrichSummary.processed }} · completos
           {{ enrichSummary.completed }} · revisión
@@ -301,6 +312,7 @@ const searchSource = ref<"usda" | "open_food_facts" | "bedca">(
 );
 const enriching = ref(false);
 const enrichSummary = ref<EnrichSummary | null>(null);
+const mergingDuplicates = ref(false);
 const backfillingAliases = ref(false);
 const reviewCandidates = ref<ReviewCandidate[]>([]);
 const selectedIds = ref<string[]>([]);
@@ -489,6 +501,22 @@ const backfillAliases = async () => {
     await logError("web", error, { context: "ingredients.backfillAliases" });
   } finally {
     backfillingAliases.value = false;
+  }
+};
+
+const mergeDuplicateIngredients = async () => {
+  mergingDuplicates.value = true;
+  try {
+    await $fetch("/api/ingredients-merge-duplicates", {
+      method: "POST",
+    });
+    await load();
+  } catch (error) {
+    await logError("web", error, {
+      context: "ingredients.mergeDuplicateIngredients",
+    });
+  } finally {
+    mergingDuplicates.value = false;
   }
 };
 

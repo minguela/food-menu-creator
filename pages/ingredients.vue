@@ -45,6 +45,21 @@
           {{ searchingUsda ? "Buscando..." : "Buscar alimentos" }}
         </button>
       </div>
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          v-for="option in filterOptions"
+          :key="option.value"
+          class="rounded-full border px-3 py-1.5 text-xs font-medium"
+          :class="
+            filterMode === option.value
+              ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+              : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+          "
+          @click="filterMode = option.value"
+        >
+          {{ option.label }} {{ option.count }}
+        </button>
+      </div>
       <div class="mt-2">
         <label class="text-xs text-gray-600 block mb-1">Fuente</label>
         <select
@@ -154,157 +169,62 @@
 
     <section
       v-if="reviewCandidates.length > 0"
-      class="bg-white rounded-lg border p-4 space-y-2"
+      class="rounded-lg border border-sky-100 bg-sky-50 p-3 text-xs text-sky-800"
     >
-      <h2 class="font-semibold text-gray-900">Candidatos en revisión</h2>
-      <div
-        v-for="candidate in reviewCandidates"
-        :key="candidate.id"
-        class="border rounded-lg p-3"
-      >
-        <p class="text-sm text-gray-700">
-          Ingrediente:
-          <span class="font-medium">{{
-            ingredientNameById(candidate.ingredient_id)
-          }}</span>
-        </p>
-        <p class="font-medium text-gray-900">{{ candidate.name }}</p>
-        <p class="text-xs text-gray-500">
-          {{ candidate.kcal_per_100g ?? "?" }} kcal · P
-          {{ candidate.protein_per_100g ?? "?" }} · H
-          {{ candidate.carbs_per_100g ?? "?" }} · G
-          {{ candidate.fat_per_100g ?? "?" }} · fuente {{ candidate.source }} ·
-          confianza {{ Number(candidate.confidence || 0).toFixed(2) }}
-        </p>
-        <button
-          class="mt-2 text-xs text-indigo-700"
-          @click="applyCandidate(candidate.id)"
-        >
-          Aplicar candidato
-        </button>
-      </div>
+      Hay {{ reviewCandidates.length }} sugerencias pendientes repartidas en
+      las tarjetas de sus ingredientes.
     </section>
 
-    <section class="bg-white rounded-lg border overflow-x-auto">
+    <section class="space-y-3">
       <div
-        class="grid min-w-[1280px] grid-cols-[36px_minmax(180px,1.2fr)_90px_90px_90px_90px_90px_100px_70px_minmax(180px,1fr)_150px] gap-2 p-3 text-xs font-semibold text-gray-600 border-b"
+        class="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white p-4"
       >
-        <label class="inline-flex items-center justify-center">
+        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
           <input
             type="checkbox"
             :checked="allFilteredSelected"
             @change="toggleSelectAllFiltered"
           />
+          Seleccionar visibles
         </label>
-        <span>Ingrediente</span><span>kcal/100g</span><span>P/100g</span
-        ><span>H/100g</span><span>G/100g</span><span>Unidad</span
-        ><span>Fuente</span><span>Verif.</span><span>Recetas</span
-        ><span>Acciones</span>
+        <div class="text-xs text-gray-500">
+          Mostrando {{ filtered.length }} de {{ rows.length }} ingredientes
+        </div>
       </div>
-      <div
+
+      <IngredientCard
         v-for="row in filtered"
         :key="row.id"
-        class="grid min-w-[1280px] grid-cols-[36px_minmax(180px,1.2fr)_90px_90px_90px_90px_90px_100px_70px_minmax(180px,1fr)_150px] gap-2 p-3 border-b items-center"
-      >
-        <label class="inline-flex items-center justify-center">
-          <input
-            type="checkbox"
-            :checked="isSelected(row.id)"
-            @change="toggleSelected(row.id)"
-          />
-        </label>
-        <input
-          v-model.trim="row.name"
-          class="border rounded px-2 py-1 text-sm"
-          placeholder="Nombre"
-        />
-        <input
-          v-model.number="row.kcal_per_100g"
-          type="number"
-          min="0"
-          step="0.1"
-          class="border rounded px-2 py-1 text-sm"
-        />
-        <input
-          v-model.number="row.protein_per_100g"
-          type="number"
-          min="0"
-          step="0.1"
-          class="border rounded px-2 py-1 text-sm"
-        />
-        <input
-          v-model.number="row.carbs_per_100g"
-          type="number"
-          min="0"
-          step="0.1"
-          class="border rounded px-2 py-1 text-sm"
-        />
-        <input
-          v-model.number="row.fat_per_100g"
-          type="number"
-          min="0"
-          step="0.1"
-          class="border rounded px-2 py-1 text-sm"
-        />
-        <select
-          v-model="row.default_unit_type"
-          class="border rounded px-2 py-1 text-sm"
-        >
-          <option v-for="unit in unitTypes" :key="unit" :value="unit">
-            {{ unit }}
-          </option>
-        </select>
-        <select v-model="row.source" class="border rounded px-2 py-1 text-sm">
-          <option value="manual">manual</option>
-          <option value="system">system</option>
-          <option value="imported">imported</option>
-          <option value="usda">usda</option>
-          <option value="open_food_facts">open_food_facts</option>
-        </select>
-        <label class="inline-flex items-center justify-center">
-          <input v-model="row.is_verified" type="checkbox" />
-        </label>
-        <div class="flex flex-wrap gap-1 text-xs">
-          <NuxtLink
-            v-for="recipe in recipesForIngredient(row.id).slice(0, 3)"
-            :key="`${row.id}-${recipe.id}`"
-            :to="{ path: '/recipes', query: { recipe: recipe.id } }"
-            class="rounded border px-2 py-1 text-sky-700 hover:bg-sky-50"
-            :title="recipe.name"
-          >
-            {{ recipe.name }}
-          </NuxtLink>
-          <span
-            v-if="recipesForIngredient(row.id).length > 3"
-            class="rounded bg-gray-100 px-2 py-1 text-gray-600"
-          >
-            +{{ recipesForIngredient(row.id).length - 3 }}
-          </span>
-          <span
-            v-if="recipesForIngredient(row.id).length === 0"
-            class="text-gray-400"
-          >
-            Sin recetas
-          </span>
-        </div>
-        <div class="flex flex-wrap justify-end gap-2">
-          <button
-            class="text-xs text-amber-700 disabled:opacity-50"
-            :disabled="
-              isRowEnriching(row.id) || String(row.id).startsWith('tmp-')
-            "
-            @click="enrichOne(row)"
-          >
-            {{ isRowEnriching(row.id) ? "Curando..." : "Curar OFF" }}
-          </button>
-          <button class="text-xs text-indigo-700" @click="save(row)">
-            Guardar
-          </button>
-          <button class="text-xs text-red-700" @click="deleteOne(row.id)">
-            Eliminar
-          </button>
-        </div>
-      </div>
+        :row="row"
+        :original="originalForRow(row.id)"
+        :quality="qualityForRow(row)"
+        :changed-fields="changedFieldsForRow(row)"
+        :selected="isSelected(row.id)"
+        :active="activeIngredientId === row.id"
+        :saving="savingStatusForRow(row.id) === 'saving'"
+        :save-state="savingStatusForRow(row.id)"
+        :enriching="isRowEnriching(row.id)"
+        :is-temporary="String(row.id).startsWith('tmp-')"
+        :is-first="filtered.findIndex((item) => item.id === row.id) === 0"
+        :is-last="
+          filtered.findIndex((item) => item.id === row.id) ===
+          filtered.length - 1
+        "
+        :unit-types="unitTypes"
+        :recipes="recipesForIngredient(row.id)"
+        :candidates="candidatesForIngredient(row.id)"
+        @patch="patchRow(row.id, $event)"
+        @save="save(row)"
+        @save-next="save(row, { goNext: true })"
+        @enrich="enrichOne(row)"
+        @autocomplete="autocompleteRow(row)"
+        @restore-original="restoreOriginal(row)"
+        @toggle-selected="toggleSelected(row.id)"
+        @previous="moveActive(row.id, -1)"
+        @next="moveActive(row.id, 1)"
+        @delete="deleteOne(row.id)"
+        @apply-candidate="applyCandidate"
+      />
     </section>
   </div>
 </template>
@@ -345,10 +265,23 @@ type RecipeLink = {
   id: string;
   name: string;
 };
+type FilterMode = "all" | "review" | "incomplete" | "inconsistent" | "ok";
+type SaveState = "idle" | "saving" | "success" | "error";
+type OriginalIngredientSnapshot = Pick<
+  IngredientRow,
+  | "name"
+  | "default_unit_type"
+  | "kcal_per_100g"
+  | "protein_per_100g"
+  | "carbs_per_100g"
+  | "fat_per_100g"
+  | "source"
+>;
 
 const supabase = useSupabase();
 const query = ref("");
 const rows = ref<IngredientRow[]>([]);
+const originalsById = ref<Record<string, OriginalIngredientSnapshot>>({});
 const csvInput = ref("");
 const importingCsv = ref(false);
 const usdaCandidates = ref<any[]>([]);
@@ -363,6 +296,9 @@ const backfillingAliases = ref(false);
 const reviewCandidates = ref<ReviewCandidate[]>([]);
 const selectedIds = ref<string[]>([]);
 const enrichingRowIds = ref<string[]>([]);
+const savingRowStates = ref<Record<string, SaveState>>({});
+const activeIngredientId = ref<string | null>(null);
+const filterMode = ref<FilterMode>("all");
 const recipeLinksByIngredientId = ref<Record<string, RecipeLink[]>>({});
 const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
   "g",
@@ -374,17 +310,75 @@ const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
   "unidad",
 ];
 
+const qualityForRow = (row: IngredientRow) =>
+  validateIngredientNutritionQuality({
+    kcal_per_100g: row.kcal_per_100g,
+    protein_per_100g: row.protein_per_100g,
+    carbs_per_100g: row.carbs_per_100g,
+    fat_per_100g: row.fat_per_100g,
+  });
+
 const filtered = computed(() => {
   const q = query.value.toLowerCase();
-  if (!q) return rows.value;
   return rows.value.filter((item) => {
     const byName = item.name.toLowerCase().includes(q);
     const byNormalized = String(item.normalized_name || "")
       .toLowerCase()
       .includes(q);
-    return byName || byNormalized;
+    const matchesSearch = !q || byName || byNormalized;
+    if (!matchesSearch) return false;
+
+    const quality = qualityForRow(item);
+    if (filterMode.value === "review") {
+      return item.nutrition_status === "needs_review" || quality.needsReview;
+    }
+    if (filterMode.value === "incomplete") {
+      return quality.status === "incomplete";
+    }
+    if (filterMode.value === "inconsistent") {
+      return quality.status === "inconsistent";
+    }
+    if (filterMode.value === "ok") {
+      return quality.status === "ok";
+    }
+    return true;
   });
 });
+
+const filterStats = computed(() => {
+  return rows.value.reduce(
+    (stats, row) => {
+      const quality = qualityForRow(row);
+      stats.all += 1;
+      if (row.nutrition_status === "needs_review" || quality.needsReview) {
+        stats.review += 1;
+      }
+      if (quality.status === "incomplete") stats.incomplete += 1;
+      if (quality.status === "inconsistent") stats.inconsistent += 1;
+      if (quality.status === "ok") stats.ok += 1;
+      return stats;
+    },
+    { all: 0, review: 0, incomplete: 0, inconsistent: 0, ok: 0 },
+  );
+});
+
+const filterOptions = computed<Array<{ value: FilterMode; label: string; count: number }>>(
+  () => [
+    { value: "all", label: "Todos", count: filterStats.value.all },
+    { value: "review", label: "A revisar", count: filterStats.value.review },
+    {
+      value: "incomplete",
+      label: "Incompletos",
+      count: filterStats.value.incomplete,
+    },
+    {
+      value: "inconsistent",
+      label: "Inconsistentes",
+      count: filterStats.value.inconsistent,
+    },
+    { value: "ok", label: "OK", count: filterStats.value.ok },
+  ],
+);
 
 const allFilteredSelected = computed(() => {
   const visibleIds = filtered.value
@@ -406,6 +400,23 @@ const load = async () => {
     is_verified: Boolean(row.is_verified),
     source: row.source || "manual",
   }));
+  originalsById.value = Object.fromEntries(
+    rows.value.map((row) => [
+      row.id,
+      {
+        name: row.name,
+        default_unit_type: row.default_unit_type,
+        kcal_per_100g: row.kcal_per_100g,
+        protein_per_100g: row.protein_per_100g,
+        carbs_per_100g: row.carbs_per_100g,
+        fat_per_100g: row.fat_per_100g,
+        source: row.source,
+      },
+    ]),
+  );
+  if (!activeIngredientId.value && rows.value.length > 0) {
+    activeIngredientId.value = rows.value[0].id;
+  }
   selectedIds.value = selectedIds.value.filter((id) =>
     rows.value.some((row) => row.id === id),
   );
@@ -457,6 +468,48 @@ const load = async () => {
 const recipesForIngredient = (ingredientId: string) =>
   recipeLinksByIngredientId.value[ingredientId] || [];
 
+const candidatesForIngredient = (ingredientId: string) =>
+  reviewCandidates.value.filter(
+    (candidate) => candidate.ingredient_id === ingredientId,
+  );
+
+const originalForRow = (ingredientId: string) =>
+  originalsById.value[ingredientId] || {
+    kcal_per_100g: null,
+    protein_per_100g: null,
+    carbs_per_100g: null,
+    fat_per_100g: null,
+  };
+
+const changedFieldsForRow = (row: IngredientRow) => {
+  const original = originalsById.value[row.id];
+  if (!original) return [];
+  return [
+    "name",
+    "default_unit_type",
+    "kcal_per_100g",
+    "protein_per_100g",
+    "carbs_per_100g",
+    "fat_per_100g",
+    "source",
+  ].filter((field) => {
+    return (
+      (row as any)[field] !== (original as any)[field] &&
+      !((row as any)[field] == null && (original as any)[field] == null)
+    );
+  });
+};
+
+const patchRow = (ingredientId: string, patch: Partial<IngredientRow>) => {
+  const row = rows.value.find((item) => item.id === ingredientId);
+  if (!row) return;
+  Object.assign(row, patch);
+  activeIngredientId.value = ingredientId;
+};
+
+const savingStatusForRow = (ingredientId: string) =>
+  savingRowStates.value[ingredientId] || "idle";
+
 const isRowEnriching = (ingredientId: string) =>
   enrichingRowIds.value.includes(ingredientId);
 
@@ -485,12 +538,6 @@ const toggleSelectAllFiltered = () => {
   }
   selectedIds.value = Array.from(
     new Set([...selectedIds.value, ...visibleIds]),
-  );
-};
-
-const ingredientNameById = (ingredientId: string) => {
-  return (
-    rows.value.find((row) => row.id === ingredientId)?.name || ingredientId
   );
 };
 
@@ -641,9 +688,38 @@ const applyCandidate = async (candidateId: string) => {
   }
 };
 
+const moveActive = (ingredientId: string, direction: -1 | 1) => {
+  const currentIndex = filtered.value.findIndex((row) => row.id === ingredientId);
+  if (currentIndex < 0) return;
+  const next = filtered.value[currentIndex + direction];
+  if (next) activeIngredientId.value = next.id;
+};
+
+const autocompleteRow = async (row: IngredientRow) => {
+  const candidate = candidatesForIngredient(row.id)[0];
+  if (candidate) {
+    patchRow(row.id, {
+      kcal_per_100g: candidate.kcal_per_100g,
+      protein_per_100g: candidate.protein_per_100g,
+      carbs_per_100g: candidate.carbs_per_100g,
+      fat_per_100g: candidate.fat_per_100g,
+      source: candidate.source,
+    } as Partial<IngredientRow>);
+    return;
+  }
+  await enrichOne(row);
+};
+
+const restoreOriginal = (row: IngredientRow) => {
+  const original = originalsById.value[row.id];
+  if (!original) return;
+  patchRow(row.id, original as Partial<IngredientRow>);
+};
+
 const addIngredient = () => {
-  rows.value.unshift({
-    id: `tmp-${Date.now()}` as any,
+  const id = `tmp-${Date.now()}` as any;
+  const newRow = {
+    id,
     name: "",
     normalized_name: "",
     unit_type: "g",
@@ -658,11 +734,26 @@ const addIngredient = () => {
     is_verified: false,
     nutrition_status: "pending",
     created_at: new Date().toISOString(),
-  } as IngredientRow);
+  } as IngredientRow;
+  rows.value.unshift(newRow);
+  originalsById.value = {
+    ...originalsById.value,
+    [id]: {
+      name: "",
+      default_unit_type: "g",
+      kcal_per_100g: null,
+      protein_per_100g: null,
+      carbs_per_100g: null,
+      fat_per_100g: null,
+      source: "manual",
+    },
+  };
+  activeIngredientId.value = id;
 };
 
-const save = async (row: IngredientRow) => {
+const save = async (row: IngredientRow, options: { goNext?: boolean } = {}) => {
   if (!row.name.trim()) return;
+  activeIngredientId.value = row.id;
   const nutritionQuality = validateIngredientNutritionQuality({
     kcal_per_100g: row.kcal_per_100g,
     protein_per_100g: row.protein_per_100g,
@@ -688,14 +779,30 @@ const save = async (row: IngredientRow) => {
         ? "needs_review"
         : "complete",
   };
+  savingRowStates.value = { ...savingRowStates.value, [row.id]: "saving" };
   try {
     if (String(row.id).startsWith("tmp-")) {
-      await supabase.from("ingredients").insert(payload);
+      const { data: inserted, error } = await supabase
+        .from("ingredients")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (error) throw error;
+      if (inserted?.id) activeIngredientId.value = inserted.id;
     } else {
-      await supabase.from("ingredients").update(payload).eq("id", row.id);
+      const { error } = await supabase
+        .from("ingredients")
+        .update(payload)
+        .eq("id", row.id);
+      if (error) throw error;
     }
+    savingRowStates.value = { ...savingRowStates.value, [row.id]: "success" };
     await load();
+    if (options.goNext && activeIngredientId.value) {
+      moveActive(activeIngredientId.value, 1);
+    }
   } catch (error) {
+    savingRowStates.value = { ...savingRowStates.value, [row.id]: "error" };
     await logError("web", error, { context: "ingredients.save" });
   }
 };

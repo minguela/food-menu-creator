@@ -10,6 +10,7 @@ type GeneratePayload = {
   startDate: string;
   sourceWeeklyMenuIds: string[];
   profileIds: string[];
+  specialMealKcal?: number;
 };
 
 export default defineEventHandler(async (event) => {
@@ -47,7 +48,9 @@ export default defineEventHandler(async (event) => {
         .in("id", body.profileIds || []),
       supabase
         .from("weekly_meals")
-        .select("id, day_number, meal_type, dish_name, dish_description")
+        .select(
+          "id, day_number, meal_type, dish_name, dish_description, is_special, special_kcal_reserved",
+        )
         .in("weekly_menu_id", body.sourceWeeklyMenuIds),
     ]);
 
@@ -261,6 +264,10 @@ export default defineEventHandler(async (event) => {
     comida: { kcal: 0.4, protein: 0.4 },
     cena: { kcal: 0.35, protein: 0.3 },
   };
+  const defaultSpecialMealKcal = Math.max(
+    0,
+    Math.min(2000, Number(body.specialMealKcal) || 700),
+  );
 
   const generatedDays: any[] = [];
   const lastByType: Record<string, string> = {};
@@ -269,6 +276,8 @@ export default defineEventHandler(async (event) => {
     const date = new Date(body.startDate);
     date.setDate(date.getDate() + day - 1);
     const dayMeals: any[] = [];
+
+    const dayPlannedMeals: any[] = [];
 
     for (const mealType of ["desayuno", "comida", "cena"] as MealType[]) {
       const options = mealLibrary[mealType] || [];
@@ -327,12 +336,111 @@ export default defineEventHandler(async (event) => {
       baseKcal = Math.max(1, baseKcal || 1);
       baseProtein = Math.max(1, baseProtein || 1);
 
+      dayPlannedMeals.push({
+        meal_type: mealType,
+        source_weekly_meal_id: picked.id,
+        dish_name: picked.dish_name,
+        dish_description: picked.dish_description || null,
+        is_special: Boolean(picked.is_special),
+        special_kcal_reserved: Boolean(picked.is_special)
+          ? Math.max(
+              0,
+              Math.min(
+                2000,
+                Number(picked.special_kcal_reserved || defaultSpecialMealKcal),
+              ),
+            )
+          : 0,
+        base_kcal: baseKcal,
+        base_protein: baseProtein,
+        recipe_status: recipeStatus,
+        ingredient_base: ingredientBase,
+      });
+    }
+
+    for (const plannedMeal of dayPlannedMeals) {
+      const mealType = plannedMeal.meal_type as MealType;
+      const isSpecial = Boolean(plannedMeal.is_special);
+      const specialKcalReserved = Number(plannedMeal.special_kcal_reserved || 0);
+      const ingredientBase = plannedMeal.ingredient_base || [];
+      const recipeStatus = String(plannedMeal.recipe_status || "");
+      const baseKcal = Number(plannedMeal.base_kcal || 1);
+      const baseProtein = Number(plannedMeal.base_protein || 1);
+      const daySpecialMeals = dayPlannedMeals.filter((meal) => meal.is_special);
+      const specialReservedTotal = daySpecialMeals.reduce(
+        (acc: number, meal: any) =>
+          acc + Number(meal.special_kcal_reserved || defaultSpecialMealKcal),
+        0,
+      );
+      const regularMeals = dayPlannedMeals.filter((meal) => !meal.is_special);
+      const regularKcalShareSum = regularMeals.reduce(
+        (acc: number, meal: any) =>
+          acc + Number(shares[meal.meal_type as MealType].kcal),
+        0,
+      );
+      const regularProteinShareSum = regularMeals.reduce(
+        (acc: number, meal: any) =>
+          acc + Number(shares[meal.meal_type as MealType].protein),
+        0,
+      );
+      const allSpecialDay = regularMeals.length === 0;
+
       const portions = profileTargets.map((profile) => {
-        const targetMealKcal = profile.target_kcal * shares[mealType].kcal;
-        const targetMealProtein =
-          profile.target_protein_g * shares[mealType].protein;
-        const targetMealCarbs = profile.target_carbs_g * shares[mealType].kcal;
-        const targetMealFat = profile.target_fat_g * shares[mealType].kcal;
+        const remainingKcalBudget = Math.max(
+          0,
+          Number(profile.target_kcal) - specialReservedTotal,
+        );
+        const macroScale =
+          Number(profile.target_kcal) > 0
+            ? remainingKcalBudget / Number(profile.target_kcal)
+            : 0;
+        const remainingProteinBudget = Number(profile.target_protein_g) * macroScale;
+        const remainingCarbsBudget = Number(profile.target_carbs_g) * macroScale;
+        const remainingFatBudget = Number(profile.target_fat_g) * macroScale;
+
+        if (isSpecial) {
+          return {
+            profile_key: profile.key,
+            profile_id: profile.profile_id,
+            profile_name: profile.profile_name,
+            target_meal_kcal: round(specialKcalReserved),
+            target_meal_protein_g: 0,
+            target_meal_carbs_g: 0,
+            target_meal_fat_g: 0,
+            serving_multiplier: 1,
+            final_kcal: round(specialKcalReserved),
+            final_protein_g: 0,
+            final_carbs_g: 0,
+            final_fat_g: 0,
+            kcal_delta: 0,
+            protein_delta_g: 0,
+            carbs_delta_g: 0,
+            fat_delta_g: 0,
+            nutrition_pending: false,
+            is_special: true,
+            special_kcal_reserved: specialKcalReserved,
+            all_special_day: allSpecialDay,
+            ingredients: ingredientBase.map((ing: any) => ({
+              name: ing.name,
+              base_quantity: ing.quantity,
+              final_quantity: ing.quantity,
+              unit_type: ing.unit_type,
+              nutrition_pending: false,
+            })),
+          };
+        }
+
+        const mealKcalShare = regularKcalShareSum
+          ? shares[mealType].kcal / regularKcalShareSum
+          : 0;
+        const mealProteinShare = regularProteinShareSum
+          ? shares[mealType].protein / regularProteinShareSum
+          : 0;
+        const targetMealKcal = remainingKcalBudget * mealKcalShare;
+        const targetMealProtein = remainingProteinBudget * mealProteinShare;
+        const targetMealCarbs = remainingCarbsBudget * mealKcalShare;
+        const targetMealFat = remainingFatBudget * mealKcalShare;
+
         const multiplier = Math.max(
           0.55,
           Math.min(
@@ -341,7 +449,6 @@ export default defineEventHandler(async (event) => {
               (targetMealProtein / baseProtein) * 0.35,
           ),
         );
-
         let kcal = 0;
         let protein = 0;
         let carbs = 0;
@@ -407,15 +514,20 @@ export default defineEventHandler(async (event) => {
           carbs_delta_g: round(carbs - targetMealCarbs),
           fat_delta_g: round(fat - targetMealFat),
           nutrition_pending: pending,
+          is_special: false,
+          special_kcal_reserved: 0,
+          all_special_day: allSpecialDay,
           ingredients,
         };
       });
 
       dayMeals.push({
         meal_type: mealType,
-        source_weekly_meal_id: picked.id,
-        dish_name: picked.dish_name,
-        dish_description: picked.dish_description || null,
+        source_weekly_meal_id: plannedMeal.source_weekly_meal_id,
+        dish_name: plannedMeal.dish_name,
+        dish_description: plannedMeal.dish_description || null,
+        is_special: isSpecial,
+        special_kcal_reserved: specialKcalReserved,
         profile_portions: portions,
       });
     }
@@ -440,6 +552,15 @@ export default defineEventHandler(async (event) => {
         (acc: number, meal: any) => acc + Number(meal?.final_fat_g || 0),
         0,
       );
+      const specialKcalReserved = dayMeals
+        .filter((meal) => meal.is_special)
+        .reduce(
+          (acc: number, meal: any) =>
+            acc + Number(meal.special_kcal_reserved || defaultSpecialMealKcal),
+          0,
+        );
+      const allSpecialDay =
+        dayMeals.length > 0 && dayMeals.every((meal) => meal.is_special);
       return {
         profile_key: profile.key,
         profile_id: profile.profile_id,
@@ -452,10 +573,12 @@ export default defineEventHandler(async (event) => {
         total_protein_g: round(protein),
         total_carbs_g: round(carbs),
         total_fat_g: round(fat),
+        special_kcal_reserved: round(specialKcalReserved),
         kcal_delta: round(kcal - profile.target_kcal),
         protein_delta_g: round(protein - profile.target_protein_g),
         carbs_delta_g: round(carbs - profile.target_carbs_g),
         fat_delta_g: round(fat - profile.target_fat_g),
+        all_special_day: allSpecialDay,
       };
     });
 
@@ -567,6 +690,8 @@ export default defineEventHandler(async (event) => {
       source_weekly_meal_id: meal.source_weekly_meal_id,
       dish_name: meal.dish_name,
       dish_description: meal.dish_description || null,
+      is_special: Boolean(meal.is_special),
+      special_kcal_reserved: Number(meal.special_kcal_reserved || 0),
       base_servings: 1,
       serving_multiplier: meal.profile_portions[0]?.serving_multiplier || 1,
       final_kcal: meal.profile_portions[0]?.final_kcal || 0,

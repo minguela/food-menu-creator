@@ -29,10 +29,12 @@ export const buildShoppingListFromRotatingMenu = async ({
 
   const { data: mealRows } = await supabase
     .from("rotating_menu_meals")
-    .select("id")
+    .select("id,is_special")
     .in("rotating_menu_day_id", dayIds);
 
-  const mealIds = (mealRows || []).map((row: any) => row.id);
+  const mealIds = (mealRows || [])
+    .filter((row: any) => !row.is_special)
+    .map((row: any) => row.id);
   if (mealIds.length === 0) {
     return { inserted: 0 };
   }
@@ -103,4 +105,3 @@ export const buildShoppingListFromRotatingMenu = async ({
 
   return { inserted: rows.length };
 };
-

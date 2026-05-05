@@ -220,6 +220,12 @@
                   {{ getMeal(day, type)?.dish_name }}
                 </p>
                 <p
+                  v-if="getMeal(day, type)?.is_special"
+                  class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800"
+                >
+                  Comida libre · {{ getMeal(day, type)?.special_kcal_reserved || 700 }} kcal
+                </p>
+                <p
                   v-if="recipeStatusLabel(getMeal(day, type)?.dish_name)"
                   class="text-[11px] text-gray-500"
                 >
@@ -241,6 +247,16 @@
                   class="text-xs text-indigo-600 hover:text-indigo-800 mr-3"
                 >
                   Editar
+                </button>
+                <button
+                  @click="toggleMealSpecial(getMeal(day, type)!)"
+                  class="text-xs text-amber-700 hover:text-amber-900 mr-3"
+                >
+                  {{
+                    getMeal(day, type)?.is_special
+                      ? "Quitar comida libre"
+                      : "Marcar comida libre"
+                  }}
                 </button>
                 <button
                   @click="deleteMeal(getMeal(day, type)!.id)"
@@ -314,6 +330,25 @@
               >
               <input
                 v-model.trim="newMeal.dish_description"
+                class="w-full border rounded-lg px-4 py-2"
+              />
+            </label>
+            <label class="md:col-span-2">
+              <span class="inline-flex items-center gap-2 text-sm text-gray-700">
+                <input v-model="newMeal.is_special" type="checkbox" />
+                <span>Marcar como comida libre/especial</span>
+              </span>
+            </label>
+            <label v-if="newMeal.is_special" class="md:col-span-2">
+              <span class="block text-sm font-medium text-gray-700 mb-1">
+                kcal reservadas para comida libre
+              </span>
+              <input
+                v-model.number="newMeal.special_kcal_reserved"
+                type="number"
+                min="0"
+                max="2000"
+                step="10"
                 class="w-full border rounded-lg px-4 py-2"
               />
             </label>
@@ -483,6 +518,8 @@ const applyBreakfastToWeek = ref(false);
 const newMeal = ref({
   dish_name: "",
   dish_description: "",
+  is_special: false,
+  special_kcal_reserved: 700,
 });
 const ingredientRows = ref<
   Array<{
@@ -715,10 +752,14 @@ const openMealModal = (day: number, type: MealType, meal?: WeeklyMeal) => {
     ? {
         dish_name: meal.dish_name,
         dish_description: meal.dish_description || "",
+        is_special: Boolean(meal.is_special),
+        special_kcal_reserved: Number(meal.special_kcal_reserved || 700),
       }
     : {
         dish_name: "",
         dish_description: "",
+        is_special: false,
+        special_kcal_reserved: 700,
       };
   ingredientRows.value = meal?.weekly_meal_ingredients?.length
     ? meal.weekly_meal_ingredients.map((ingredient) => ({
@@ -773,6 +814,11 @@ const saveMeal = async () => {
           meal_type: selectedType.value,
           dish_name: newMeal.value.dish_name,
           dish_description: newMeal.value.dish_description || null,
+          is_special: Boolean(newMeal.value.is_special),
+          special_kcal_reserved: Math.max(
+            0,
+            Math.min(2000, Number(newMeal.value.special_kcal_reserved) || 700),
+          ),
           kcal: 0,
           protein_g: 0,
           carbs_g: 0,
@@ -909,6 +955,25 @@ const deleteMeal = async (mealId: string) => {
     return;
   }
 
+  await loadMenu();
+};
+
+const toggleMealSpecial = async (meal: WeeklyMeal) => {
+  const nextIsSpecial = !Boolean(meal.is_special);
+  const { error } = await supabase
+    .from("weekly_meals")
+    .update({
+      is_special: nextIsSpecial,
+      special_kcal_reserved: nextIsSpecial
+        ? Math.max(0, Math.min(2000, Number(meal.special_kcal_reserved || 700)))
+        : 0,
+    })
+    .eq("id", meal.id);
+
+  if (error) {
+    alert("Error actualizando comida libre: " + error.message);
+    return;
+  }
   await loadMenu();
 };
 

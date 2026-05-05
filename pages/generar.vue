@@ -108,10 +108,14 @@
         <div class="mt-4 flex flex-wrap gap-2">
           <button
             class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
-            :disabled="loading"
+            :disabled="loading || currentJob?.status === 'processing'"
             @click="generateRotatingMenu"
           >
-            {{ loading ? "Generando..." : "Generar menú + compra" }}
+            {{
+              loading || currentJob?.status === "processing"
+                ? "Creando menú..."
+                : "Generar menú + compra"
+            }}
           </button>
           <button
             class="rounded-lg border px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
@@ -142,7 +146,45 @@
             5. Lista de compra creada automáticamente
           </li>
         </ol>
-        <div v-if="shoppingItemsCreated !== null" class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+        <div
+          v-if="currentJob"
+          class="mt-4 rounded-lg border p-3 text-sm"
+          :class="
+            currentJob.status === 'failed'
+              ? 'border-red-200 bg-red-50 text-red-700'
+              : currentJob.status === 'completed'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                : 'border-amber-200 bg-amber-50 text-amber-800'
+          "
+        >
+          <p class="font-medium">
+            {{
+              currentJob.status === "completed"
+                ? "Tu menú rotativo está listo"
+                : currentJob.status === "failed"
+                  ? "Error al crear el menú"
+                  : "Estamos creando tu menú rotativo"
+            }}
+          </p>
+          <p class="text-xs mt-1">
+            Estado: {{ currentJob.status }} · progreso
+            {{ currentJob.progress ?? 0 }}%
+          </p>
+          <p v-if="currentJob.error_message" class="text-xs mt-1">
+            {{ currentJob.error_message }}
+          </p>
+          <NuxtLink
+            v-if="currentJob.status === 'completed' && currentJob.result_menu_id"
+            href="/shopping"
+            class="mt-2 inline-block rounded border px-2 py-1 text-xs"
+          >
+            Ver menú/lista
+          </NuxtLink>
+        </div>
+        <div
+          v-if="shoppingItemsCreated !== null"
+          class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"
+        >
           Lista de compra generada con {{ shoppingItemsCreated }} líneas.
         </div>
       </article>
@@ -360,6 +402,14 @@ const useGlobalProfileFallback = ref(true);
 const generatedDays = ref<RotatingDay[]>([]);
 const profilesSummary = ref<RotatingProfileTarget[]>([]);
 const shoppingItemsCreated = ref<number | null>(null);
+const currentJob = ref<{
+  id: string;
+  status: "pending" | "processing" | "completed" | "failed";
+  progress: number;
+  error_message?: string | null;
+  result_menu_id?: string | null;
+} | null>(null);
+const jobChannel = ref<any>(null);
 const loading = ref(false);
 const error = ref("");
 
@@ -414,10 +464,13 @@ const generateRotatingMenu = async () => {
 
     const response = await $fetch<{
       success: boolean;
-      generated_days: RotatingDay[];
-      profiles: RotatingProfileTarget[];
-      shopping_list_items: number;
-    }>("/api/rotating-menu-generate", {
+      job: {
+        id: string;
+        status: "pending" | "processing" | "completed" | "failed";
+        progress: number;
+      };
+      deduplicated: boolean;
+    }>("/api/rotating-menu-jobs", {
       method: "POST",
       body: {
         userId: currentUser.id,
@@ -434,9 +487,12 @@ const generateRotatingMenu = async () => {
       throw new Error("No se pudo generar el menú rotativo");
     }
 
-    generatedDays.value = response.generated_days || [];
-    profilesSummary.value = response.profiles || [];
-    shoppingItemsCreated.value = Number(response.shopping_list_items || 0);
+    currentJob.value = {
+      id: response.job.id,
+      status: response.job.status,
+      progress: Number(response.job.progress || 0),
+    };
+    subscribeToJob(response.job.id);
   } catch (err) {
     const maybeErr = err as
       | (Error & { data?: any })
@@ -482,6 +538,61 @@ const printMenu = () => {
   window.print();
 };
 
+const hydrateFromJobResult = async (jobId: string) => {
+  const { data, error: jobError } = await supabase
+    .from("menu_generation_jobs")
+    .select("*")
+    .eq("id", jobId)
+    .maybeSingle();
+  if (jobError || !data) return;
+  currentJob.value = {
+    id: data.id,
+    status: data.status,
+    progress: Number(data.progress || 0),
+    error_message: data.error_message,
+    result_menu_id: data.result_menu_id,
+  };
+  if (data.status === "completed" && data.result_payload) {
+    generatedDays.value = (data.result_payload.generated_days || []) as RotatingDay[];
+    profilesSummary.value = (data.result_payload.profiles || []) as RotatingProfileTarget[];
+    shoppingItemsCreated.value = Number(
+      data.result_payload.shopping_list_items || 0,
+    );
+  }
+};
+
+const subscribeToJob = (jobId: string) => {
+  if (jobChannel.value) {
+    supabase.removeChannel(jobChannel.value);
+  }
+  const channel = supabase
+    .channel(`menu-job-${jobId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "menu_generation_jobs",
+        filter: `id=eq.${jobId}`,
+      },
+      async (payload: any) => {
+        const next = payload.new;
+        currentJob.value = {
+          id: next.id,
+          status: next.status,
+          progress: Number(next.progress || 0),
+          error_message: next.error_message,
+          result_menu_id: next.result_menu_id,
+        };
+        if (next.status === "completed") {
+          await hydrateFromJobResult(jobId);
+        }
+      },
+    )
+    .subscribe();
+  jobChannel.value = channel;
+};
+
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString("es-ES", {
     day: "2-digit",
@@ -490,5 +601,10 @@ const formatDate = (value: string) =>
   });
 
 onMounted(loadBaseData);
+onUnmounted(() => {
+  if (jobChannel.value) {
+    supabase.removeChannel(jobChannel.value);
+    jobChannel.value = null;
+  }
+});
 </script>
-

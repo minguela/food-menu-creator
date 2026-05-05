@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+import { validateIngredientNutritionQuality } from "~/utils/ingredient-nutrition-quality";
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as { candidateId?: string };
@@ -25,12 +26,12 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const hasFull = [
-    candidate.kcal_per_100g,
-    candidate.protein_per_100g,
-    candidate.carbs_per_100g,
-    candidate.fat_per_100g,
-  ].every((v) => v != null);
+  const nutritionQuality = validateIngredientNutritionQuality({
+    kcal_per_100g: candidate.kcal_per_100g,
+    protein_per_100g: candidate.protein_per_100g,
+    carbs_per_100g: candidate.carbs_per_100g,
+    fat_per_100g: candidate.fat_per_100g,
+  });
 
   const { error: updateError } = await supabase
     .from("ingredients")
@@ -41,8 +42,10 @@ export default defineEventHandler(async (event) => {
       fat_per_100g: candidate.fat_per_100g,
       source: candidate.source,
       external_id: candidate.external_id,
-      is_verified: hasFull,
-      nutrition_status: hasFull ? "complete" : "needs_review",
+      is_verified: !nutritionQuality.needsReview,
+      nutrition_status: nutritionQuality.needsReview
+        ? "needs_review"
+        : "complete",
     })
     .eq("id", candidate.ingredient_id);
   if (updateError) {

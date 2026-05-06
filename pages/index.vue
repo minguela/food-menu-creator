@@ -121,12 +121,42 @@
               <h4 class="font-medium text-gray-900 mb-2">
                 {{ mealLabel(type) }} fija
               </h4>
+              <div class="mb-3 grid gap-2 md:grid-cols-2">
+                <button
+                  type="button"
+                  class="rounded-lg border px-3 py-2 text-sm text-left"
+                  :class="
+                    fixedMeals[type].recipe_mode === 'existing'
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                      : 'border-gray-300 text-gray-700'
+                  "
+                  @click="fixedMeals[type].recipe_mode = 'existing'"
+                >
+                  Usar receta existente
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg border px-3 py-2 text-sm text-left"
+                  :class="
+                    fixedMeals[type].recipe_mode === 'new'
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                      : 'border-gray-300 text-gray-700'
+                  "
+                  @click="
+                    fixedMeals[type].recipe_mode = 'new';
+                    fixedMeals[type].selected_recipe_id = '';
+                  "
+                >
+                  Crear receta nueva
+                </button>
+              </div>
               <label class="block mb-3">
                 <span class="block text-xs font-medium text-gray-700 mb-1">
-                  Elegir receta guardada (opcional)
+                  Elegir receta guardada
                 </span>
                 <select
                   v-model="fixedMeals[type].selected_recipe_id"
+                  :disabled="fixedMeals[type].recipe_mode !== 'existing'"
                   class="w-full border rounded-lg px-3 py-2"
                   @change="applySavedRecipeToFixedMeal(type)"
                 >
@@ -285,6 +315,7 @@ const fixedMeals = reactive(
     mealTypes.map((type) => [
       type,
       {
+        recipe_mode: "existing" as "existing" | "new",
         selected_recipe_id: "",
         dish_name: "",
         dish_description: "",
@@ -294,6 +325,7 @@ const fixedMeals = reactive(
   ) as Record<
     (typeof mealTypes)[number],
     {
+      recipe_mode: "existing" | "new";
       selected_recipe_id: string;
       dish_name: string;
       dish_description: string;
@@ -389,6 +421,66 @@ const createMenu = async () => {
   }
 
   if (data?.id && fixedMealTypes.value.length > 0) {
+    const recipeByNormalizedName = new Map(
+      savedRecipes.value.map((recipe) => [normalizeName(recipe.name), recipe]),
+    );
+
+    const ensureRecipeExists = async (type: (typeof mealTypes)[number]) => {
+      const fixed = fixedMeals[type];
+      if (fixed.selected_recipe_id) return fixed.selected_recipe_id;
+      if (!fixed.dish_name.trim()) return null;
+
+      const normalizedDishName = normalizeName(fixed.dish_name);
+      const existing = recipeByNormalizedName.get(normalizedDishName);
+      if (existing?.id) {
+        fixed.selected_recipe_id = existing.id;
+        return existing.id;
+      }
+
+      const { data: createdDish, error: createdDishError } = await supabase
+        .from("dishes")
+        .insert({
+          user_id: currentUser.id,
+          name: fixed.dish_name.trim(),
+          normalized_name: normalizedDishName,
+          description: fixed.dish_description.trim() || null,
+          recipe_status: "pending_ingredients",
+        })
+        .select("id")
+        .single();
+
+      if (createdDishError || !createdDish?.id) {
+        console.error("Error creando receta desde menú semanal:", createdDishError);
+        return null;
+      }
+
+      const recipeIngredients = fixed.ingredients
+        .filter((ingredient) => ingredient.name && ingredient.quantity > 0)
+        .map((ingredient) => ({
+          recipe_id: createdDish.id,
+          name: ingredient.name.toLowerCase(),
+          normalized_name: normalizeName(ingredient.name),
+          quantity: ingredient.quantity,
+          unit_type: ingredient.unit_type,
+          is_confirmed: true,
+        }));
+
+      if (recipeIngredients.length > 0) {
+        const { error: recipeIngredientsError } = await supabase
+          .from("recipe_ingredients")
+          .insert(recipeIngredients);
+        if (recipeIngredientsError) {
+          console.error(
+            "Error guardando ingredientes de receta desde menú semanal:",
+            recipeIngredientsError,
+          );
+        }
+      }
+
+      fixed.selected_recipe_id = createdDish.id;
+      return createdDish.id;
+    };
+
     const fixedRows = [];
     const fixedIngredientRows: Array<{
       weekly_meal_id: string;
@@ -399,6 +491,16 @@ const createMenu = async () => {
 
     for (const type of fixedMealTypes.value) {
       const fixed = fixedMeals[type];
+      if (
+        fixed.recipe_mode === "existing" &&
+        !fixed.selected_recipe_id &&
+        !fixed.dish_name.trim()
+      ) {
+        continue;
+      }
+      if (fixed.recipe_mode === "new" && fixed.dish_name.trim()) {
+        await ensureRecipeExists(type);
+      }
       if (!fixed.dish_name.trim()) continue;
       for (let day = 1; day <= 7; day++) {
         fixedRows.push({
@@ -517,6 +619,7 @@ const applySavedRecipeToFixedMeal = (type: (typeof mealTypes)[number]) => {
 
   fixedMeals[type].dish_name = selectedRecipe.name || "";
   fixedMeals[type].dish_description = selectedRecipe.description || "";
+  fixedMeals[type].recipe_mode = "existing";
 
   const confirmedIngredients = (selectedRecipe.recipe_ingredients || []).filter(
     (ingredient) => ingredient.is_confirmed !== false && ingredient.name,
@@ -544,6 +647,7 @@ const resetFixedMeals = () => {
   fixedMealTypes.value = [];
   for (const type of mealTypes) {
     fixedMeals[type] = {
+      recipe_mode: "existing",
       selected_recipe_id: "",
       dish_name: "",
       dish_description: "",
@@ -551,6 +655,13 @@ const resetFixedMeals = () => {
     };
   }
 };
+
+const normalizeName = (value: string) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 
 const viewMenu = (menu: WeeklyMenu) => {
   router.push(`/menu/${menu.id}`);

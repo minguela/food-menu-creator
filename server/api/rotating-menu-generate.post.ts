@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
 import { buildShoppingListFromRotatingMenu } from "~/server/utils/shopping-from-rotating";
+import { createMenuGenerationLogger } from "~/server/utils/menu-generation-logger";
 
 type MealType = "desayuno" | "comida" | "cena";
 
@@ -11,12 +12,17 @@ type GeneratePayload = {
   sourceWeeklyMenuIds: string[];
   profileIds: string[];
   specialMealKcal?: number;
+  jobId?: string;
 };
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as GeneratePayload;
   const config = useRuntimeConfig(event);
   const supabase = createSupabaseAdminClient(config);
+  const logger = createMenuGenerationLogger({
+    supabase,
+    jobId: String(body?.jobId || "").trim() || null,
+  });
 
   if (!body?.userId) {
     throw createError({ statusCode: 400, statusMessage: "userId requerido" });
@@ -39,6 +45,34 @@ export default defineEventHandler(async (event) => {
 
   const targetDays = Math.min(90, Math.max(1, Number(body.durationDays) || 7));
 
+  await logger.log({
+    level: "info",
+    step: "input_validation",
+    status: "completed",
+    message: "Payload validado para generación rotativa.",
+    metadata: {
+      user_id: body.userId,
+      duration_days: targetDays,
+      start_date: body.startDate,
+      source_menu_ids_count: body.sourceWeeklyMenuIds.length,
+      profile_ids_count: body.profileIds.length,
+      special_meal_kcal: body.specialMealKcal,
+    },
+    progress: { progress: 8, currentStep: "input_validation" },
+  });
+
+  await logger.log({
+    level: "info",
+    step: "read_profiles",
+    status: "running",
+    message: "Leyendo usuario, perfiles y comidas semanales fuente.",
+    metadata: {
+      profile_ids: body.profileIds,
+      source_weekly_menu_ids: body.sourceWeeklyMenuIds,
+    },
+    progress: { progress: 12, currentStep: "read_profiles" },
+  });
+
   const [{ data: user }, { data: profiles }, { data: weeklyMeals }] =
     await Promise.all([
       supabase.from("users").select("*").eq("id", body.userId).single(),
@@ -54,7 +88,34 @@ export default defineEventHandler(async (event) => {
         .in("weekly_menu_id", body.sourceWeeklyMenuIds),
     ]);
 
+  await logger.log({
+    level: "info",
+    step: "read_profiles",
+    status: "completed",
+    message: "Usuario, perfiles y comidas semanales cargados.",
+    metadata: {
+      has_user: Boolean(user),
+      profiles_count: profiles?.length || 0,
+      weekly_meals_count: weeklyMeals?.length || 0,
+    },
+    progress: { progress: 18, currentStep: "read_profiles" },
+  });
+
   if (!user) {
+    await logger.log({
+      level: "error",
+      step: "read_profiles",
+      status: "failed",
+      message: "Usuario no encontrado.",
+      metadata: { user_id: body.userId },
+      progress: {
+        progress: 100,
+        currentStep: "read_profiles",
+        status: "failed",
+        errorMessage: "Usuario no encontrado",
+        completedAt: new Date().toISOString(),
+      },
+    });
     throw createError({
       statusCode: 404,
       statusMessage: "Usuario no encontrado",
@@ -88,7 +149,53 @@ export default defineEventHandler(async (event) => {
     };
   });
 
+  await logger.log({
+    level: "info",
+    step: "target_kcal",
+    status: "completed",
+    message: "Objetivos kcal calculados por perfil.",
+    metadata: {
+      profiles: profileTargets.map((profile) => ({
+        profile_id: profile.profile_id,
+        profile_name: profile.profile_name,
+        target_kcal: profile.target_kcal,
+      })),
+    },
+    progress: { progress: 22, currentStep: "target_kcal" },
+  });
+
+  await logger.log({
+    level: "info",
+    step: "macro_targets",
+    status: "completed",
+    message: "Macros objetivo calculados por perfil.",
+    metadata: {
+      profiles: profileTargets.map((profile) => ({
+        profile_id: profile.profile_id,
+        profile_name: profile.profile_name,
+        target_protein_g: profile.target_protein_g,
+        target_carbs_g: profile.target_carbs_g,
+        target_fat_g: profile.target_fat_g,
+      })),
+    },
+    progress: { progress: 25, currentStep: "macro_targets" },
+  });
+
   if (profileTargets.length === 0) {
+    await logger.log({
+      level: "error",
+      step: "read_profiles",
+      status: "failed",
+      message: "No hay perfiles válidos seleccionados.",
+      metadata: { requested_profile_ids: body.profileIds },
+      progress: {
+        progress: 100,
+        currentStep: "read_profiles",
+        status: "failed",
+        errorMessage: "Selecciona al menos un perfil",
+        completedAt: new Date().toISOString(),
+      },
+    });
     throw createError({
       statusCode: 400,
       statusMessage: "Selecciona al menos un perfil",
@@ -106,6 +213,47 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  await logger.log({
+    level: "info",
+    step: "recipe_selection",
+    status: "running",
+    message: "Preparando biblioteca de recetas y datos nutricionales.",
+    metadata: {
+      meals_by_type: {
+        desayuno: mealLibrary.desayuno.length,
+        comida: mealLibrary.comida.length,
+        cena: mealLibrary.cena.length,
+      },
+    },
+    progress: { progress: 30, currentStep: "recipe_selection" },
+  });
+
+  if (
+    mealLibrary.desayuno.length +
+      mealLibrary.comida.length +
+      mealLibrary.cena.length ===
+    0
+  ) {
+    await logger.log({
+      level: "error",
+      step: "recipe_selection",
+      status: "failed",
+      message: "Los menús fuente no tienen comidas disponibles.",
+      metadata: { source_weekly_menu_ids: body.sourceWeeklyMenuIds },
+      progress: {
+        progress: 100,
+        currentStep: "recipe_selection",
+        status: "failed",
+        errorMessage: "Los menús fuente no tienen comidas disponibles.",
+        completedAt: new Date().toISOString(),
+      },
+    });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Los menús fuente no tienen comidas disponibles.",
+    });
+  }
+
   const uniqueDishNames = Array.from(
     new Set(
       (weeklyMeals || [])
@@ -113,16 +261,18 @@ export default defineEventHandler(async (event) => {
         .filter(Boolean),
     ),
   );
-  const { data: dishRows } = await supabase
-    .from("dishes")
-    .select(
-      "id,name,normalized_name,recipe_status,is_special,special_kcal_reserved",
-    )
-    .eq("user_id", body.userId)
-    .in(
-      "normalized_name",
-      uniqueDishNames.map((name) => name.toLowerCase()),
-    );
+  const { data: dishRows } = uniqueDishNames.length
+    ? await supabase
+        .from("dishes")
+        .select(
+          "id,name,normalized_name,recipe_status,is_special,special_kcal_reserved",
+        )
+        .eq("user_id", body.userId)
+        .in(
+          "normalized_name",
+          uniqueDishNames.map((name) => name.toLowerCase()),
+        )
+    : { data: [] as any[] };
   const dishByNormalizedName = new Map(
     (dishRows || []).map((row: any) => [
       String(row.normalized_name || row.name || "").toLowerCase(),
@@ -152,15 +302,31 @@ export default defineEventHandler(async (event) => {
         .map((row: any) => row.ingredient_id),
     ),
   );
-  const { data: ingredientRows } = await supabase
-    .from("ingredients")
-    .select(
-      "id, name, normalized_name, nutrition_status, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
-    )
-    .in("id", ingredientIds);
+  const { data: ingredientRows } = ingredientIds.length
+    ? await supabase
+        .from("ingredients")
+        .select(
+          "id, name, normalized_name, nutrition_status, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
+        )
+        .in("id", ingredientIds)
+    : { data: [] as any[] };
   const nutritionById = new Map(
     (ingredientRows || []).map((row: any) => [row.id, row]),
   );
+
+  await logger.log({
+    level: "info",
+    step: "recipe_selection",
+    status: "completed",
+    message: "Recetas, ingredientes confirmados y nutrición cargados.",
+    metadata: {
+      unique_dish_names_count: uniqueDishNames.length,
+      matched_dishes_count: dishRows?.length || 0,
+      recipe_ingredients_count: recipeRows?.length || 0,
+      nutrition_rows_count: ingredientRows?.length || 0,
+    },
+    progress: { progress: 36, currentStep: "recipe_selection" },
+  });
 
   const uncuredRecipes: Array<{
     dish_id: string;
@@ -253,6 +419,25 @@ export default defineEventHandler(async (event) => {
   }
 
   if (uncuredSet.size > 0) {
+    await logger.log({
+      level: "error",
+      step: "recipe_validation",
+      status: "failed",
+      message: "La generación se bloquea por recetas o ingredientes sin curar.",
+      metadata: {
+        uncured_recipes_count: uncuredRecipes.length,
+        uncured_recipes: uncuredRecipes.slice(0, 50),
+      },
+      progress: {
+        progress: 100,
+        currentStep: "recipe_validation",
+        status: "failed",
+        errorMessage:
+          "Tienes recetas o ingredientes sin curar. Completa su curación antes de generar el menú rotativo.",
+        completedAt: new Date().toISOString(),
+        resultPayload: { error_data: { uncured_recipes: uncuredRecipes } },
+      },
+    });
     throw createError({
       statusCode: 409,
       statusMessage:
@@ -273,6 +458,15 @@ export default defineEventHandler(async (event) => {
 
   const generatedDays: any[] = [];
   const lastByType: Record<string, string> = {};
+
+  await logger.log({
+    level: "info",
+    step: "quantity_calculation",
+    status: "running",
+    message: "Calculando recetas, cantidades base y rotación por día.",
+    metadata: { target_days: targetDays },
+    progress: { progress: 42, currentStep: "quantity_calculation" },
+  });
 
   for (let day = 1; day <= targetDays; day++) {
     const date = new Date(body.startDate);
@@ -599,7 +793,77 @@ export default defineEventHandler(async (event) => {
       meals: dayMeals,
       profile_totals: dailyProfileTotals,
     });
+
+    if (day === 1 || day === targetDays || day % 10 === 0) {
+      await logger.log({
+        level: "debug",
+        step: "profile_scaling",
+        status: "running",
+        message: `Escalado por perfil calculado hasta el día ${day}.`,
+        metadata: {
+          day_number: day,
+          meals_count: dayMeals.length,
+          profiles_count: profileTargets.length,
+          sample_profile_totals: dailyProfileTotals.slice(0, 3),
+        },
+        progress: {
+          progress: 42 + Math.round((day / targetDays) * 24),
+          currentStep: "profile_scaling",
+        },
+      });
+    }
   }
+
+  const specialMealsCount = generatedDays.reduce(
+    (acc, day) =>
+      acc + day.meals.filter((meal: any) => Boolean(meal.is_special)).length,
+    0,
+  );
+
+  await logger.log({
+    level: "info",
+    step: "special_meals",
+    status: "completed",
+    message: "Comidas especiales/libres procesadas.",
+    metadata: {
+      special_meals_count: specialMealsCount,
+      default_special_meal_kcal: defaultSpecialMealKcal,
+    },
+    progress: { progress: 68, currentStep: "special_meals" },
+  });
+
+  await logger.log({
+    level: "info",
+    step: "macro_validation",
+    status: "completed",
+    message: "Totales diarios y desviaciones macro calculadas.",
+    metadata: {
+      generated_days_count: generatedDays.length,
+      profiles_count: profileTargets.length,
+      max_abs_kcal_delta: Math.max(
+        0,
+        ...generatedDays.flatMap((day) =>
+          day.profile_totals.map((total: any) =>
+            Math.abs(Number(total.kcal_delta || 0)),
+          ),
+        ),
+      ),
+      nutrition_pending_portions: generatedDays.reduce(
+        (acc, day) =>
+          acc +
+          day.meals.reduce(
+            (mealAcc: number, meal: any) =>
+              mealAcc +
+              meal.profile_portions.filter((portion: any) =>
+                Boolean(portion.nutrition_pending),
+              ).length,
+            0,
+          ),
+        0,
+      ),
+    },
+    progress: { progress: 72, currentStep: "macro_validation" },
+  });
 
   const totalTargets = profileTargets.reduce(
     (acc, p) => {
@@ -611,6 +875,22 @@ export default defineEventHandler(async (event) => {
     },
     { kcal: 0, protein: 0, carbs: 0, fat: 0 },
   );
+
+  await logger.log({
+    level: "info",
+    step: "save_supabase",
+    status: "running",
+    message: "Guardando menú rotativo y entidades relacionadas en Supabase.",
+    metadata: {
+      generated_days_count: generatedDays.length,
+      meals_count: generatedDays.reduce(
+        (acc, day) => acc + day.meals.length,
+        0,
+      ),
+      total_targets: totalTargets,
+    },
+    progress: { progress: 78, currentStep: "save_supabase" },
+  });
 
   const { data: rotatingMenu, error: rotatingError } = await supabase
     .from("rotating_menus")
@@ -629,6 +909,14 @@ export default defineEventHandler(async (event) => {
     .select("id")
     .single();
   if (rotatingError || !rotatingMenu) {
+    await logger.log({
+      level: "error",
+      step: "save_supabase",
+      status: "failed",
+      message: rotatingError?.message || "Error guardando rotating_menus",
+      metadata: { error: rotatingError },
+      progress: { currentStep: "save_supabase", progress: 100 },
+    });
     throw createError({
       statusCode: 500,
       statusMessage: rotatingError?.message || "Error guardando rotating_menus",
@@ -650,6 +938,14 @@ export default defineEventHandler(async (event) => {
         })),
       );
     if (profileInsertError) {
+      await logger.log({
+        level: "error",
+        step: "save_supabase",
+        status: "failed",
+        message: profileInsertError.message,
+        metadata: { table: "rotating_menu_profiles", error: profileInsertError },
+        progress: { currentStep: "save_supabase", progress: 100 },
+      });
       throw createError({
         statusCode: 500,
         statusMessage: profileInsertError.message,
@@ -685,6 +981,14 @@ export default defineEventHandler(async (event) => {
     .insert(dayRows)
     .select("id, day_number");
   if (daysError || !savedDays) {
+    await logger.log({
+      level: "error",
+      step: "save_supabase",
+      status: "failed",
+      message: daysError?.message || "Error guardando rotating_menu_days",
+      metadata: { table: "rotating_menu_days", error: daysError },
+      progress: { currentStep: "save_supabase", progress: 100 },
+    });
     throw createError({
       statusCode: 500,
       statusMessage: daysError?.message || "Error guardando rotating_menu_days",
@@ -716,6 +1020,14 @@ export default defineEventHandler(async (event) => {
     .insert(mealRows)
     .select("id, rotating_menu_day_id, meal_type");
   if (mealsError || !savedMeals) {
+    await logger.log({
+      level: "error",
+      step: "save_supabase",
+      status: "failed",
+      message: mealsError?.message || "Error guardando rotating_menu_meals",
+      metadata: { table: "rotating_menu_meals", error: mealsError },
+      progress: { currentStep: "save_supabase", progress: 100 },
+    });
     throw createError({
       statusCode: 500,
       statusMessage:
@@ -752,6 +1064,19 @@ export default defineEventHandler(async (event) => {
     .insert(portionsRows)
     .select("id, rotating_menu_meal_id, profile_id");
   if (portionsError || !savedPortions) {
+    await logger.log({
+      level: "error",
+      step: "save_supabase",
+      status: "failed",
+      message:
+        portionsError?.message ||
+        "Error guardando rotating_menu_meal_profile_portions",
+      metadata: {
+        table: "rotating_menu_meal_profile_portions",
+        error: portionsError,
+      },
+      progress: { currentStep: "save_supabase", progress: 100 },
+    });
     throw createError({
       statusCode: 500,
       statusMessage:
@@ -794,6 +1119,20 @@ export default defineEventHandler(async (event) => {
       .from("rotating_menu_meal_profile_ingredients")
       .insert(ingredientsRows);
     if (ingredientsError) {
+      await logger.log({
+        level: "error",
+        step: "save_supabase",
+        status: "failed",
+        message:
+          ingredientsError.message ||
+          "Error guardando rotating_menu_meal_profile_ingredients",
+        metadata: {
+          table: "rotating_menu_meal_profile_ingredients",
+          error: ingredientsError,
+          rows_count: ingredientsRows.length,
+        },
+        progress: { currentStep: "save_supabase", progress: 100 },
+      });
       throw createError({
         statusCode: 500,
         statusMessage:
@@ -803,10 +1142,59 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  await logger.log({
+    level: "info",
+    step: "save_supabase",
+    status: "completed",
+    message: "Menú rotativo guardado en Supabase.",
+    metadata: {
+      rotating_menu_id: rotatingMenu.id,
+      days_inserted: savedDays.length,
+      meals_inserted: savedMeals.length,
+      portions_inserted: savedPortions.length,
+      ingredients_inserted: ingredientsRows.length,
+    },
+    progress: { progress: 88, currentStep: "save_supabase" },
+  });
+
+  await logger.log({
+    level: "info",
+    step: "shopping_list",
+    status: "running",
+    message: "Generando lista de la compra consolidada.",
+    metadata: { rotating_menu_id: rotatingMenu.id },
+    progress: { progress: 92, currentStep: "shopping_list" },
+  });
+
   const shoppingBuild = await buildShoppingListFromRotatingMenu({
     supabase,
     userId: body.userId,
     rotatingMenuId: rotatingMenu.id,
+  });
+
+  await logger.log({
+    level: "info",
+    step: "shopping_list",
+    status: "completed",
+    message: "Lista de la compra generada.",
+    metadata: {
+      rotating_menu_id: rotatingMenu.id,
+      inserted_items: shoppingBuild.inserted,
+    },
+    progress: { progress: 96, currentStep: "shopping_list" },
+  });
+
+  await logger.log({
+    level: "info",
+    step: "generation_completed",
+    status: "completed",
+    message: "Generación de menú rotativo completada.",
+    metadata: {
+      rotating_menu_id: rotatingMenu.id,
+      generated_days_count: generatedDays.length,
+      shopping_list_items: shoppingBuild.inserted,
+    },
+    progress: { progress: 98, currentStep: "generation_completed" },
   });
 
   return {

@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+import { createMenuGenerationLogger } from "~/server/utils/menu-generation-logger";
 
 type CreateJobPayload = {
   userId: string;
@@ -34,7 +35,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: existingRunning } = await supabase
     .from("menu_generation_jobs")
-    .select("id,status,created_at")
+    .select("id,status,progress,current_step,created_at")
     .eq("user_id", userId)
     .in("status", ["pending", "processing"])
     .order("created_at", { ascending: false })
@@ -42,6 +43,21 @@ export default defineEventHandler(async (event) => {
     .maybeSingle();
 
   if (existingRunning?.id) {
+    const logger = createMenuGenerationLogger({
+      supabase,
+      jobId: existingRunning.id,
+    });
+    await logger.log({
+      level: "info",
+      step: "job_deduplicated",
+      status: "completed",
+      message: "Ya existe un job activo para este usuario; se reutiliza.",
+      metadata: { user_id: userId, existing_job_id: existingRunning.id },
+      progress: {
+        currentStep: "job_deduplicated",
+        progress: Number(existingRunning.progress || 0),
+      },
+    });
     return {
       success: true,
       job: existingRunning,
@@ -68,9 +84,11 @@ export default defineEventHandler(async (event) => {
       user_id: userId,
       status: "pending",
       progress: 0,
+      current_step: "job_created",
+      heartbeat_at: new Date().toISOString(),
       input_payload: inputPayload,
     })
-    .select("id,user_id,status,progress,created_at")
+    .select("id,user_id,status,progress,current_step,created_at")
     .single();
 
   if (createErrorJob || !createdJob) {
@@ -79,6 +97,25 @@ export default defineEventHandler(async (event) => {
       statusMessage: createErrorJob?.message || "No se pudo crear el job",
     });
   }
+
+  const logger = createMenuGenerationLogger({
+    supabase,
+    jobId: createdJob.id,
+  });
+  await logger.log({
+    level: "info",
+    step: "job_created",
+    status: "completed",
+    message: "Job de generación creado y encolado.",
+    metadata: {
+      user_id: userId,
+      duration_days: inputPayload.durationDays,
+      profiles_count: inputPayload.profileIds.length,
+      source_menus_count: inputPayload.sourceWeeklyMenuIds.length,
+      start_date: inputPayload.startDate,
+    },
+    progress: { currentStep: "job_created", progress: 0, status: "pending" },
+  });
 
   const origin = getRequestURL(event).origin;
   fetch(`${origin}/api/rotating-menu-jobs-process`, {

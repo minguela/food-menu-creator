@@ -1,5 +1,21 @@
 <template>
   <div class="space-y-6">
+    <div
+      v-if="notificationMessage"
+      class="fixed right-4 top-20 z-50 max-w-sm rounded-lg border bg-white p-3 text-sm shadow-lg"
+      :class="
+        notificationLevel === 'error'
+          ? 'border-red-200 text-red-700'
+          : 'border-emerald-200 text-emerald-700'
+      "
+    >
+      <div class="flex items-start justify-between gap-3">
+        <p>{{ notificationMessage }}</p>
+        <button class="text-xs text-gray-500" @click="notificationMessage = ''">
+          Cerrar
+        </button>
+      </div>
+    </div>
     <header class="flex flex-wrap items-end justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Generar menú rotativo</h1>
@@ -193,6 +209,22 @@
             Estado: {{ currentJob.status }} · progreso
             {{ currentJob.progress ?? 0 }}%
           </p>
+          <div class="mt-3 h-2 w-full overflow-hidden rounded bg-white/70">
+            <div
+              class="h-2 rounded bg-indigo-600 transition-all"
+              :class="
+                currentJob.status === 'failed'
+                  ? 'bg-red-500'
+                  : currentJob.status === 'completed'
+                    ? 'bg-emerald-500'
+                    : 'bg-indigo-600'
+              "
+              :style="{ width: `${Math.max(0, Math.min(100, currentJob.progress || 0))}%` }"
+            />
+          </div>
+          <p v-if="currentJob.current_step" class="text-xs mt-2">
+            Paso actual: {{ stepLabel(currentJob.current_step) }}
+          </p>
           <p v-if="currentJob.error_message" class="text-xs mt-1">
             {{ currentJob.error_message }}
           </p>
@@ -203,6 +235,60 @@
           >
             Ver menú/lista
           </NuxtLink>
+        </div>
+        <div
+          v-if="currentJob"
+          class="mt-4 rounded-lg border bg-zinc-950 p-3 text-sm text-zinc-100"
+        >
+          <div class="mb-3 flex items-center justify-between gap-2">
+            <div>
+              <h3 class="font-semibold">Debug del job</h3>
+              <p class="text-xs text-zinc-400">
+                Logs persistidos en Supabase · {{ generationLogs.length }} eventos
+              </p>
+            </div>
+            <span
+              class="rounded-full px-2 py-1 text-xs"
+              :class="statusPillClass(currentJob.status)"
+            >
+              {{ statusLabel(currentJob.status) }}
+            </span>
+          </div>
+          <div v-if="generationLogs.length === 0" class="rounded border border-zinc-800 p-3 text-xs text-zinc-400">
+            Esperando eventos del proceso...
+          </div>
+          <ol v-else class="max-h-80 space-y-2 overflow-y-auto pr-1">
+            <li
+              v-for="log in generationLogs"
+              :key="log.id"
+              class="rounded border border-zinc-800 bg-zinc-900 p-2"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="rounded px-1.5 py-0.5 text-[10px] uppercase" :class="levelClass(log.level)">
+                    {{ log.level }}
+                  </span>
+                  <span class="text-xs font-medium text-zinc-100">
+                    {{ stepLabel(log.step) }}
+                  </span>
+                  <span class="text-[11px] text-zinc-500">
+                    {{ log.metadata?.status || "running" }}
+                  </span>
+                </div>
+                <time class="text-[11px] text-zinc-500">
+                  {{ formatTime(log.created_at) }}
+                </time>
+              </div>
+              <p class="mt-1 text-xs text-zinc-300">{{ log.message }}</p>
+              <details
+                v-if="hasLogMetadata(log)"
+                class="mt-2 text-[11px] text-zinc-400"
+              >
+                <summary class="cursor-pointer select-none">metadata</summary>
+                <pre class="mt-2 overflow-x-auto rounded border border-zinc-800 p-2">{{ JSON.stringify(log.metadata, null, 2) }}</pre>
+              </details>
+            </li>
+          </ol>
         </div>
         <div
           v-if="shoppingItemsCreated !== null"
@@ -433,6 +519,16 @@ type RotatingDay = {
   profile_totals: DayProfileTotal[];
 };
 
+type MenuGenerationLog = {
+  id: string;
+  job_id: string;
+  level: "debug" | "info" | "warn" | "error";
+  step: string;
+  message: string;
+  metadata?: Record<string, any> | null;
+  created_at: string;
+};
+
 const supabase = useSupabase();
 const { loadCurrentUser } = useCurrentUser();
 
@@ -451,12 +547,16 @@ const currentJob = ref<{
   id: string;
   status: "pending" | "processing" | "completed" | "failed";
   progress: number;
+  current_step?: string | null;
   error_message?: string | null;
   result_menu_id?: string | null;
 } | null>(null);
 const jobChannel = ref<any>(null);
+const generationLogs = ref<MenuGenerationLog[]>([]);
 const loading = ref(false);
 const error = ref("");
+const notificationMessage = ref("");
+const notificationLevel = ref<"success" | "error">("success");
 
 const mealLabel = (type: string) =>
   type === "desayuno" ? "Desayuno" : type === "comida" ? "Comida" : "Cena";
@@ -472,6 +572,63 @@ const deltaClass = (value: number) => {
   if (abs <= 90) return "text-amber-700";
   return "text-red-700";
 };
+
+const hasLogMetadata = (log: MenuGenerationLog) => {
+  const metadata = log.metadata || {};
+  return Object.keys(metadata).some(
+    (key) => !["timestamp", "status"].includes(key),
+  );
+};
+
+const appendGenerationLog = (log: MenuGenerationLog) => {
+  if (generationLogs.value.some((item) => item.id === log.id)) return;
+  generationLogs.value = [...generationLogs.value, log].sort(
+    (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  );
+};
+
+const statusLabel = (status: string) => {
+  if (status === "pending") return "Pendiente";
+  if (status === "processing") return "Procesando";
+  if (status === "completed") return "Completado";
+  return "Error";
+};
+
+const statusPillClass = (status: string) => {
+  if (status === "completed") return "bg-emerald-900 text-emerald-200";
+  if (status === "failed") return "bg-red-900 text-red-200";
+  return "bg-amber-900 text-amber-200";
+};
+
+const levelClass = (level: string) => {
+  if (level === "error") return "bg-red-900 text-red-100";
+  if (level === "warn") return "bg-amber-900 text-amber-100";
+  if (level === "debug") return "bg-zinc-700 text-zinc-100";
+  return "bg-sky-900 text-sky-100";
+};
+
+const stepLabel = (step: string) =>
+  ({
+    job_created: "Job creado",
+    job_deduplicated: "Job reutilizado",
+    job_start: "Inicio del job",
+    input_validation: "Validación de entrada",
+    read_profiles: "Lectura de perfiles",
+    target_kcal: "Cálculo kcal objetivo",
+    macro_targets: "Cálculo de macros",
+    recipe_selection: "Selección de recetas",
+    recipe_validation: "Validación de recetas",
+    quantity_calculation: "Cálculo de cantidades",
+    profile_scaling: "Escalado por perfil",
+    special_meals: "Comidas libres",
+    macro_validation: "Validación de macros",
+    save_supabase: "Guardado en Supabase",
+    shopping_list: "Lista de la compra",
+    generation_completed: "Generación completada",
+    job_completed: "Job completado",
+    job_failed: "Error del job",
+  })[step] || step;
 
 const loadBaseData = async () => {
   const currentUser = await loadCurrentUser();
@@ -503,6 +660,7 @@ const loadBaseData = async () => {
 
 const generateRotatingMenu = async () => {
   error.value = "";
+  notificationMessage.value = "";
   shoppingItemsCreated.value = null;
   loading.value = true;
 
@@ -522,6 +680,7 @@ const generateRotatingMenu = async () => {
         id: string;
         status: "pending" | "processing" | "completed" | "failed";
         progress: number;
+        current_step?: string | null;
       };
       deduplicated: boolean;
     }>("/api/rotating-menu-jobs", {
@@ -545,13 +704,16 @@ const generateRotatingMenu = async () => {
       id: response.job.id,
       status: response.job.status,
       progress: Number(response.job.progress || 0),
+      current_step: response.job.current_step || "job_created",
     };
     subscribeToJob(response.job.id);
   } catch (err) {
     const maybeErr = err as
       | (Error & { data?: any })
       | { data?: any; message?: string };
-    const uncured = maybeErr?.data?.uncured_recipes;
+    const uncured =
+      maybeErr?.data?.uncured_recipes ||
+      maybeErr?.data?.data?.uncured_recipes;
     if (Array.isArray(uncured) && uncured.length > 0) {
       const preview = uncured
         .slice(0, 6)
@@ -607,6 +769,7 @@ const hydrateFromJobResult = async (jobId: string) => {
     id: data.id,
     status: data.status,
     progress: Number(data.progress || 0),
+    current_step: data.current_step,
     error_message: data.error_message,
     result_menu_id: data.result_menu_id,
   };
@@ -617,12 +780,28 @@ const hydrateFromJobResult = async (jobId: string) => {
       data.result_payload.shopping_list_items || 0,
     );
   }
+  await loadGenerationLogs(jobId);
+};
+
+const loadGenerationLogs = async (jobId: string) => {
+  const { data } = await supabase
+    .from("menu_generation_logs")
+    .select("*")
+    .eq("job_id", jobId)
+    .order("created_at", { ascending: true })
+    .limit(300);
+  generationLogs.value = ((data || []) as MenuGenerationLog[]).sort(
+    (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  );
 };
 
 const subscribeToJob = (jobId: string) => {
   if (jobChannel.value) {
     supabase.removeChannel(jobChannel.value);
   }
+  generationLogs.value = [];
+  loadGenerationLogs(jobId);
   const channel = supabase
     .channel(`menu-job-${jobId}`)
     .on(
@@ -639,12 +818,31 @@ const subscribeToJob = (jobId: string) => {
           id: next.id,
           status: next.status,
           progress: Number(next.progress || 0),
+          current_step: next.current_step,
           error_message: next.error_message,
           result_menu_id: next.result_menu_id,
         };
         if (next.status === "completed") {
+          notificationLevel.value = "success";
+          notificationMessage.value = "Menú rotativo generado correctamente.";
           await hydrateFromJobResult(jobId);
+        } else if (next.status === "failed") {
+          notificationLevel.value = "error";
+          notificationMessage.value =
+            next.error_message || "La generación del menú ha fallado.";
         }
+      },
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "menu_generation_logs",
+        filter: `job_id=eq.${jobId}`,
+      },
+      (payload: any) => {
+        appendGenerationLog(payload.new as MenuGenerationLog);
       },
     )
     .subscribe();
@@ -656,6 +854,13 @@ const formatDate = (value: string) =>
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+  });
+
+const formatTime = (value: string) =>
+  new Date(value).toLocaleTimeString("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   });
 
 onMounted(loadBaseData);

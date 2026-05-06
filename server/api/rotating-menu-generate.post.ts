@@ -338,9 +338,34 @@ export default defineEventHandler(async (event) => {
       | "pending_ingredients"
       | "suggested_ingredients"
       | "missing_ingredient_link"
-      | "missing_nutrition";
+      | "missing_nutrition"
+      | "invalid_recipe_data";
   }> = [];
   const uncuredSet = new Set<string>();
+
+  const validRecipeById = new Map<
+    string,
+    {
+      dish_id: string;
+      dish_name: string;
+      normalized_name: string;
+      ingredient_base: Array<{
+        ingredient_id: string;
+        name: string;
+        normalized_name: string;
+        quantity: number;
+        unit_type: string;
+      }>;
+      base_kcal: number;
+      base_protein: number;
+    }
+  >();
+  const discardedRecipes: Array<{
+    dish_id: string;
+    dish_name: string;
+    reason: string;
+    details?: string;
+  }> = [];
 
   for (const dish of dishRows || []) {
     const normalizedName = normalizeDishName(dish.normalized_name || dish.name);
@@ -367,6 +392,11 @@ export default defineEventHandler(async (event) => {
         dish_name: dish.name,
         reason: "pending_ingredients",
       });
+      discardedRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "pending_ingredients",
+      });
       continue;
     }
     if (dish.recipe_status === "suggested_ingredients") {
@@ -374,6 +404,11 @@ export default defineEventHandler(async (event) => {
         `${dish.id}:suggested_ingredients:${normalizedName || dish.id}`,
       );
       uncuredRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "suggested_ingredients",
+      });
+      discardedRecipes.push({
         dish_id: dish.id,
         dish_name: dish.name,
         reason: "suggested_ingredients",
@@ -390,6 +425,11 @@ export default defineEventHandler(async (event) => {
         dish_name: dish.name,
         reason: "pending_ingredients",
       });
+      discardedRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "pending_ingredients",
+      });
       continue;
     }
 
@@ -399,6 +439,11 @@ export default defineEventHandler(async (event) => {
         `${dish.id}:missing_ingredient_link:${normalizedName || dish.id}`,
       );
       uncuredRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "missing_ingredient_link",
+      });
+      discardedRecipes.push({
         dish_id: dish.id,
         dish_name: dish.name,
         reason: "missing_ingredient_link",
@@ -427,7 +472,118 @@ export default defineEventHandler(async (event) => {
         dish_name: dish.name,
         reason: "missing_nutrition",
       });
+      discardedRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "missing_nutrition",
+      });
+      continue;
     }
+
+    const ingredientBase = confirmedRows.map((ing: any) => ({
+      ingredient_id: ing.ingredient_id,
+      name: String(ing.name || ""),
+      normalized_name: String(ing.normalized_name || ing.name || "").toLowerCase(),
+      quantity: Number(ing.quantity),
+      unit_type: String(ing.unit_type || ""),
+    }));
+    const hasInvalidQuantity = ingredientBase.some(
+      (ing) => !Number.isFinite(ing.quantity) || ing.quantity <= 0,
+    );
+    const hasInvalidUnit = ingredientBase.some(
+      (ing) => normalizeToGrams(ing.quantity, ing.unit_type) === null,
+    );
+    if (hasInvalidQuantity || hasInvalidUnit) {
+      uncuredSet.add(`${dish.id}:invalid_recipe_data:${normalizedName || dish.id}`);
+      uncuredRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "invalid_recipe_data",
+      });
+      discardedRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "invalid_recipe_data",
+        details: hasInvalidQuantity
+          ? "ingredient_quantity_invalid"
+          : "ingredient_unit_not_convertible",
+      });
+      continue;
+    }
+
+    let baseKcal = 0;
+    let baseProtein = 0;
+    for (const ing of ingredientBase) {
+      const nutrition = nutritionById.get(ing.ingredient_id);
+      const grams = normalizeToGrams(ing.quantity, ing.unit_type);
+      if (!nutrition || grams === null) continue;
+      const factor = grams / 100;
+      baseKcal += Number(nutrition.kcal_per_100g) * factor;
+      baseProtein += Number(nutrition.protein_per_100g) * factor;
+    }
+
+    if (baseKcal <= 0 || baseProtein <= 0) {
+      uncuredSet.add(`${dish.id}:invalid_recipe_data:${normalizedName || dish.id}`);
+      uncuredRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "invalid_recipe_data",
+      });
+      discardedRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "invalid_recipe_data",
+        details: "base_macros_not_calculable",
+      });
+      continue;
+    }
+
+    validRecipeById.set(dish.id, {
+      dish_id: dish.id,
+      dish_name: dish.name,
+      normalized_name: normalizedName,
+      ingredient_base: ingredientBase,
+      base_kcal: baseKcal,
+      base_protein: baseProtein,
+    });
+  }
+
+  await logger.log({
+    level: "info",
+    step: "recipe_validation",
+    status: "completed",
+    message: "Validación de recetas completada.",
+    metadata: {
+      total_recipes_loaded: dishRows?.length || 0,
+      valid_recipes: validRecipeById.size,
+      discarded_recipes: discardedRecipes.length,
+      discarded_reasons: discardedRecipes.slice(0, 80),
+    },
+    progress: { progress: 40, currentStep: "recipe_validation" },
+  });
+
+  if (validRecipeById.size === 0) {
+    await logger.log({
+      level: "error",
+      step: "recipe_validation",
+      status: "failed",
+      message: "No hay recetas válidas para generar el menú rotativo.",
+      metadata: {
+        discarded_recipes: discardedRecipes.slice(0, 80),
+      },
+      progress: {
+        progress: 100,
+        currentStep: "recipe_validation",
+        status: "failed",
+        errorMessage: "No hay recetas válidas para generar el menú rotativo.",
+        completedAt: new Date().toISOString(),
+      },
+    });
+    throw createError({
+      statusCode: 409,
+      statusMessage: "No hay recetas válidas para generar el menú rotativo.",
+      data: { discarded_recipes: discardedRecipes },
+    });
   }
 
   if (uncuredSet.size > 0) {
@@ -486,6 +642,127 @@ export default defineEventHandler(async (event) => {
     progress: { progress: 42, currentStep: "quantity_calculation" },
   });
 
+  const mealOptionsByType: Record<MealType, any[]> = {
+    desayuno: [],
+    comida: [],
+    cena: [],
+  };
+  const discardedMealOptions: Array<{
+    day_number: number | null;
+    meal_type: MealType;
+    dish_name: string;
+    reason: string;
+  }> = [];
+
+  for (const mealType of ["desayuno", "comida", "cena"] as MealType[]) {
+    const sourceMeals = mealLibrary[mealType] || [];
+    for (const sourceMeal of sourceMeals) {
+      const linkedDish =
+        dishByNormalizedName.get(normalizeDishName(sourceMeal.dish_name)) || null;
+      const isSpecial = isSpecialMealCandidate(sourceMeal, linkedDish);
+      if (isSpecial) {
+        mealOptionsByType[mealType].push({
+          ...sourceMeal,
+          _linkedDish: linkedDish,
+          _isSpecial: true,
+        });
+        continue;
+      }
+
+      if (!linkedDish) {
+        discardedMealOptions.push({
+          day_number: Number(sourceMeal.day_number) || null,
+          meal_type: mealType,
+          dish_name: String(sourceMeal.dish_name || ""),
+          reason: "recipe_name_not_found",
+        });
+        continue;
+      }
+
+      if (!validRecipeById.has(linkedDish.id)) {
+        discardedMealOptions.push({
+          day_number: Number(sourceMeal.day_number) || null,
+          meal_type: mealType,
+          dish_name: String(sourceMeal.dish_name || ""),
+          reason: "recipe_not_validated",
+        });
+        continue;
+      }
+
+      mealOptionsByType[mealType].push({
+        ...sourceMeal,
+        _linkedDish: linkedDish,
+        _isSpecial: false,
+      });
+    }
+  }
+
+  const emptyRequiredTypes = (["desayuno", "comida", "cena"] as MealType[]).filter(
+    (mealType) =>
+      (mealLibrary[mealType] || []).length > 0 &&
+      mealOptionsByType[mealType].length === 0,
+  );
+
+  await logger.log({
+    level: "info",
+    step: "recipe_selection",
+    status: "completed",
+    message: "Selección de recetas por franja completada.",
+    metadata: {
+      options_by_type: {
+        desayuno: mealOptionsByType.desayuno.length,
+        comida: mealOptionsByType.comida.length,
+        cena: mealOptionsByType.cena.length,
+      },
+      discarded_meal_options: discardedMealOptions.slice(0, 120),
+      empty_required_types: emptyRequiredTypes,
+    },
+    progress: { progress: 44, currentStep: "recipe_selection" },
+  });
+
+  if (emptyRequiredTypes.length > 0) {
+    const message = `No hay recetas válidas para: ${emptyRequiredTypes.join(", ")}`;
+    await logger.log({
+      level: "error",
+      step: "recipe_selection",
+      status: "failed",
+      message,
+      metadata: {
+        empty_required_types: emptyRequiredTypes,
+        discarded_meal_options: discardedMealOptions.slice(0, 120),
+      },
+      progress: {
+        progress: 100,
+        currentStep: "recipe_selection",
+        status: "failed",
+        errorMessage: message,
+        completedAt: new Date().toISOString(),
+      },
+    });
+    throw createError({
+      statusCode: 409,
+      statusMessage: message,
+      data: {
+        empty_required_types: emptyRequiredTypes,
+        discarded_meal_options: discardedMealOptions,
+      },
+    });
+  }
+
+  const rotationOffsets: Record<MealType, number> = {
+    desayuno: randomInt(mealOptionsByType.desayuno.length),
+    comida: randomInt(mealOptionsByType.comida.length),
+    cena: randomInt(mealOptionsByType.cena.length),
+  };
+  await logger.log({
+    level: "info",
+    step: "recipe_selection",
+    status: "completed",
+    message: "Offset aleatorio de rotación aplicado.",
+    metadata: { rotation_offsets: rotationOffsets },
+    progress: { progress: 45, currentStep: "recipe_selection" },
+  });
+
   for (let day = 1; day <= targetDays; day++) {
     const date = new Date(body.startDate);
     date.setDate(date.getDate() + day - 1);
@@ -494,9 +771,9 @@ export default defineEventHandler(async (event) => {
     const dayPlannedMeals: any[] = [];
 
     for (const mealType of ["desayuno", "comida", "cena"] as MealType[]) {
-      const options = mealLibrary[mealType] || [];
+      const options = mealOptionsByType[mealType] || [];
       if (options.length === 0) continue;
-      let pickIndex = (day - 1) % options.length;
+      let pickIndex = (rotationOffsets[mealType] + day - 1) % options.length;
       if (
         options.length > 1 &&
         options[pickIndex].dish_name === lastByType[mealType]
@@ -506,11 +783,8 @@ export default defineEventHandler(async (event) => {
       const picked = options[pickIndex];
       lastByType[mealType] = picked.dish_name;
 
-      const linkedDish =
-        dishByNormalizedName.get(
-          normalizeDishName(picked.dish_name),
-        ) || null;
-      const isSpecial = isSpecialMealCandidate(picked, linkedDish);
+      const linkedDish = picked._linkedDish || null;
+      const isSpecial = Boolean(picked._isSpecial);
       const specialKcalReserved = isSpecial
         ? resolveSpecialMealKcal({
             picked,
@@ -518,47 +792,11 @@ export default defineEventHandler(async (event) => {
             defaultSpecialMealKcal,
           })
         : 0;
+      const validRecipe = linkedDish ? validRecipeById.get(linkedDish.id) : null;
       const recipeStatus = linkedDish?.recipe_status || "pending_ingredients";
-      const recipeRowsForDish = !isSpecial && linkedDish
-        ? recipeIngredientsByRecipeId.get(linkedDish.id) || []
-        : [];
-      const ingredientBase = recipeRowsForDish
-        .filter((row: any) => row.is_confirmed && row.ingredient_id)
-        .map((ing: any) => ({
-          ingredient_id: ing.ingredient_id,
-          name: String(ing.name || ""),
-          normalized_name: String(
-            ing.normalized_name || ing.name || "",
-          ).toLowerCase(),
-          quantity: Number(ing.quantity) || 1,
-          unit_type: ing.unit_type,
-        }));
-
-      let baseKcal = 0;
-      let baseProtein = 0;
-      if (!isSpecial) {
-        for (const baseIng of ingredientBase) {
-          const n = nutritionById.get(baseIng.ingredient_id);
-          const normalized = normalizeToGrams(
-            baseIng.quantity,
-            baseIng.unit_type,
-          );
-          if (
-            !n ||
-            n.nutrition_status !== "complete" ||
-            normalized === null ||
-            n.kcal_per_100g == null ||
-            n.protein_per_100g == null
-          ) {
-            continue;
-          }
-          const factor = normalized / 100;
-          baseKcal += Number(n.kcal_per_100g) * factor;
-          baseProtein += Number(n.protein_per_100g) * factor;
-        }
-      }
-      baseKcal = Math.max(1, baseKcal || 1);
-      baseProtein = Math.max(1, baseProtein || 1);
+      const ingredientBase = !isSpecial ? validRecipe?.ingredient_base || [] : [];
+      const baseKcal = Math.max(1, Number(validRecipe?.base_kcal || 1));
+      const baseProtein = Math.max(1, Number(validRecipe?.base_protein || 1));
 
       if (isSpecial) {
         await logger.log({
@@ -896,6 +1134,68 @@ export default defineEventHandler(async (event) => {
         },
       });
     }
+  }
+
+  const invalidNormalMeals = generatedDays.flatMap((day: any) =>
+    day.meals
+      .filter((meal: any) => !meal.is_special)
+      .flatMap((meal: any) =>
+        (meal.profile_portions || [])
+          .filter((portion: any) => {
+            const hasNoIngredients = (portion.ingredients || []).length === 0;
+            const hasZeroMacros =
+              Number(portion.final_kcal || 0) <= 0 ||
+              Number(portion.final_protein_g || 0) <= 0 ||
+              Number(portion.final_carbs_g || 0) <= 0 ||
+              Number(portion.final_fat_g || 0) <= 0;
+            return (
+              hasNoIngredients ||
+              hasZeroMacros ||
+              Boolean(portion.nutrition_pending)
+            );
+          })
+          .map((portion: any) => ({
+            day_number: day.day_number,
+            meal_type: meal.meal_type,
+            dish_name: meal.dish_name,
+            profile_id: portion.profile_id,
+            profile_name: portion.profile_name,
+            final_kcal: portion.final_kcal,
+            final_protein_g: portion.final_protein_g,
+            final_carbs_g: portion.final_carbs_g,
+            final_fat_g: portion.final_fat_g,
+            ingredients_count: (portion.ingredients || []).length,
+            nutrition_pending: Boolean(portion.nutrition_pending),
+          })),
+      ),
+  );
+
+  if (invalidNormalMeals.length > 0) {
+    await logger.log({
+      level: "error",
+      step: "macro_validation",
+      status: "failed",
+      message:
+        "Se detectaron comidas normales inválidas (kcal/macros/ingredientes).",
+      metadata: {
+        invalid_meals_count: invalidNormalMeals.length,
+        invalid_meals: invalidNormalMeals.slice(0, 120),
+      },
+      progress: {
+        progress: 100,
+        currentStep: "macro_validation",
+        status: "failed",
+        errorMessage:
+          "No se puede completar: hay comidas normales sin ingredientes o sin macros/kcal calculadas.",
+        completedAt: new Date().toISOString(),
+      },
+    });
+    throw createError({
+      statusCode: 422,
+      statusMessage:
+        "No se puede completar: hay comidas normales sin ingredientes o sin macros/kcal calculadas.",
+      data: { invalid_meals: invalidNormalMeals },
+    });
   }
 
   const specialMealsCount = generatedDays.reduce(
@@ -1366,6 +1666,11 @@ function resolveSpecialMealKcal({
     0,
     Math.min(2000, Number(reservedKcal ?? SPECIAL_MEAL_RESERVED_KCAL)),
   );
+}
+
+function randomInt(maxExclusive: number) {
+  if (!Number.isFinite(maxExclusive) || maxExclusive <= 1) return 0;
+  return Math.floor(Math.random() * maxExclusive);
 }
 
 function round(value: number, digits = 2) {

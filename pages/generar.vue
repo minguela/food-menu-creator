@@ -357,10 +357,22 @@
                 v-if="meal.is_special"
                 class="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] text-amber-800"
               >
-                Comida libre · {{ meal.special_kcal_reserved || specialMealKcal }} kcal
+                Comida libre · {{ meal.special_kcal_reserved ?? specialMealKcal }} kcal
               </span>
             </p>
-            <div class="mt-2 overflow-x-auto">
+            <div
+              v-if="meal.is_special"
+              class="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800"
+            >
+              <p class="font-medium">
+                {{ meal.special_kcal_reserved ?? specialMealKcal }} kcal reservadas
+              </p>
+              <p class="mt-1">
+                Esta comida no tiene macros definidos, no calcula cantidades y
+                no se incluye en la lista de la compra.
+              </p>
+            </div>
+            <div v-else class="mt-2 overflow-x-auto">
               <table class="min-w-[880px] w-full text-xs">
                 <thead class="text-left text-gray-600">
                   <tr>
@@ -417,8 +429,9 @@
             <thead class="text-left text-gray-600">
               <tr>
                 <th class="px-2 py-2">Perfil</th>
-                <th class="px-2 py-2">Totales kcal</th>
+                <th class="px-2 py-2">kcal estimadas</th>
                 <th class="px-2 py-2">kcal libres</th>
+                <th class="px-2 py-2">kcal resto</th>
                 <th class="px-2 py-2">Totales P/H/G</th>
                 <th class="px-2 py-2">Δ kcal</th>
                 <th class="px-2 py-2">Δ proteína</th>
@@ -438,12 +451,21 @@
                   >
                     Día libre completo
                   </span>
+                  <span
+                    v-if="total.low_regular_budget_warning"
+                    class="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] text-red-800"
+                  >
+                    Poco margen
+                  </span>
                 </td>
                 <td class="px-2 py-2">
                   {{ total.total_kcal }} / {{ Math.round(total.target_kcal) }}
                 </td>
                 <td class="px-2 py-2">
                   {{ Math.round(total.special_kcal_reserved || 0) }}
+                </td>
+                <td class="px-2 py-2">
+                  {{ Math.round(total.regular_kcal || 0) }}
                 </td>
                 <td class="px-2 py-2">
                   {{ total.total_protein_g.toFixed(1) }} /
@@ -487,6 +509,8 @@ type ProfilePortion = {
   final_carbs_g: number;
   final_fat_g: number;
   kcal_delta: number;
+  is_special?: boolean;
+  special_kcal_reserved?: number;
   ingredients: RotatingIngredient[];
 };
 
@@ -507,9 +531,11 @@ type DayProfileTotal = {
   total_carbs_g: number;
   total_fat_g: number;
   special_kcal_reserved?: number;
+  regular_kcal?: number;
   kcal_delta: number;
   protein_delta_g: number;
   all_special_day?: boolean;
+  low_regular_budget_warning?: boolean;
 };
 
 type RotatingDay = {
@@ -738,9 +764,13 @@ const copySummary = async () => {
     for (const meal of day.meals) {
       lines.push(
         `- ${mealLabel(meal.meal_type)}: ${meal.dish_name}${
-          meal.is_special ? ` [libre ${meal.special_kcal_reserved || specialMealKcal.value} kcal]` : ""
+          meal.is_special ? ` [libre ${meal.special_kcal_reserved ?? specialMealKcal.value} kcal]` : ""
         }`,
       );
+      if (meal.is_special) {
+        lines.push("  · Sin ingredientes ni lista de la compra");
+        continue;
+      }
       for (const portion of meal.profile_portions) {
         lines.push(
           `  · ${portion.profile_name}: x${portion.serving_multiplier.toFixed(2)} · ${Math.round(

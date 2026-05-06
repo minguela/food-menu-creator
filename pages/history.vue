@@ -47,6 +47,13 @@
                 {{ statusLabel(job.status) }}
               </span>
               <button
+                v-if="job.result_menu_id"
+                class="rounded border px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                @click="openRotatingMenu(job.result_menu_id)"
+              >
+                Abrir menú
+              </button>
+              <button
                 class="rounded border px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
                 @click="toggleJobLogs(job)"
               >
@@ -147,6 +154,12 @@
               </p>
             </div>
             <div class="flex flex-wrap gap-2">
+              <button
+                class="rounded border px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                @click="openRotatingMenu(menu.id)"
+              >
+                Abrir menú
+              </button>
               <button
                 class="rounded border px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
                 @click="openShoppingForMenu(menu.id)"
@@ -299,6 +312,10 @@ const openShoppingForMenu = async (rotatingMenuId: string) => {
   } catch (error) {
     await logError("web", error, { context: "history.openShoppingForMenu" });
   }
+};
+
+const openRotatingMenu = async (rotatingMenuId: string) => {
+  await router.push(`/rotating/${rotatingMenuId}`);
 };
 
 const failedRecipes = (job: MenuGenerationJob) =>

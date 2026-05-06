@@ -230,10 +230,10 @@
           </p>
           <NuxtLink
             v-if="currentJob.status === 'completed' && currentJob.result_menu_id"
-            href="/shopping"
+            :href="`/rotating/${currentJob.result_menu_id}`"
             class="mt-2 inline-block rounded border px-2 py-1 text-xs"
           >
-            Ver menú/lista
+            Abrir menú generado
           </NuxtLink>
         </div>
         <div

@@ -216,35 +216,49 @@
                   {{ mealLabel(type) }}
                 </p>
                 <button
-                  v-if="!getMeal(day, type)"
-                  @click="openMealModal(day, type)"
+                  v-if="getMeals(day, type).length < 2"
+                  @click="
+                    openMealModal(
+                      day,
+                      type,
+                      undefined,
+                      getMealBySlot(day, type, 1) ? 2 : 1,
+                    )
+                  "
                   class="text-xs text-indigo-600 hover:text-indigo-800"
                 >
-                  + Añadir
+                  + Añadir {{ getMealBySlot(day, type, 1) ? "slot 2" : "slot 1" }}
                 </button>
               </div>
 
-              <div v-if="getMeal(day, type)" class="space-y-2">
+              <div v-if="getMeals(day, type).length > 0" class="space-y-2">
+                <article
+                  v-for="meal in getMeals(day, type)"
+                  :key="meal.id"
+                  class="rounded border border-gray-200 p-2"
+                >
+                <p class="text-[11px] font-medium text-gray-500">
+                  {{ mealLabel(type) }} {{ meal.meal_slot || 1 }}
+                </p>
                 <p class="text-sm font-semibold text-gray-900">
-                  {{ getMeal(day, type)?.dish_name }}
+                  {{ meal.dish_name }}
                 </p>
                 <p
-                  v-if="getMeal(day, type)?.is_special"
+                  v-if="meal.is_special"
                   class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800"
                 >
-                  Comida libre · {{ getMeal(day, type)?.special_kcal_reserved || 700 }} kcal
+                  Comida libre · {{ meal.special_kcal_reserved || 700 }} kcal
                 </p>
                 <p
-                  v-if="recipeStatusLabel(getMeal(day, type)?.dish_name)"
+                  v-if="recipeStatusLabel(meal.dish_name)"
                   class="text-[11px] text-gray-500"
                 >
-                  {{ recipeStatusLabel(getMeal(day, type)?.dish_name) }}
+                  {{ recipeStatusLabel(meal.dish_name) }}
                 </p>
                 <p class="text-xs text-amber-700">Pendiente de cálculo</p>
                 <ul class="text-xs text-gray-600 space-y-1">
                   <li
-                    v-for="ingredient in getMeal(day, type)
-                      ?.weekly_meal_ingredients || []"
+                    v-for="ingredient in meal.weekly_meal_ingredients || []"
                     :key="ingredient.id"
                   >
                     {{ ingredient.name }} · {{ ingredient.quantity }}
@@ -252,27 +266,28 @@
                   </li>
                 </ul>
                 <button
-                  @click="openMealModal(day, type, getMeal(day, type)!)"
+                  @click="openMealModal(day, type, meal)"
                   class="text-xs text-indigo-600 hover:text-indigo-800 mr-3"
                 >
                   Editar
                 </button>
                 <button
-                  @click="toggleMealSpecial(getMeal(day, type)!)"
+                  @click="toggleMealSpecial(meal)"
                   class="text-xs text-amber-700 hover:text-amber-900 mr-3"
                 >
                   {{
-                    getMeal(day, type)?.is_special
+                    meal.is_special
                       ? "Quitar comida libre"
                       : "Marcar comida libre"
                   }}
                 </button>
                 <button
-                  @click="deleteMeal(getMeal(day, type)!.id)"
+                  @click="deleteMeal(meal.id)"
                   class="text-xs text-red-500 hover:text-red-700"
                 >
                   Eliminar
                 </button>
+                </article>
               </div>
             </div>
           </div>
@@ -319,7 +334,7 @@
         >
           <h2 class="text-xl font-bold mb-4">
             {{ editingMealId ? "Editar" : "Añadir" }}
-            {{ mealLabel(selectedType).toLowerCase() }} · Día {{ selectedDay }}
+            {{ mealLabel(selectedType).toLowerCase() }} {{ selectedSlot }} · Día {{ selectedDay }}
           </h2>
 
           <div class="grid gap-3 md:grid-cols-2">
@@ -518,6 +533,7 @@ const imageError = ref("");
 const recipeStatusByName = ref<Record<string, string>>({});
 const selectedDay = ref(1);
 const selectedType = ref<MealType>("comida");
+const selectedSlot = ref<1 | 2>(1);
 const editingMealId = ref<string | null>(null);
 const creationMode = ref<"daily" | "block">("daily");
 const blockStartDay = ref(1);
@@ -729,11 +745,18 @@ const ensureRecipeLibrary = async (weeklyMeals: WeeklyMeal[]) => {
   }
 };
 
-const getMeal = (day: number, type: MealType) => {
-  return meals.value.find(
-    (meal) => meal.day_number === day && meal.meal_type === type,
+const getMeals = (day: number, type: MealType) =>
+  meals.value
+    .filter((meal) => meal.day_number === day && meal.meal_type === type)
+    .sort((a, b) => Number(a.meal_slot || 1) - Number(b.meal_slot || 1));
+
+const getMealBySlot = (day: number, type: MealType, slot: 1 | 2) =>
+  meals.value.find(
+    (meal) =>
+      meal.day_number === day &&
+      meal.meal_type === type &&
+      Number(meal.meal_slot || 1) === slot,
   );
-};
 
 const getDayImage = (day: number) => {
   return dayImages.value.find((image) => image.day_number === day);
@@ -753,9 +776,15 @@ watch(blockDayCount, (count) => {
   if (normalizedCount !== count) blockDayCount.value = normalizedCount;
 });
 
-const openMealModal = (day: number, type: MealType, meal?: WeeklyMeal) => {
+const openMealModal = (
+  day: number,
+  type: MealType,
+  meal?: WeeklyMeal,
+  slot?: 1 | 2,
+) => {
   selectedDay.value = day;
   selectedType.value = type;
+  selectedSlot.value = (meal?.meal_slot as 1 | 2) || slot || 1;
   editingMealId.value = meal?.id || null;
   applyBreakfastToWeek.value = false;
   newMeal.value = meal
@@ -785,6 +814,7 @@ const openMealModal = (day: number, type: MealType, meal?: WeeklyMeal) => {
 const closeMealModal = () => {
   showMealModal.value = false;
   editingMealId.value = null;
+  selectedSlot.value = 1;
   applyBreakfastToWeek.value = false;
   formError.value = "";
 };
@@ -822,6 +852,7 @@ const saveMeal = async () => {
           weekly_menu_id: menu.value.id,
           day_number: day,
           meal_type: selectedType.value,
+          meal_slot: selectedSlot.value,
           dish_name: newMeal.value.dish_name,
           dish_description: newMeal.value.dish_description || null,
           is_special: Boolean(newMeal.value.is_special),
@@ -835,7 +866,7 @@ const saveMeal = async () => {
           fat_g: 0,
         },
         {
-          onConflict: "weekly_menu_id,day_number,meal_type",
+          onConflict: "weekly_menu_id,day_number,meal_type,meal_slot",
         },
       )
       .select()

@@ -41,6 +41,7 @@ export interface WeeklyMeal {
   weekly_menu_id: string;
   day_number: number;
   meal_type: "desayuno" | "comida" | "cena";
+  meal_slot?: 1 | 2;
   dish_name: string;
   dish_description?: string;
   image_url?: string;

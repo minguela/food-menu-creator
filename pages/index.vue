@@ -507,6 +507,7 @@ const createMenu = async () => {
           weekly_menu_id: data.id,
           day_number: day,
           meal_type: type,
+          meal_slot: 1,
           dish_name: fixed.dish_name.trim(),
           dish_description: fixed.dish_description.trim() || null,
           kcal: 0,
@@ -521,7 +522,7 @@ const createMenu = async () => {
       const { data: insertedMeals, error: fixedError } = await supabase
         .from("weekly_meals")
         .upsert(fixedRows, {
-          onConflict: "weekly_menu_id,day_number,meal_type",
+          onConflict: "weekly_menu_id,day_number,meal_type,meal_slot",
         })
         .select("id, meal_type, day_number");
 

@@ -89,17 +89,26 @@
           <p class="text-sm font-medium text-gray-700 mb-2">
             Franjas a extraer del OCR
           </p>
+          <p class="text-xs text-gray-500 mb-2">
+            Desayuno fijo y merienda no aplica; OCR solo extrae comida y cena.
+          </p>
           <div class="flex flex-wrap gap-2">
             <label
               v-for="type in mealTypes"
               :key="`ocr-type-${type}`"
-              class="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border cursor-pointer"
+              class="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border"
+              :class="
+                OCR_WEEKLY_MEAL_TYPES.includes(type)
+                  ? 'border-indigo-200 bg-indigo-50 text-indigo-800'
+                  : 'border-gray-200 bg-gray-100 text-gray-400'
+              "
             >
               <input
                 v-model="ocrMealTypes"
                 type="checkbox"
                 :value="type"
                 class="h-4 w-4"
+                :disabled="!OCR_WEEKLY_MEAL_TYPES.includes(type)"
               />
               <span>{{ mealLabel(type) }}</span>
             </label>
@@ -513,7 +522,8 @@ const editingMealId = ref<string | null>(null);
 const creationMode = ref<"daily" | "block">("daily");
 const blockStartDay = ref(1);
 const blockDayCount = ref(3);
-const ocrMealTypes = ref<MealType[]>(["comida", "cena"]);
+const OCR_WEEKLY_MEAL_TYPES: MealType[] = ["comida", "cena"];
+const ocrMealTypes = ref<MealType[]>([...OCR_WEEKLY_MEAL_TYPES]);
 const applyBreakfastToWeek = ref(false);
 const newMeal = ref({
   dish_name: "",
@@ -1033,10 +1043,7 @@ const uploadMenuImage = async ({
   sourceMode: "daily" | "block";
 }) => {
   if (!menu.value) return;
-  if (ocrMealTypes.value.length === 0) {
-    imageError.value = "Selecciona al menos una franja (desayuno/comida/cena).";
-    return;
-  }
+  ocrMealTypes.value = [...OCR_WEEKLY_MEAL_TYPES];
 
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
@@ -1112,7 +1119,7 @@ const uploadMenuImage = async ({
       start_day: normalizedStartDay,
       day_count: normalizedDayCount,
       source_mode: sourceMode,
-      meal_types: ocrMealTypes.value,
+      meal_types: OCR_WEEKLY_MEAL_TYPES,
     },
   });
 

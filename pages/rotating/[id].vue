@@ -59,21 +59,21 @@
 
     <template v-else>
       <section class="grid gap-3 md:grid-cols-4">
-        <article class="rounded-lg border bg-white p-4">
+        <article class="rounded-lg border bg-white p-4 text-gray-900">
           <p class="text-xs text-gray-500">Estado job</p>
           <p class="mt-1 font-semibold text-gray-900">
             {{ detail.job?.status || "Sin job vinculado" }}
           </p>
         </article>
-        <article class="rounded-lg border bg-white p-4">
+        <article class="rounded-lg border bg-white p-4 text-gray-900">
           <p class="text-xs text-gray-500">Días</p>
           <p class="mt-1 font-semibold text-gray-900">{{ detail.days.length }}</p>
         </article>
-        <article class="rounded-lg border bg-white p-4">
+        <article class="rounded-lg border bg-white p-4 text-gray-900">
           <p class="text-xs text-gray-500">Comidas</p>
           <p class="mt-1 font-semibold text-gray-900">{{ mealsCount }}</p>
         </article>
-        <article class="rounded-lg border bg-white p-4">
+        <article class="rounded-lg border bg-white p-4 text-gray-900">
           <p class="text-xs text-gray-500">Compra</p>
           <p class="mt-1 font-semibold text-gray-900">
             {{ detail.shopping_items.length }} líneas
@@ -81,7 +81,7 @@
         </article>
       </section>
 
-      <section class="rounded-lg border bg-white p-4">
+      <section class="rounded-lg border bg-white p-4 text-gray-900">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 class="font-semibold text-gray-900">Navegación por días</h2>
@@ -123,7 +123,7 @@
           v-for="day in visibleDays"
           :id="`day-${day.day_number}`"
           :key="day.id"
-          class="rounded-lg border bg-white p-4"
+          class="rounded-lg border bg-white p-4 text-gray-900"
         >
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -225,8 +225,8 @@
               </div>
             </article>
 
-            <div class="overflow-x-auto rounded-lg border">
-              <table class="min-w-[820px] w-full text-sm">
+            <div class="overflow-x-auto rounded-lg border bg-white">
+              <table class="min-w-[820px] w-full text-sm text-gray-900">
                 <thead class="text-left text-gray-600">
                   <tr>
                     <th class="px-3 py-2">Perfil</th>
@@ -267,7 +267,7 @@
         </article>
       </section>
 
-      <section class="rounded-lg border bg-white p-4">
+      <section class="rounded-lg border bg-white p-4 text-gray-900">
         <h2 class="font-semibold text-gray-900">Lista de la compra generada</h2>
         <p class="mt-1 text-xs text-gray-500">
           Generada desde este menú. Las comidas libres/especiales se ignoran.

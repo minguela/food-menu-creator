@@ -1117,8 +1117,12 @@ const uploadMenuImage = async ({
   });
 
   if (ocrError) {
+    const ocrMessage = String(ocrError.message || "");
+    const mappingError = ocrMessage.includes("OCR_1TO1_MAPPING_ERROR");
     imageError.value =
-      "La imagen se guardó, pero el OCR falló: " + ocrError.message;
+      mappingError
+        ? "No se pudo mapear 1:1 día/franja desde la imagen. Revisa calidad o recorte."
+        : "La imagen se guardó, pero el OCR falló: " + ocrError.message;
     await logError("ocr", ocrError, {
       context: "menu.uploadMenuImage.invokeOcrWithRetry",
     });

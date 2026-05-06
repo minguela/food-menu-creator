@@ -1,5 +1,1302 @@
-no quiero varios slots para añadir, no quiero que los campos de desayuno comida y cena ahora sean blancos y NO se vea lo
-que pone, solamente quiero que en esa tabla aparezcan las comidas y cenas de cada dia, en formato texto, clicable cada
-comida y cada cena para editarlas y curarlas, las comidas que son dos platos y las cenas que son dos platos NECESITO que
-esten unidas de alguna forma, pero hay platos repetidos como las ensaladas, que pueden estar en 2 comidas distintas y
-ser el primer plato de un dia con 2 comidas, eso quiero que lo tengas en cuenta
+<template>
+  <div>
+    <div v-if=" loading " class="text-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+      <p class="mt-4 text-gray-600">Cargando menú...</p>
+    </div>
+
+    <div v-else-if=" menu " class="space-y-6">
+      <header class="flex flex-wrap justify-between gap-4">
+        <div>
+          <button @click="$router.back()" class="text-gray-500 hover:text-gray-700 mb-2">
+            ← Volver
+          </button>
+
+          <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-bold text-gray-900">{{ menu.name }}</h1>
+            <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
+              Semana {{ menu.week_number }}
+            </span>
+          </div>
+
+          <p class="text-sm text-gray-500 mt-1">
+            {{ mealsCount }}/14 comidas y cenas · {{ formatDate( menu.created_at ) }}
+          </p>
+        </div>
+
+        <div class="text-right flex flex-col items-end gap-3">
+          <button type="button" class="text-sm text-red-600 hover:text-red-800" @click=" deleteMenu ">
+            Eliminar menú
+          </button>
+
+          <div>
+            <p class="text-sm text-gray-500">Ingredientes únicos</p>
+            <p class="text-2xl font-semibold text-gray-900">
+              {{ consolidatedIngredients.length }}
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 class="font-semibold text-gray-900">Crear desde imagen</h2>
+            <p class="text-sm text-gray-600 mt-1">
+              Sube una foto del menú. El OCR solo extraerá comida y cena,
+              manteniendo cada día completo.
+            </p>
+          </div>
+
+          <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+            <button type="button" @click="creationMode = 'daily'" class="px-3 py-2 text-sm font-medium" :class=" creationMode === 'daily'
+              ? 'bg-indigo-600 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-50'
+              ">
+              Día a día
+            </button>
+            <button type="button" @click="creationMode = 'block'"
+              class="px-3 py-2 text-sm font-medium border-l border-gray-200" :class=" creationMode === 'block'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+                ">
+              Por bloque
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-4 rounded-lg bg-indigo-50 border border-indigo-100 p-3">
+          <p class="text-sm font-medium text-indigo-900">
+            El OCR extrae únicamente Comida y Cena
+          </p>
+          <p class="text-xs text-indigo-700 mt-1">
+            Desayuno y merienda se omiten porque el desayuno se elegirá como fijo.
+          </p>
+        </div>
+
+        <div v-if=" creationMode === 'block' " class="mt-4 grid gap-3 md:grid-cols-[140px_140px_1fr]">
+          <label>
+            <span class="block text-sm font-medium text-gray-700 mb-1">
+              Día inicial
+            </span>
+            <input v-model.number=" blockStartDay " type="number" min="1" max="7"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 bg-white" />
+          </label>
+
+          <label>
+            <span class="block text-sm font-medium text-gray-700 mb-1">
+              Días incluidos
+            </span>
+            <input v-model.number=" blockDayCount " type="number" min="1" :max=" 8 - blockStartDay "
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 bg-white" />
+          </label>
+
+          <label class="self-end">
+            <span class="sr-only">Subir imagen de bloque</span>
+            <input type="file" accept="image/*" class="hidden" @change=" uploadBlockImage " />
+            <span
+              class="block text-center px-4 py-2 rounded-lg border border-indigo-600 text-indigo-700 cursor-pointer hover:bg-indigo-50"
+              :class=" imageProcessing ? 'opacity-50 pointer-events-none' : '' ">
+              {{
+                imageProcessing
+                  ? "Procesando OCR..."
+                  : "Subir imagen del bloque"
+              }}
+            </span>
+          </label>
+        </div>
+
+        <div v-else class="mt-4 text-sm text-gray-600">
+          Usa el botón de imagen de cada día si prefieres procesar días individuales.
+        </div>
+
+        <p v-if=" imageError " class="text-sm text-red-600 mt-3">
+          {{ imageError }}
+        </p>
+      </section>
+
+      <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+          <h2 class="font-semibold text-gray-900">Menú semanal</h2>
+          <p class="text-sm text-gray-600 mt-1">
+            Haz clic en cualquier comida o cena para editarla, marcarla como libre
+            o curar sus ingredientes.
+          </p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-collapse">
+            <thead>
+              <tr class="bg-slate-100">
+                <th
+                  class="sticky left-0 z-10 bg-slate-100 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 border-r border-slate-200">
+                  Franja
+                </th>
+                <th v-for=" day in 7 " :key=" `head-${ day }` "
+                  class="min-w-[170px] px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-700 border-r border-slate-200 last:border-r-0">
+                  <div class="flex items-center justify-center gap-2">
+                    <span>Día {{ day }}</span>
+                    <label class="text-[11px] normal-case text-indigo-600 cursor-pointer hover:text-indigo-800"
+                      :class=" imageProcessing ? 'opacity-50 pointer-events-none' : '' ">
+                      {{ imageProcessing ? "OCR..." : "Imagen" }}
+                      <input type="file" accept="image/*" class="hidden" @change="uploadDailyImage( day, $event )" />
+                    </label>
+                  </div>
+
+                  <img v-if=" getDayImage( day ) " :src=" getDayImage( day )?.image_url " alt="Imagen del menú diario"
+                    class="mt-2 h-16 w-full object-cover rounded border border-slate-200" />
+
+                  <p v-if=" getDayImage( day )?.ocr_status " class="text-[11px] text-slate-500 mt-1 normal-case">
+                    OCR: {{ ocrStatusLabel( getDayImage( day )?.ocr_status ) }}
+                  </p>
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-for=" type in displayMealTypes " :key=" `row-${ type }` " class="border-t border-slate-200">
+                <th
+                  class="sticky left-0 z-10 bg-slate-50 px-4 py-4 text-left text-sm font-bold text-slate-800 border-r border-slate-200 align-top">
+                  {{ mealLabel( type ) }}
+                </th>
+
+                <td v-for=" day in 7 " :key=" `${ day }-${ type }` "
+                  class="align-top border-r border-slate-200 last:border-r-0 p-2 bg-white">
+                  <button type="button"
+                    class="w-full min-h-[120px] rounded-lg border p-3 text-left transition hover:border-indigo-300 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    :class=" cellClass( getPrimaryMeal( day, type ) ) "
+                    @click="openMealModal( day, type, getPrimaryMeal( day, type ) )">
+                    <template v-if=" getPrimaryMeal( day, type ) ">
+                      <div class="flex items-start justify-between gap-2">
+                        <p class="text-sm font-semibold leading-snug text-slate-900">
+                          {{ getPrimaryMeal( day, type )?.dish_name }}
+                        </p>
+                      </div>
+
+                      <div v-if=" getPrimaryMeal( day, type )?.is_special "
+                        class="mt-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+                        Libre ·
+                        {{
+                          getPrimaryMeal( day, type )?.special_kcal_reserved || 700
+                        }}
+                        kcal
+                      </div>
+
+                      <div v-if=" getCompositeParts( getPrimaryMeal( day, type )?.dish_name ).length > 1 "
+                        class="mt-3 space-y-1">
+                        <p class="text-[11px] font-medium text-slate-500">
+                          Platos unidos:
+                        </p>
+                        <ul class="space-y-1">
+                          <li v-for=" part in getCompositeParts( getPrimaryMeal( day, type )?.dish_name ) "
+                            :key=" `${ day }-${ type }-${ part }` " class="text-xs text-slate-700">
+                            · {{ part }}
+                          </li>
+                        </ul>
+                      </div>
+
+                      <p v-if=" recipeStatusText( getPrimaryMeal( day, type ) ) "
+                        class="mt-3 text-[11px] text-slate-500">
+                        {{ recipeStatusText( getPrimaryMeal( day, type ) ) }}
+                      </p>
+                    </template>
+
+                    <template v-else>
+                      <div class="flex h-full min-h-[96px] items-center justify-center">
+                        <span class="text-sm font-medium text-slate-400">
+                          + Añadir {{ mealLabel( type ).toLowerCase() }}
+                        </span>
+                      </div>
+                    </template>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <h2 class="font-semibold text-gray-900 mb-3">
+          Ingredientes consolidados
+        </h2>
+
+        <div v-if=" consolidatedIngredients.length === 0 " class="text-sm text-gray-500">
+          Añade ingredientes exactos a los platos para generar una lista de compra
+          deduplicada.
+        </div>
+
+        <div v-else class="grid gap-2 md:grid-cols-4">
+          <div v-for=" ingredient in consolidatedIngredients " :key=" `${ ingredient.name }-${ ingredient.unit_type }` "
+            class="text-sm bg-gray-50 rounded-lg p-3 border border-gray-100">
+            <p class="font-medium text-gray-900">{{ ingredient.name }}</p>
+            <p class="text-gray-600">
+              {{ ingredient.quantity }} {{ ingredient.unit_type }}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div v-if=" showMealModal " class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        @click.self=" closeMealModal ">
+        <form class="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl"
+          @submit.prevent=" saveMeal ">
+          <div class="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h2 class="text-xl font-bold text-gray-900">
+                {{ editingMealId ? "Editar" : "Añadir" }}
+                {{ mealLabel( selectedType ).toLowerCase() }} · Día {{ selectedDay }}
+              </h2>
+              <p class="text-sm text-gray-500 mt-1">
+                Si hay dos platos, mantenlos unidos con “ + ”.
+              </p>
+            </div>
+
+            <button type="button" class="text-gray-400 hover:text-gray-700" @click=" closeMealModal ">
+              ✕
+            </button>
+          </div>
+
+          <label class="block mb-4">
+            <span class="block text-sm font-medium text-gray-700 mb-1">
+              Usar receta existente como plantilla
+            </span>
+            <select v-model=" selectedRecipeId "
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 bg-white"
+              @change=" applySavedRecipeToModal ">
+              <option value="">Editar manualmente...</option>
+              <option v-for=" recipe in savedRecipes " :key=" recipe.id " :value=" recipe.id ">
+                {{ recipe.name }}
+              </option>
+            </select>
+          </label>
+
+          <div class="grid gap-3 md:grid-cols-2">
+            <label class="md:col-span-2">
+              <span class="block text-sm font-medium text-gray-700 mb-1">
+                Plato o platos unidos
+              </span>
+              <textarea v-model.trim=" newMeal.dish_name " rows="3"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 bg-white"
+                placeholder="Ej: Crema de calabacín + Pescado a elegir" required />
+            </label>
+
+            <label class="md:col-span-2">
+              <span class="block text-sm font-medium text-gray-700 mb-1">
+                Descripción
+              </span>
+              <input v-model.trim=" newMeal.dish_description "
+                class="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 bg-white" />
+            </label>
+
+            <label class="md:col-span-2">
+              <span class="inline-flex items-center gap-2 text-sm text-gray-700">
+                <input v-model=" newMeal.is_special " type="checkbox" />
+                <span>Marcar como comida libre/especial</span>
+              </span>
+            </label>
+
+            <label v-if=" newMeal.is_special " class="md:col-span-2">
+              <span class="block text-sm font-medium text-gray-700 mb-1">
+                kcal reservadas para comida libre
+              </span>
+              <input v-model.number=" newMeal.special_kcal_reserved " type="number" min="0" max="2000" step="10"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 bg-white" />
+            </label>
+          </div>
+
+          <div v-if=" getCompositeParts( newMeal.dish_name ).length > 1 "
+            class="mt-4 rounded-lg border border-indigo-100 bg-indigo-50 p-3">
+            <p class="text-sm font-medium text-indigo-900">
+              Esta celda contiene varios platos:
+            </p>
+            <ul class="mt-2 space-y-1">
+              <li v-for=" part in getCompositeParts( newMeal.dish_name ) " :key=" part "
+                class="text-sm text-indigo-800">
+                · {{ part }}
+              </li>
+            </ul>
+            <p class="text-xs text-indigo-700 mt-2">
+              Se guardan juntos en el menú, pero la librería de recetas se cura por
+              plato individual para que los platos repetidos, como ensaladas, se
+              puedan reutilizar correctamente.
+            </p>
+          </div>
+
+          <div class="mt-5">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="font-medium text-gray-900">Ingredientes exactos</h3>
+              <button type="button" @click=" addIngredientRow " class="text-sm text-indigo-600 hover:text-indigo-800">
+                + Ingrediente
+              </button>
+            </div>
+
+            <div v-if=" newMeal.is_special "
+              class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+              Esta comida es libre. Sus ingredientes no se usarán para el cálculo
+              del menú rotativo ni para la lista de la compra.
+            </div>
+
+            <div v-else class="space-y-2">
+              <div v-for=" ( ingredient, index ) in ingredientRows " :key=" index "
+                class="grid grid-cols-[1fr_90px_90px_32px] gap-2">
+                <input v-model.trim=" ingredient.name "
+                  class="border border-gray-300 rounded-lg px-3 py-2 text-gray-900 bg-white" placeholder="Nombre" />
+                <input v-model.number=" ingredient.quantity " type="number" min="0.01" step="0.01"
+                  class="border border-gray-300 rounded-lg px-3 py-2 text-gray-900 bg-white" />
+                <select v-model=" ingredient.unit_type "
+                  class="border border-gray-300 rounded-lg px-3 py-2 text-gray-900 bg-white">
+                  <option v-for=" unit in unitTypes " :key=" unit " :value=" unit ">
+                    {{ unit }}
+                  </option>
+                </select>
+                <button type="button" @click="removeIngredientRow( index )" class="text-red-500 hover:text-red-700">
+                  ×
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <p v-if=" formError " class="text-sm text-red-600 mt-3">
+            {{ formError }}
+          </p>
+
+          <div class="flex justify-between gap-2 mt-6">
+            <button v-if=" editingMealId " type="button" @click=" deleteCurrentMeal "
+              class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg">
+              Eliminar
+            </button>
+            <span v-else></span>
+
+            <div class="flex justify-end gap-2">
+              <button type="button" @click=" closeMealModal "
+                class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                Cancelar
+              </button>
+              <button type="submit" :disabled=" savingMeal || !mealFormValid "
+                class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                {{ savingMeal ? "Guardando..." : editingMealId ? "Actualizar" : "Guardar" }}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div v-else class="text-center py-12 bg-white rounded-lg border">
+      <p class="text-gray-600">Menú no encontrado</p>
+      <button @click="$router.push( '/' )" class="mt-4 text-indigo-600 hover:text-indigo-800">
+        Volver a la lista
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { logError } from "~/utils/log-error";
+import {
+  extractIngredientCandidatesFromDishName,
+  getRecipeStatusFromDishName,
+} from "~/utils/ingredient-candidates";
+import type {
+  WeeklyDayImage,
+  WeeklyMeal,
+  WeeklyMealIngredient,
+  WeeklyMenu,
+} from "~/types";
+
+type MealType = WeeklyMeal[ "meal_type" ];
+
+const supabase = useSupabase();
+const route = useRoute();
+const router = useRouter();
+const runtimeConfig = useRuntimeConfig();
+const { loadCurrentUser } = useCurrentUser();
+
+const displayMealTypes: MealType[] = [ "comida", "cena" ];
+const unitTypes: WeeklyMealIngredient[ "unit_type" ][] = [
+  "g",
+  "kg",
+  "ml",
+  "l",
+  "ud",
+  "pack",
+  "unidad",
+];
+
+const menu = ref<WeeklyMenu | null>( null );
+const meals = ref<WeeklyMeal[]>( [] );
+const dayImages = ref<WeeklyDayImage[]>( [] );
+const loading = ref( true );
+const showMealModal = ref( false );
+const savingMeal = ref( false );
+const imageProcessing = ref( false );
+const formError = ref( "" );
+const imageError = ref( "" );
+const recipeStatusByName = ref<Record<string, string>>( {} );
+const selectedDay = ref( 1 );
+const selectedType = ref<MealType>( "comida" );
+const selectedRecipeId = ref( "" );
+const editingMealId = ref<string | null>( null );
+const creationMode = ref<"daily" | "block">( "daily" );
+const blockStartDay = ref( 1 );
+const blockDayCount = ref( 7 );
+const OCR_WEEKLY_MEAL_TYPES: MealType[] = [ "comida", "cena" ];
+
+const savedRecipes = ref<
+  Array<{
+    id: string;
+    name: string;
+    description?: string | null;
+    recipe_ingredients?: Array<{
+      name: string;
+      quantity: number | null;
+      unit_type: string | null;
+      is_confirmed?: boolean;
+    }>;
+  }>
+>( [] );
+
+const newMeal = ref( {
+  dish_name: "",
+  dish_description: "",
+  is_special: false,
+  special_kcal_reserved: 700,
+} );
+
+const ingredientRows = ref<
+  Array<{
+    name: string;
+    quantity: number;
+    unit_type: WeeklyMealIngredient[ "unit_type" ];
+  }>
+>( [] );
+
+const mealsCount = computed(
+  () =>
+    meals.value.filter( ( meal ) =>
+      displayMealTypes.includes( meal.meal_type as MealType ),
+    ).length,
+);
+
+const consolidatedIngredients = computed( () => {
+  const consolidated: Record<
+    string,
+    { name: string; quantity: number; unit_type: string }
+  > = {};
+
+  for ( const meal of meals.value ) {
+    if ( meal.is_special ) continue;
+
+    for ( const ingredient of meal.weekly_meal_ingredients || [] ) {
+      const key = `${ ingredient.name.toLowerCase() }::${ ingredient.unit_type }`;
+
+      if ( !consolidated[ key ] ) {
+        consolidated[ key ] = {
+          name: ingredient.name,
+          quantity: 0,
+          unit_type: ingredient.unit_type,
+        };
+      }
+
+      consolidated[ key ].quantity += Number( ingredient.quantity ) || 0;
+    }
+  }
+
+  return Object.values( consolidated )
+    .map( ( item ) => ( {
+      ...item,
+      quantity: Math.round( item.quantity * 100 ) / 100,
+    } ) )
+    .sort( ( a, b ) => a.name.localeCompare( b.name ) );
+} );
+
+const mealFormValid = computed( () => {
+  if ( !newMeal.value.dish_name.trim() ) return false;
+  if ( newMeal.value.is_special ) return true;
+
+  return ingredientRows.value.every(
+    ( ingredient ) => !ingredient.name || Number( ingredient.quantity ) > 0,
+  );
+} );
+
+const loadMenu = async () => {
+  loading.value = true;
+
+  const currentUser = await loadCurrentUser();
+
+  if ( !currentUser ) {
+    menu.value = null;
+    loading.value = false;
+    return;
+  }
+
+  const { data: menuData } = await supabase
+    .from( "weekly_menus" )
+    .select( "*" )
+    .eq( "id", route.params.id )
+    .eq( "user_id", currentUser.id )
+    .maybeSingle();
+
+  if ( !menuData ) {
+    menu.value = null;
+    loading.value = false;
+    return;
+  }
+
+  menu.value = menuData;
+
+  const [ { data: mealsData }, { data: imagesData } ] = await Promise.all( [
+    supabase
+      .from( "weekly_meals" )
+      .select( "*, weekly_meal_ingredients(*)" )
+      .eq( "weekly_menu_id", route.params.id as string )
+      .in( "meal_type", displayMealTypes )
+      .order( "day_number", { ascending: true } )
+      .order( "meal_type", { ascending: true } )
+      .order( "meal_slot", { ascending: true } ),
+    supabase
+      .from( "weekly_day_images" )
+      .select( "*" )
+      .eq( "weekly_menu_id", route.params.id as string )
+      .order( "day_number", { ascending: true } ),
+  ] );
+
+  meals.value = ( mealsData || [] ).map( ( meal: WeeklyMeal ) => ( {
+    ...meal,
+    dish_name: normalizeCompositeDishName( meal.dish_name || "" ),
+    meal_slot: 1,
+  } ) );
+
+  dayImages.value = imagesData || [];
+
+  await ensureRecipeLibrary( meals.value );
+  await loadRecipeStatuses();
+
+  loading.value = false;
+};
+
+const loadRecipeStatuses = async () => {
+  const currentUser = await loadCurrentUser();
+  if ( !currentUser ) return;
+
+  const names = getUniqueRecipePartsFromMeals( meals.value );
+
+  if ( names.length === 0 ) {
+    recipeStatusByName.value = {};
+    return;
+  }
+
+  const { data } = await supabase
+    .from( "dishes" )
+    .select( "name,recipe_status" )
+    .eq( "user_id", currentUser.id )
+    .in( "name", names );
+
+  const map: Record<string, string> = {};
+
+  for ( const row of data || [] ) {
+    map[ String( row.name ) ] = String( row.recipe_status || "pending_ingredients" );
+  }
+
+  recipeStatusByName.value = map;
+};
+
+const loadSavedRecipes = async () => {
+  const currentUser = await loadCurrentUser();
+
+  if ( !currentUser ) {
+    savedRecipes.value = [];
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from( "dishes" )
+    .select(
+      "id,name,description,recipe_ingredients(name,quantity,unit_type,is_confirmed)",
+    )
+    .eq( "user_id", currentUser.id )
+    .order( "name", { ascending: true } );
+
+  if ( error ) {
+    savedRecipes.value = [];
+    return;
+  }
+
+  savedRecipes.value = data || [];
+};
+
+const ensureRecipeLibrary = async ( weeklyMeals: WeeklyMeal[] ) => {
+  const currentUser = await loadCurrentUser();
+  if ( !currentUser ) return;
+
+  const names = getUniqueRecipePartsFromMeals( weeklyMeals ).filter(
+    ( name ) => !isFreeMealName( name ),
+  );
+
+  if ( names.length === 0 ) return;
+
+  const { data: existing } = await supabase
+    .from( "dishes" )
+    .select( "id,name,recipe_status" )
+    .eq( "user_id", currentUser.id )
+    .in( "name", names );
+
+  const existingByName = new Map(
+    ( existing || [] ).map( ( item: any ) => [ item.name, item ] ),
+  );
+
+  const toInsert = names
+    .filter( ( name ) => !existingByName.has( name ) )
+    .map( ( name ) => {
+      const candidates = extractIngredientCandidatesFromDishName( name );
+
+      return {
+        user_id: currentUser.id,
+        name,
+        normalized_name: name.toLowerCase().trim(),
+        description: null,
+        source: "ocr",
+        kcal: null,
+        protein_g: null,
+        carbs_g: null,
+        fat_g: null,
+        servings_base: 1,
+        recipe_status: getRecipeStatusFromDishName( name, candidates ),
+      };
+    } );
+
+  if ( toInsert.length === 0 ) return;
+
+  const { data: insertedDishes } = await supabase
+    .from( "dishes" )
+    .insert( toInsert )
+    .select( "id,name" );
+
+  const suggestions = ( insertedDishes || [] ).flatMap( ( dish: any ) => {
+    const candidates = extractIngredientCandidatesFromDishName( dish.name || "" );
+
+    return candidates.map( ( candidate ) => ( {
+      recipe_id: dish.id,
+      ingredient_id: null,
+      name: candidate.name,
+      normalized_name: candidate.name.toLowerCase().trim(),
+      quantity: null,
+      unit_type: null,
+      is_confirmed: false,
+      is_suggested: true,
+      needs_review: candidate.needs_review,
+    } ) );
+  } );
+
+  if ( suggestions.length > 0 ) {
+    await supabase
+      .from( "recipe_ingredients" )
+      .upsert( suggestions, { onConflict: "recipe_id,normalized_name" } );
+  }
+
+  if ( ( insertedDishes || [] ).length > 0 ) {
+    try {
+      await $fetch( "/api/recipes-auto-curate", {
+        method: "POST",
+        body: {
+          recipeIds: ( insertedDishes || [] ).map( ( dish: any ) => dish.id ),
+          source: "open_food_facts",
+        },
+      } );
+    } catch ( curationError ) {
+      await logError( "web", curationError, {
+        context: "menu.ensureRecipeLibrary.autoCurate",
+      } );
+    }
+  }
+};
+
+const getPrimaryMeal = ( day: number, type: MealType ) => {
+  return (
+    meals.value.find(
+      ( meal ) => meal.day_number === day && meal.meal_type === type,
+    ) || null
+  );
+};
+
+const getDayImage = ( day: number ) => {
+  return dayImages.value.find( ( image ) => image.day_number === day );
+};
+
+const getCompositeParts = ( dishName?: string | null ) => {
+  return splitCompositeDishName( dishName || "" );
+};
+
+const getUniqueRecipePartsFromMeals = ( weeklyMeals: WeeklyMeal[] ) => {
+  return Array.from(
+    new Set(
+      weeklyMeals
+        .filter( ( meal ) => displayMealTypes.includes( meal.meal_type as MealType ) )
+        .flatMap( ( meal ) => splitCompositeDishName( meal.dish_name || "" ) )
+        .map( ( name ) => name.trim() )
+        .filter( Boolean ),
+    ),
+  );
+};
+
+const splitCompositeDishName = ( dishName: string ) => {
+  const normalized = normalizeCompositeDishName( dishName );
+
+  if ( !normalized ) return [];
+
+  if ( isFreeMealName( normalized ) ) return [ "Libre" ];
+
+  return normalized
+    .split( /\s+\+\s+/g )
+    .map( ( part ) => part.trim() )
+    .filter( Boolean );
+};
+
+const normalizeCompositeDishName = ( dishName: string ) => {
+  return String( dishName || "" )
+    .replace( /\s+/g, " " )
+    .replace( /\s*\(\s*ver foto\s*\)\s*/gi, " " )
+    .replace( /\s*\(\s*ver doc anexo\s*\)\s*/gi, " " )
+    .replace( /\s*\(\s*ver dox anexo\s*\)\s*/gi, " " )
+    .replace( /\s*\(\s*ver anexo\s*\)\s*/gi, " " )
+    .replace( /\s*\+\s*/g, " + " )
+    .replace( /\s{2,}/g, " " )
+    .trim();
+};
+
+const isFreeMealName = ( dishName: string ) => {
+  return /^libre$/i.test( String( dishName || "" ).trim() );
+};
+
+watch( blockStartDay, ( day ) => {
+  const normalizedDay = Math.min( 7, Math.max( 1, Number( day ) || 1 ) );
+  if ( normalizedDay !== day ) blockStartDay.value = normalizedDay;
+  blockDayCount.value = Math.min( blockDayCount.value, 8 - normalizedDay );
+} );
+
+watch( blockDayCount, ( count ) => {
+  const normalizedCount = Math.min(
+    8 - blockStartDay.value,
+    Math.max( 1, Number( count ) || 1 ),
+  );
+
+  if ( normalizedCount !== count ) blockDayCount.value = normalizedCount;
+} );
+
+const openMealModal = ( day: number, type: MealType, meal?: WeeklyMeal | null ) => {
+  selectedDay.value = day;
+  selectedType.value = type;
+  editingMealId.value = meal?.id || null;
+  selectedRecipeId.value = "";
+
+  newMeal.value = meal
+    ? {
+      dish_name: normalizeCompositeDishName( meal.dish_name ),
+      dish_description: meal.dish_description || "",
+      is_special: Boolean( meal.is_special ) || isFreeMealName( meal.dish_name ),
+      special_kcal_reserved: Number( meal.special_kcal_reserved || 700 ),
+    }
+    : {
+      dish_name: "",
+      dish_description: "",
+      is_special: false,
+      special_kcal_reserved: 700,
+    };
+
+  ingredientRows.value = meal?.weekly_meal_ingredients?.length
+    ? meal.weekly_meal_ingredients.map( ( ingredient ) => ( {
+      name: ingredient.name,
+      quantity: Number( ingredient.quantity ) || 1,
+      unit_type: ingredient.unit_type,
+    } ) )
+    : [ { name: "", quantity: 1, unit_type: "g" } ];
+
+  formError.value = "";
+  showMealModal.value = true;
+};
+
+const applySavedRecipeToModal = () => {
+  if ( !selectedRecipeId.value ) return;
+
+  const recipe = savedRecipes.value.find(
+    ( item ) => item.id === selectedRecipeId.value,
+  );
+
+  if ( !recipe ) return;
+
+  newMeal.value.dish_name = recipe.name || "";
+  newMeal.value.dish_description = recipe.description || "";
+
+  const confirmedIngredients = ( recipe.recipe_ingredients || [] ).filter(
+    ( ingredient ) => ingredient.is_confirmed !== false && ingredient.name,
+  );
+
+  ingredientRows.value =
+    confirmedIngredients.length > 0
+      ? confirmedIngredients.map( ( ingredient ) => ( {
+        name: ingredient.name,
+        quantity:
+          Number( ingredient.quantity ) > 0 ? Number( ingredient.quantity ) : 1,
+        unit_type:
+          ( ingredient.unit_type as WeeklyMealIngredient[ "unit_type" ] ) || "g",
+      } ) )
+      : [ { name: "", quantity: 1, unit_type: "g" } ];
+};
+
+const closeMealModal = () => {
+  showMealModal.value = false;
+  editingMealId.value = null;
+  selectedRecipeId.value = "";
+  formError.value = "";
+};
+
+const addIngredientRow = () => {
+  ingredientRows.value.push( { name: "", quantity: 1, unit_type: "g" } );
+};
+
+const removeIngredientRow = ( index: number ) => {
+  ingredientRows.value.splice( index, 1 );
+};
+
+const saveMeal = async () => {
+  if ( !menu.value || !mealFormValid.value ) return;
+
+  savingMeal.value = true;
+  formError.value = "";
+
+  const normalizedDishName = normalizeCompositeDishName( newMeal.value.dish_name );
+
+  const isSpecial =
+    Boolean( newMeal.value.is_special ) || isFreeMealName( normalizedDishName );
+
+  const rowsToInsert = isSpecial
+    ? []
+    : ingredientRows.value.filter(
+      ( ingredient ) => ingredient.name && Number( ingredient.quantity ) > 0,
+    );
+
+  const payload = {
+    weekly_menu_id: menu.value.id,
+    day_number: selectedDay.value,
+    meal_type: selectedType.value,
+    meal_slot: 1,
+    dish_name: normalizedDishName,
+    dish_description: newMeal.value.dish_description || null,
+    is_special: isSpecial,
+    special_kcal_reserved: isSpecial
+      ? Math.max(
+        0,
+        Math.min( 2000, Number( newMeal.value.special_kcal_reserved ) || 700 ),
+      )
+      : 0,
+    kcal: 0,
+    protein_g: 0,
+    carbs_g: 0,
+    fat_g: 0,
+  };
+
+  let savedMeal: any = null;
+  let upsertError: any = null;
+
+  const firstAttempt = await supabase
+    .from( "weekly_meals" )
+    .upsert( payload, {
+      onConflict: "weekly_menu_id,day_number,meal_type,meal_slot",
+    } )
+    .select()
+    .single();
+
+  savedMeal = firstAttempt.data;
+  upsertError = firstAttempt.error;
+
+  if ( upsertError?.code === "42P10" ) {
+    const { meal_slot, ...legacyPayload } = payload;
+
+    const fallbackAttempt = await supabase
+      .from( "weekly_meals" )
+      .upsert( legacyPayload, {
+        onConflict: "weekly_menu_id,day_number,meal_type",
+      } )
+      .select()
+      .single();
+
+    savedMeal = fallbackAttempt.data;
+    upsertError = fallbackAttempt.error;
+  }
+
+  if ( upsertError || !savedMeal ) {
+    savingMeal.value = false;
+    formError.value = `Error guardando el plato: ${ upsertError?.message || "desconocido"
+      }`;
+    return;
+  }
+
+  const { error: deleteIngredientsError } = await supabase
+    .from( "weekly_meal_ingredients" )
+    .delete()
+    .eq( "weekly_meal_id", savedMeal.id );
+
+  if ( deleteIngredientsError ) {
+    savingMeal.value = false;
+    formError.value = `Error limpiando ingredientes: ${ deleteIngredientsError.message }`;
+    return;
+  }
+
+  if ( rowsToInsert.length > 0 ) {
+    const { error: ingredientsError } = await supabase
+      .from( "weekly_meal_ingredients" )
+      .insert(
+        rowsToInsert.map( ( ingredient ) => ( {
+          weekly_meal_id: savedMeal.id,
+          name: ingredient.name.toLowerCase(),
+          quantity: ingredient.quantity,
+          unit_type: ingredient.unit_type,
+        } ) ),
+      );
+
+    if ( ingredientsError ) {
+      savingMeal.value = false;
+      formError.value = `Error guardando ingredientes: ${ ingredientsError.message }`;
+      return;
+    }
+  }
+
+  savingMeal.value = false;
+  closeMealModal();
+  await loadMenu();
+};
+
+const deleteCurrentMeal = async () => {
+  if ( !editingMealId.value ) return;
+  await deleteMeal( editingMealId.value );
+  closeMealModal();
+};
+
+const deleteMeal = async ( mealId: string ) => {
+  if ( !confirm( "¿Eliminar esta comida/cena?" ) ) return;
+
+  const { error } = await supabase
+    .from( "weekly_meals" )
+    .delete()
+    .eq( "id", mealId );
+
+  if ( error ) {
+    alert( "Error: " + error.message );
+    return;
+  }
+
+  await loadMenu();
+};
+
+const deleteMenu = async () => {
+  if ( !menu.value ) return;
+
+  if ( !confirm( `¿Eliminar el menú "${ menu.value.name }" y todo su contenido?` ) ) {
+    return;
+  }
+
+  const currentUser = await loadCurrentUser();
+
+  if ( !currentUser ) {
+    alert( "No hay usuario configurado. Usa /start en Telegram primero." );
+    return;
+  }
+
+  const { error } = await supabase
+    .from( "weekly_menus" )
+    .delete()
+    .eq( "id", menu.value.id )
+    .eq( "user_id", currentUser.id );
+
+  if ( error ) {
+    alert( "Error eliminando menú: " + error.message );
+    return;
+  }
+
+  await router.push( "/" );
+};
+
+const uploadDailyImage = async ( day: number, event: Event ) => {
+  creationMode.value = "daily";
+
+  await uploadMenuImage( {
+    event,
+    startDay: day,
+    dayCount: 1,
+    sourceMode: "daily",
+  } );
+};
+
+const uploadBlockImage = async ( event: Event ) => {
+  await uploadMenuImage( {
+    event,
+    startDay: blockStartDay.value,
+    dayCount: blockDayCount.value,
+    sourceMode: "block",
+  } );
+};
+
+const uploadMenuImage = async ( {
+  event,
+  startDay,
+  dayCount,
+  sourceMode,
+}: {
+  event: Event;
+  startDay: number;
+  dayCount: number;
+  sourceMode: "daily" | "block";
+} ) => {
+  if ( !menu.value ) return;
+
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[ 0 ];
+
+  if ( !file ) return;
+
+  const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
+  if ( file.size > MAX_IMAGE_BYTES ) {
+    imageError.value =
+      "La imagen supera 2MB. Reduce tamaño/resolución e inténtalo de nuevo.";
+    target.value = "";
+    return;
+  }
+
+  imageProcessing.value = true;
+  imageError.value = "";
+
+  const normalizedStartDay = Math.min( 7, Math.max( 1, startDay ) );
+  const normalizedDayCount = Math.min(
+    8 - normalizedStartDay,
+    Math.max( 1, dayCount ),
+  );
+
+  const affectedDays = Array.from(
+    { length: normalizedDayCount },
+    ( _, index ) => normalizedStartDay + index,
+  );
+
+  const extension = file.name.split( "." ).pop() || "jpg";
+  const fileName = `${ menu.value.id }/${ sourceMode }_${ normalizedStartDay }_${ normalizedDayCount }_${ Date.now() }.${ extension }`;
+
+  const { error: uploadError } = await supabase.storage
+    .from( "menu-images" )
+    .upload( fileName, file );
+
+  if ( uploadError ) {
+    imageProcessing.value = false;
+    imageError.value = "Error subiendo imagen: " + uploadError.message;
+    target.value = "";
+    return;
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from( "menu-images" ).getPublicUrl( fileName );
+
+  const rows = affectedDays.map( ( day ) => ( {
+    weekly_menu_id: menu.value!.id,
+    day_number: day,
+    image_url: publicUrl,
+    source_mode: sourceMode,
+    day_span_count: normalizedDayCount,
+    ocr_status: "processing",
+    ocr_error: null,
+    updated_at: new Date().toISOString(),
+  } ) );
+
+  const { data: imageRows, error } = await supabase
+    .from( "weekly_day_images" )
+    .upsert( rows, {
+      onConflict: "weekly_menu_id,day_number",
+    } )
+    .select();
+
+  if ( error ) {
+    imageProcessing.value = false;
+    imageError.value = "Error guardando imagen: " + error.message;
+    target.value = "";
+    return;
+  }
+
+  const { error: ocrError } = await invokeOcrWithRetry( {
+    file,
+    payload: {
+      weekly_menu_id: menu.value.id,
+      weekly_day_image_ids: ( imageRows || [] ).map( ( image ) => image.id ),
+      image_url: publicUrl,
+      start_day: normalizedStartDay,
+      day_count: normalizedDayCount,
+      source_mode: sourceMode,
+      meal_types: OCR_WEEKLY_MEAL_TYPES,
+    },
+  } );
+
+  if ( ocrError ) {
+    const ocrMessage = String( ocrError.message || "" );
+    const mappingError = ocrMessage.includes( "OCR_1TO1_MAPPING_ERROR" );
+
+    imageError.value = mappingError
+      ? "No se pudo mapear día/comida/cena desde la imagen. Revisa calidad o recorte."
+      : "La imagen se guardó, pero el OCR falló: " + ocrError.message;
+
+    await logError( "ocr", ocrError, {
+      context: "menu.uploadMenuImage.invokeOcrWithRetry",
+    } );
+
+    await supabase
+      .from( "weekly_day_images" )
+      .update( {
+        ocr_status: "error",
+        ocr_error: ocrError.message,
+      } )
+      .in(
+        "id",
+        ( imageRows || [] ).map( ( image ) => image.id ),
+      );
+  }
+
+  imageProcessing.value = false;
+  target.value = "";
+  await loadMenu();
+};
+
+const sleep = ( ms: number ) =>
+  new Promise( ( resolve ) => {
+    setTimeout( resolve, ms );
+  } );
+
+const invokeOcrWithRetry = async ( {
+  file,
+  payload,
+}: {
+  file: File;
+  payload: Record<string, unknown>;
+} ) => {
+  const maxAttempts = 3;
+  let lastError: Error | null = null;
+
+  for ( let attempt = 1; attempt <= maxAttempts; attempt++ ) {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const accessToken =
+        session?.access_token || runtimeConfig.public.supabaseAnonKey;
+
+      const formData = new FormData();
+      formData.append( "file", file );
+
+      for ( const [ key, value ] of Object.entries( payload ) ) {
+        if ( value === undefined || value === null ) continue;
+
+        if ( Array.isArray( value ) || typeof value === "object" ) {
+          formData.append( key, JSON.stringify( value ) );
+        } else {
+          formData.append( key, String( value ) );
+        }
+      }
+
+      const response = await fetch(
+        `${ runtimeConfig.public.supabaseUrl }/functions/v1/ocr-processor`,
+        {
+          method: "POST",
+          headers: {
+            apikey: runtimeConfig.public.supabaseAnonKey,
+            Authorization: `Bearer ${ accessToken }`,
+          },
+          body: formData,
+        },
+      );
+
+      if ( response.ok ) return { error: null };
+
+      const body = await response.json().catch( () => ( {} ) );
+      lastError = new Error( body?.error || `OCR error HTTP ${ response.status }` );
+    } catch ( error ) {
+      lastError =
+        error instanceof Error ? error : new Error( "Error OCR desconocido" );
+    }
+
+    if ( attempt < maxAttempts ) {
+      const backoffMs = 500 * 2 ** ( attempt - 1 );
+      await sleep( backoffMs );
+    }
+  }
+
+  return { error: lastError };
+};
+
+const mealLabel = ( type: MealType ) => {
+  if ( type === "comida" ) return "Comida";
+  if ( type === "cena" ) return "Cena";
+  return "Desayuno";
+};
+
+const ocrStatusLabel = ( status?: WeeklyDayImage[ "ocr_status" ] ) => {
+  if ( status === "processing" ) return "procesando";
+  if ( status === "processed" ) return "procesado";
+  if ( status === "error" ) return "error";
+  return "pendiente";
+};
+
+const cellClass = ( meal?: WeeklyMeal | null ) => {
+  if ( !meal ) {
+    return "border-dashed border-slate-300 bg-slate-50 text-slate-500";
+  }
+
+  if ( meal.is_special || isFreeMealName( meal.dish_name ) ) {
+    return "border-amber-200 bg-amber-50";
+  }
+
+  return "border-slate-200 bg-white";
+};
+
+const recipeStatusText = ( meal?: WeeklyMeal | null ) => {
+  if ( !meal?.dish_name ) return "";
+
+  const parts = splitCompositeDishName( meal.dish_name ).filter(
+    ( part ) => !isFreeMealName( part ),
+  );
+
+  if ( parts.length === 0 ) return "Comida libre";
+
+  const statuses = parts.map( ( part ) => recipeStatusByName.value[ part ] );
+
+  if ( statuses.every( ( status ) => status === "complete" ) ) {
+    return "Receta completa";
+  }
+
+  if ( statuses.some( ( status ) => status === "incomplete_nutrition" ) ) {
+    return "Pendiente de nutrición";
+  }
+
+  if (
+    statuses.some(
+      ( status ) =>
+        status === "suggested_ingredients" ||
+        status === "pending_ingredients" ||
+        !status,
+    )
+  ) {
+    return "Pendiente de curar ingredientes";
+  }
+
+  return "";
+};
+
+const formatDate = ( dateString: string ) => {
+  return new Date( dateString ).toLocaleDateString( "es-ES", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  } );
+};
+
+onMounted( async () => {
+  await Promise.all( [ loadMenu(), loadSavedRecipes() ] );
+} );
+</script>

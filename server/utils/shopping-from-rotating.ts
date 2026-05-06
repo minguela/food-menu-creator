@@ -35,8 +35,11 @@ export const buildShoppingListFromRotatingMenu = async ({
   const mealIds = (mealRows || [])
     .filter((row: any) => !row.is_special)
     .map((row: any) => row.id);
+  const skippedSpecialMeals = (mealRows || []).filter((row: any) =>
+    Boolean(row.is_special),
+  ).length;
   if (mealIds.length === 0) {
-    return { inserted: 0 };
+    return { inserted: 0, skippedSpecialMeals };
   }
 
   const { data: portionRows } = await supabase
@@ -103,5 +106,5 @@ export const buildShoppingListFromRotatingMenu = async ({
     if (error) throw error;
   }
 
-  return { inserted: rows.length };
+  return { inserted: rows.length, skippedSpecialMeals };
 };

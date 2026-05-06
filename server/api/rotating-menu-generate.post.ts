@@ -4,6 +4,9 @@ import { createMenuGenerationLogger } from "~/server/utils/menu-generation-logge
 
 type MealType = "desayuno" | "comida" | "cena";
 
+const SPECIAL_MEAL_RESERVED_KCAL = 700;
+const MIN_REGULAR_DAY_KCAL_BUDGET = 300;
+
 type GeneratePayload = {
   userId: string;
   name: string;
@@ -270,12 +273,12 @@ export default defineEventHandler(async (event) => {
         .eq("user_id", body.userId)
         .in(
           "normalized_name",
-          uniqueDishNames.map((name) => name.toLowerCase()),
+          uniqueDishNames.map((name) => normalizeDishName(name)),
         )
     : { data: [] as any[] };
   const dishByNormalizedName = new Map(
     (dishRows || []).map((row: any) => [
-      String(row.normalized_name || row.name || "").toLowerCase(),
+      normalizeDishName(row.normalized_name || row.name),
       row,
     ]),
   );
@@ -340,9 +343,18 @@ export default defineEventHandler(async (event) => {
   const uncuredSet = new Set<string>();
 
   for (const dish of dishRows || []) {
-    const normalizedName = String(
-      dish.normalized_name || dish.name || "",
-    ).toLowerCase();
+    const normalizedName = normalizeDishName(dish.normalized_name || dish.name);
+    const matchingWeeklyMeals = (weeklyMeals || []).filter(
+      (meal: any) => normalizeDishName(meal.dish_name) === normalizedName,
+    );
+    const usedOnlyAsSpecial =
+      matchingWeeklyMeals.length > 0 &&
+      matchingWeeklyMeals.every((meal: any) =>
+        isSpecialMealCandidate(meal, dish),
+      );
+    if (usedOnlyAsSpecial) {
+      continue;
+    }
     const rows = recipeIngredientsByRecipeId.get(dish.id) || [];
     const confirmedRows = rows.filter((row: any) => row.is_confirmed);
 
@@ -451,9 +463,15 @@ export default defineEventHandler(async (event) => {
     comida: { kcal: 0.4, protein: 0.4 },
     cena: { kcal: 0.35, protein: 0.3 },
   };
+  const configuredSpecialMealKcal = Number(body.specialMealKcal);
   const defaultSpecialMealKcal = Math.max(
     0,
-    Math.min(2000, Number(body.specialMealKcal) || 700),
+    Math.min(
+      2000,
+      Number.isFinite(configuredSpecialMealKcal)
+        ? configuredSpecialMealKcal
+        : SPECIAL_MEAL_RESERVED_KCAL,
+    ),
   );
 
   const generatedDays: any[] = [];
@@ -490,10 +508,18 @@ export default defineEventHandler(async (event) => {
 
       const linkedDish =
         dishByNormalizedName.get(
-          String(picked.dish_name || "").toLowerCase(),
+          normalizeDishName(picked.dish_name),
         ) || null;
+      const isSpecial = isSpecialMealCandidate(picked, linkedDish);
+      const specialKcalReserved = isSpecial
+        ? resolveSpecialMealKcal({
+            picked,
+            linkedDish,
+            defaultSpecialMealKcal,
+          })
+        : 0;
       const recipeStatus = linkedDish?.recipe_status || "pending_ingredients";
-      const recipeRowsForDish = linkedDish
+      const recipeRowsForDish = !isSpecial && linkedDish
         ? recipeIngredientsByRecipeId.get(linkedDish.id) || []
         : [];
       const ingredientBase = recipeRowsForDish
@@ -510,44 +536,62 @@ export default defineEventHandler(async (event) => {
 
       let baseKcal = 0;
       let baseProtein = 0;
-      for (const baseIng of ingredientBase) {
-        const n = nutritionById.get(baseIng.ingredient_id);
-        const normalized = normalizeToGrams(
-          baseIng.quantity,
-          baseIng.unit_type,
-        );
-        if (
-          !n ||
-          n.nutrition_status !== "complete" ||
-          normalized === null ||
-          n.kcal_per_100g == null ||
-          n.protein_per_100g == null
-        ) {
-          continue;
+      if (!isSpecial) {
+        for (const baseIng of ingredientBase) {
+          const n = nutritionById.get(baseIng.ingredient_id);
+          const normalized = normalizeToGrams(
+            baseIng.quantity,
+            baseIng.unit_type,
+          );
+          if (
+            !n ||
+            n.nutrition_status !== "complete" ||
+            normalized === null ||
+            n.kcal_per_100g == null ||
+            n.protein_per_100g == null
+          ) {
+            continue;
+          }
+          const factor = normalized / 100;
+          baseKcal += Number(n.kcal_per_100g) * factor;
+          baseProtein += Number(n.protein_per_100g) * factor;
         }
-        const factor = normalized / 100;
-        baseKcal += Number(n.kcal_per_100g) * factor;
-        baseProtein += Number(n.protein_per_100g) * factor;
       }
       baseKcal = Math.max(1, baseKcal || 1);
       baseProtein = Math.max(1, baseProtein || 1);
 
-      const dishSpecial = Boolean(linkedDish?.is_special);
-      const weeklyMealSpecial = Boolean(picked.is_special);
-      const isSpecial = weeklyMealSpecial || dishSpecial;
-      const specialKcalReserved = isSpecial
-        ? Math.max(
-            0,
-            Math.min(
-              2000,
-              Number(
-                picked.special_kcal_reserved ||
-                  linkedDish?.special_kcal_reserved ||
-                  defaultSpecialMealKcal,
-              ),
+      if (isSpecial) {
+        await logger.log({
+          level: "info",
+          step: "special_meals",
+          status: "running",
+          message: "Special meal detected.",
+          metadata: {
+            day_number: day,
+            meal_type: mealType,
+            dish_name: picked.dish_name,
+            reserved_kcal: specialKcalReserved,
+          },
+          progress: { currentStep: "special_meals" },
+        });
+        await logger.log({
+          level: "debug",
+          step: "special_meals",
+          status: "completed",
+          message:
+            "Reserved kcal for special meal and skipped ingredient calculation.",
+          metadata: {
+            day_number: day,
+            meal_type: mealType,
+            configured_reserved_kcal: specialKcalReserved,
+            skipped_ingredient_calculation: true,
+            ignored_existing_ingredients: Boolean(
+              linkedDish && recipeIngredientsByRecipeId.has(linkedDish.id),
             ),
-          )
-        : 0;
+          },
+          progress: { currentStep: "special_meals" },
+        });
+      }
 
       dayPlannedMeals.push({
         meal_type: mealType,
@@ -566,7 +610,7 @@ export default defineEventHandler(async (event) => {
     for (const plannedMeal of dayPlannedMeals) {
       const mealType = plannedMeal.meal_type as MealType;
       const isSpecial = Boolean(plannedMeal.is_special);
-      const specialKcalReserved = Number(plannedMeal.special_kcal_reserved || 0);
+      const specialKcalReserved = Number(plannedMeal.special_kcal_reserved ?? 0);
       const ingredientBase = plannedMeal.ingredient_base || [];
       const recipeStatus = String(plannedMeal.recipe_status || "");
       const baseKcal = Number(plannedMeal.base_kcal || 1);
@@ -574,7 +618,7 @@ export default defineEventHandler(async (event) => {
       const daySpecialMeals = dayPlannedMeals.filter((meal) => meal.is_special);
       const specialReservedTotal = daySpecialMeals.reduce(
         (acc: number, meal: any) =>
-          acc + Number(meal.special_kcal_reserved || defaultSpecialMealKcal),
+          acc + Number(meal.special_kcal_reserved ?? defaultSpecialMealKcal),
         0,
       );
       const regularMeals = dayPlannedMeals.filter((meal) => !meal.is_special);
@@ -591,10 +635,20 @@ export default defineEventHandler(async (event) => {
       const allSpecialDay = regularMeals.length === 0;
 
       const portions = profileTargets.map((profile) => {
+        const rawRemainingKcalBudget =
+          Number(profile.target_kcal) - specialReservedTotal;
         const remainingKcalBudget = Math.max(
-          0,
-          Number(profile.target_kcal) - specialReservedTotal,
+          regularMeals.length > 0
+            ? Math.min(
+                MIN_REGULAR_DAY_KCAL_BUDGET,
+                Number(profile.target_kcal),
+              )
+            : 0,
+          rawRemainingKcalBudget,
         );
+        const lowRegularBudgetWarning =
+          regularMeals.length > 0 &&
+          rawRemainingKcalBudget < MIN_REGULAR_DAY_KCAL_BUDGET;
         const macroScale =
           Number(profile.target_kcal) > 0
             ? remainingKcalBudget / Number(profile.target_kcal)
@@ -625,13 +679,8 @@ export default defineEventHandler(async (event) => {
             is_special: true,
             special_kcal_reserved: specialKcalReserved,
             all_special_day: allSpecialDay,
-            ingredients: ingredientBase.map((ing: any) => ({
-              name: ing.name,
-              base_quantity: ing.quantity,
-              final_quantity: ing.quantity,
-              unit_type: ing.unit_type,
-              nutrition_pending: false,
-            })),
+            low_regular_budget_warning: lowRegularBudgetWarning,
+            ingredients: [],
           };
         }
 
@@ -722,6 +771,7 @@ export default defineEventHandler(async (event) => {
           is_special: false,
           special_kcal_reserved: 0,
           all_special_day: allSpecialDay,
+          low_regular_budget_warning: lowRegularBudgetWarning,
           ingredients,
         };
       });
@@ -761,11 +811,19 @@ export default defineEventHandler(async (event) => {
         .filter((meal) => meal.is_special)
         .reduce(
           (acc: number, meal: any) =>
-            acc + Number(meal.special_kcal_reserved || defaultSpecialMealKcal),
+            acc + Number(meal.special_kcal_reserved ?? defaultSpecialMealKcal),
           0,
         );
+      const regularKcal = Math.max(0, kcal - specialKcalReserved);
       const allSpecialDay =
         dayMeals.length > 0 && dayMeals.every((meal) => meal.is_special);
+      const lowRegularBudgetWarning = dayMeals.some((meal) =>
+        meal.profile_portions.some(
+          (portion: any) =>
+            portion.profile_key === profile.key &&
+            Boolean(portion.low_regular_budget_warning),
+        ),
+      );
       return {
         profile_key: profile.key,
         profile_id: profile.profile_id,
@@ -779,13 +837,39 @@ export default defineEventHandler(async (event) => {
         total_carbs_g: round(carbs),
         total_fat_g: round(fat),
         special_kcal_reserved: round(specialKcalReserved),
+        regular_kcal: Math.round(regularKcal),
         kcal_delta: round(kcal - profile.target_kcal),
         protein_delta_g: round(protein - profile.target_protein_g),
         carbs_delta_g: round(carbs - profile.target_carbs_g),
         fat_delta_g: round(fat - profile.target_fat_g),
         all_special_day: allSpecialDay,
+        low_regular_budget_warning: lowRegularBudgetWarning,
       };
     });
+
+    const dayWarnings = dailyProfileTotals.filter(
+      (total) => total.low_regular_budget_warning,
+    );
+    if (dayWarnings.length > 0) {
+      await logger.log({
+        level: "warn",
+        step: "special_meals",
+        status: "completed",
+        message:
+          "Special meal kcal reservations leave a low budget for regular meals.",
+        metadata: {
+          day_number: day,
+          profiles: dayWarnings.map((total) => ({
+            profile_id: total.profile_id,
+            profile_name: total.profile_name,
+            target_kcal: total.target_kcal,
+            special_kcal_reserved: total.special_kcal_reserved,
+            minimum_regular_budget_kcal: MIN_REGULAR_DAY_KCAL_BUDGET,
+          })),
+        },
+        progress: { currentStep: "special_meals" },
+      });
+    }
 
     generatedDays.push({
       day_number: day,
@@ -1006,7 +1090,7 @@ export default defineEventHandler(async (event) => {
       dish_name: meal.dish_name,
       dish_description: meal.dish_description || null,
       is_special: Boolean(meal.is_special),
-      special_kcal_reserved: Number(meal.special_kcal_reserved || 0),
+      special_kcal_reserved: Number(meal.special_kcal_reserved ?? 0),
       base_servings: 1,
       serving_multiplier: meal.profile_portions[0]?.serving_multiplier || 1,
       final_kcal: meal.profile_portions[0]?.final_kcal || 0,
@@ -1093,6 +1177,7 @@ export default defineEventHandler(async (event) => {
 
   const ingredientsRows = generatedDays.flatMap((day) =>
     day.meals.flatMap((meal: any) => {
+      if (meal.is_special) return [];
       const dayId = dayIdByNumber.get(day.day_number);
       const mealId = mealIdByKey.get(`${dayId}:${meal.meal_type}`);
       return meal.profile_portions
@@ -1172,6 +1257,20 @@ export default defineEventHandler(async (event) => {
     rotatingMenuId: rotatingMenu.id,
   });
 
+  if (shoppingBuild.skippedSpecialMeals > 0) {
+    await logger.log({
+      level: "info",
+      step: "shopping_list",
+      status: "completed",
+      message: "Skipping shopping list contribution for special meal.",
+      metadata: {
+        rotating_menu_id: rotatingMenu.id,
+        skipped_special_meals: shoppingBuild.skippedSpecialMeals,
+      },
+      progress: { currentStep: "shopping_list" },
+    });
+  }
+
   await logger.log({
     level: "info",
     step: "shopping_list",
@@ -1180,6 +1279,7 @@ export default defineEventHandler(async (event) => {
     metadata: {
       rotating_menu_id: rotatingMenu.id,
       inserted_items: shoppingBuild.inserted,
+      skipped_special_meals: shoppingBuild.skippedSpecialMeals,
     },
     progress: { progress: 96, currentStep: "shopping_list" },
   });
@@ -1213,6 +1313,59 @@ function normalizeToGrams(quantity: number, unitType: string): number | null {
   if (unitType === "ml") return quantity;
   if (unitType === "l") return quantity * 1000;
   return null;
+}
+
+function normalizeDishName(value: unknown) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function isSpecialMealCandidate(meal: any, dish?: any | null) {
+  const normalizedName = normalizeDishName(
+    meal?.dish_name || meal?.name || dish?.name || dish?.normalized_name,
+  );
+  const normalizedMealType = normalizeDishName(meal?.meal_type);
+  return (
+    Boolean(meal?.is_special) ||
+    Boolean(meal?.is_free) ||
+    Boolean(meal?.special) ||
+    Boolean(dish?.is_special) ||
+    Boolean(dish?.is_free) ||
+    Boolean(dish?.special) ||
+    normalizedName === "libre" ||
+    normalizedName === "comida libre" ||
+    normalizedName === "cena libre" ||
+    normalizedName === "desayuno libre" ||
+    normalizedName.includes("comida libre") ||
+    normalizedName.includes("cena libre") ||
+    normalizedMealType === "especial" ||
+    normalizedMealType === "libre" ||
+    normalizedMealType === "free"
+  );
+}
+
+function resolveSpecialMealKcal({
+  picked,
+  linkedDish,
+  defaultSpecialMealKcal,
+}: {
+  picked: any;
+  linkedDish?: any | null;
+  defaultSpecialMealKcal: number;
+}) {
+  const reservedKcal = [
+    picked?.special_kcal_reserved,
+    linkedDish?.special_kcal_reserved,
+    defaultSpecialMealKcal,
+    SPECIAL_MEAL_RESERVED_KCAL,
+  ].find((value) => Number.isFinite(Number(value)));
+  return Math.max(
+    0,
+    Math.min(2000, Number(reservedKcal ?? SPECIAL_MEAL_RESERVED_KCAL)),
+  );
 }
 
 function round(value: number, digits = 2) {

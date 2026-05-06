@@ -337,6 +337,22 @@
             {{ mealLabel(selectedType).toLowerCase() }} {{ selectedSlot }} · Día {{ selectedDay }}
           </h2>
 
+          <label class="block mb-4">
+            <span class="block text-sm font-medium text-gray-700 mb-1">
+              Usar receta existente (opcional)
+            </span>
+            <select
+              v-model="selectedRecipeId"
+              class="w-full border rounded-lg px-4 py-2"
+              @change="applySavedRecipeToModal"
+            >
+              <option value="">Crear/editar receta manualmente...</option>
+              <option v-for="recipe in savedRecipes" :key="recipe.id" :value="recipe.id">
+                {{ recipe.name }}
+              </option>
+            </select>
+          </label>
+
           <div class="grid gap-3 md:grid-cols-2">
             <label class="md:col-span-2">
               <span class="block text-sm font-medium text-gray-700 mb-1"
@@ -534,12 +550,26 @@ const recipeStatusByName = ref<Record<string, string>>({});
 const selectedDay = ref(1);
 const selectedType = ref<MealType>("comida");
 const selectedSlot = ref<1 | 2>(1);
+const selectedRecipeId = ref("");
 const editingMealId = ref<string | null>(null);
 const creationMode = ref<"daily" | "block">("daily");
 const blockStartDay = ref(1);
 const blockDayCount = ref(3);
 const OCR_WEEKLY_MEAL_TYPES: MealType[] = ["comida", "cena"];
 const ocrMealTypes = ref<MealType[]>([...OCR_WEEKLY_MEAL_TYPES]);
+const savedRecipes = ref<
+  Array<{
+    id: string;
+    name: string;
+    description?: string | null;
+    recipe_ingredients?: Array<{
+      name: string;
+      quantity: number | null;
+      unit_type: string;
+      is_confirmed?: boolean;
+    }>;
+  }>
+>([]);
 const applyBreakfastToWeek = ref(false);
 const newMeal = ref({
   dish_name: "",
@@ -660,6 +690,26 @@ const loadRecipeStatuses = async () => {
     map[String(row.name)] = String(row.recipe_status || "pending_ingredients");
   }
   recipeStatusByName.value = map;
+};
+
+const loadSavedRecipes = async () => {
+  const currentUser = await loadCurrentUser();
+  if (!currentUser) {
+    savedRecipes.value = [];
+    return;
+  }
+  const { data, error } = await supabase
+    .from("dishes")
+    .select(
+      "id,name,description,recipe_ingredients(name,quantity,unit_type,is_confirmed)",
+    )
+    .eq("user_id", currentUser.id)
+    .order("name", { ascending: true });
+  if (error) {
+    savedRecipes.value = [];
+    return;
+  }
+  savedRecipes.value = data || [];
 };
 
 const ensureRecipeLibrary = async (weeklyMeals: WeeklyMeal[]) => {
@@ -787,6 +837,7 @@ const openMealModal = (
   selectedSlot.value = (meal?.meal_slot as 1 | 2) || slot || 1;
   editingMealId.value = meal?.id || null;
   applyBreakfastToWeek.value = false;
+  selectedRecipeId.value = "";
   newMeal.value = meal
     ? {
         dish_name: meal.dish_name,
@@ -811,10 +862,30 @@ const openMealModal = (
   showMealModal.value = true;
 };
 
+const applySavedRecipeToModal = () => {
+  if (!selectedRecipeId.value) return;
+  const recipe = savedRecipes.value.find((item) => item.id === selectedRecipeId.value);
+  if (!recipe) return;
+  newMeal.value.dish_name = recipe.name || "";
+  newMeal.value.dish_description = recipe.description || "";
+  const confirmedIngredients = (recipe.recipe_ingredients || []).filter(
+    (ingredient) => ingredient.is_confirmed !== false && ingredient.name,
+  );
+  ingredientRows.value =
+    confirmedIngredients.length > 0
+      ? confirmedIngredients.map((ingredient) => ({
+          name: ingredient.name,
+          quantity: Number(ingredient.quantity) > 0 ? Number(ingredient.quantity) : 1,
+          unit_type: (ingredient.unit_type as WeeklyMealIngredient["unit_type"]) || "g",
+        }))
+      : [{ name: "", quantity: 1, unit_type: "g" }];
+};
+
 const closeMealModal = () => {
   showMealModal.value = false;
   editingMealId.value = null;
   selectedSlot.value = 1;
+  selectedRecipeId.value = "";
   applyBreakfastToWeek.value = false;
   formError.value = "";
 };
@@ -845,32 +916,49 @@ const saveMeal = async () => {
       : [selectedDay.value];
 
   for (const day of targetDays) {
-    const { data: savedMeal, error: upsertError } = await supabase
+    const payload = {
+      weekly_menu_id: menu.value.id,
+      day_number: day,
+      meal_type: selectedType.value,
+      meal_slot: selectedSlot.value,
+      dish_name: newMeal.value.dish_name,
+      dish_description: newMeal.value.dish_description || null,
+      is_special: Boolean(newMeal.value.is_special),
+      special_kcal_reserved: Math.max(
+        0,
+        Math.min(2000, Number(newMeal.value.special_kcal_reserved) || 700),
+      ),
+      kcal: 0,
+      protein_g: 0,
+      carbs_g: 0,
+      fat_g: 0,
+    };
+
+    let savedMeal: any = null;
+    let upsertError: any = null;
+
+    const firstAttempt = await supabase
       .from("weekly_meals")
-      .upsert(
-        {
-          weekly_menu_id: menu.value.id,
-          day_number: day,
-          meal_type: selectedType.value,
-          meal_slot: selectedSlot.value,
-          dish_name: newMeal.value.dish_name,
-          dish_description: newMeal.value.dish_description || null,
-          is_special: Boolean(newMeal.value.is_special),
-          special_kcal_reserved: Math.max(
-            0,
-            Math.min(2000, Number(newMeal.value.special_kcal_reserved) || 700),
-          ),
-          kcal: 0,
-          protein_g: 0,
-          carbs_g: 0,
-          fat_g: 0,
-        },
-        {
-          onConflict: "weekly_menu_id,day_number,meal_type,meal_slot",
-        },
-      )
+      .upsert(payload, {
+        onConflict: "weekly_menu_id,day_number,meal_type,meal_slot",
+      })
       .select()
       .single();
+    savedMeal = firstAttempt.data;
+    upsertError = firstAttempt.error;
+
+    if (upsertError?.code === "42P10") {
+      const { meal_slot, ...legacyPayload } = payload;
+      const fallbackAttempt = await supabase
+        .from("weekly_meals")
+        .upsert(legacyPayload, {
+          onConflict: "weekly_menu_id,day_number,meal_type",
+        })
+        .select()
+        .single();
+      savedMeal = fallbackAttempt.data;
+      upsertError = fallbackAttempt.error;
+    }
 
     if (upsertError || !savedMeal) {
       savingMeal.value = false;
@@ -1282,5 +1370,7 @@ const formatDate = (dateString: string) => {
   });
 };
 
-onMounted(loadMenu);
+onMounted(async () => {
+  await Promise.all([loadMenu(), loadSavedRecipes()]);
+});
 </script>

@@ -519,12 +519,31 @@ const createMenu = async () => {
     }
 
     if (fixedRows.length > 0) {
-      const { data: insertedMeals, error: fixedError } = await supabase
+      let insertedMeals: Array<{ id: string; meal_type: string; day_number: number }> | null =
+        null;
+      let fixedError: any = null;
+
+      const firstAttempt = await supabase
         .from("weekly_meals")
         .upsert(fixedRows, {
           onConflict: "weekly_menu_id,day_number,meal_type,meal_slot",
         })
         .select("id, meal_type, day_number");
+
+      insertedMeals = firstAttempt.data as any;
+      fixedError = firstAttempt.error;
+
+      if (fixedError?.code === "42P10") {
+        const fallbackAttempt = await supabase
+          .from("weekly_meals")
+          .upsert(
+            fixedRows.map(({ meal_slot, ...row }) => row),
+            { onConflict: "weekly_menu_id,day_number,meal_type" },
+          )
+          .select("id, meal_type, day_number");
+        insertedMeals = fallbackAttempt.data as any;
+        fixedError = fallbackAttempt.error;
+      }
 
       if (fixedError) {
         alert("Menú creado, pero falló la comida fija: " + fixedError.message);

@@ -29,6 +29,6 @@ export default defineEventHandler(async (event) => {
   return {
     success: true,
     inserted: result.inserted,
+    skipped_special_meals: result.skippedSpecialMeals,
   };
 });
-

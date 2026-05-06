@@ -1,4 +1,8 @@
 import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+import {
+  createMenuGenerationLogger,
+  sanitizeGenerationMetadata,
+} from "~/server/utils/menu-generation-logger";
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as { jobId?: string };
@@ -9,6 +13,7 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig(event);
   const supabase = createSupabaseAdminClient(config);
+  const logger = createMenuGenerationLogger({ supabase, jobId });
 
   const { data: job, error: jobError } = await supabase
     .from("menu_generation_jobs")
@@ -24,18 +29,59 @@ export default defineEventHandler(async (event) => {
   }
 
   if (job.status === "completed") {
+    await logger.log({
+      level: "info",
+      step: "job_skip",
+      status: "completed",
+      message: "El job ya estaba completado; no se reprocesa.",
+      metadata: { job_id: jobId },
+      progress: { currentStep: "job_skip", progress: 100 },
+    });
     return { success: true, skipped: true };
   }
 
-  await supabase
-    .from("menu_generation_jobs")
-    .update({
+  if (job.status === "processing" && job.heartbeat_at) {
+    const heartbeatAgeMs =
+      Date.now() - new Date(String(job.heartbeat_at)).getTime();
+    if (heartbeatAgeMs < 20 * 60 * 1000) {
+      await logger.log({
+        level: "warn",
+        step: "job_lock",
+        status: "completed",
+        message: "El job parece estar procesándose en otra ejecución.",
+        metadata: { heartbeat_age_ms: heartbeatAgeMs },
+        progress: {
+          currentStep: "job_lock",
+          progress: Number(job.progress || 0),
+        },
+      });
+      return { success: true, skipped: true, reason: "already_processing" };
+    }
+  }
+
+  const startedAt = new Date().toISOString();
+  await logger.log({
+    level: "info",
+    step: "job_start",
+    status: "completed",
+    message: "Inicio del job de generación de menú rotativo.",
+    metadata: {
+      input_summary: {
+        duration_days: job.input_payload?.durationDays,
+        profile_ids_count: job.input_payload?.profileIds?.length || 0,
+        source_menu_ids_count:
+          job.input_payload?.sourceWeeklyMenuIds?.length || 0,
+        start_date: job.input_payload?.startDate,
+      },
+    },
+    progress: {
       status: "processing",
-      progress: 10,
-      started_at: new Date().toISOString(),
-      error_message: null,
-    })
-    .eq("id", jobId);
+      progress: 5,
+      currentStep: "job_start",
+      errorMessage: null,
+      startedAt,
+    },
+  });
 
   try {
     const input = job.input_payload || {};
@@ -48,43 +94,65 @@ export default defineEventHandler(async (event) => {
       shopping_list_items: number;
     }>(`${origin}/api/rotating-menu-generate`, {
       method: "POST",
-      body: input,
+      body: { ...input, jobId },
     });
 
-    await supabase
-      .from("menu_generation_jobs")
-      .update({
+    await logger.log({
+      level: "info",
+      step: "job_completed",
+      status: "completed",
+      message: "Job finalizado correctamente.",
+      metadata: {
+        rotating_menu_id: result.rotating_menu_id,
+        generated_days_count: result.generated_days?.length || 0,
+        profiles_count: result.profiles?.length || 0,
+        shopping_list_items: result.shopping_list_items,
+      },
+      progress: {
         status: "completed",
         progress: 100,
-        result_menu_id: result.rotating_menu_id,
-        result_payload: {
+        currentStep: "job_completed",
+        resultMenuId: result.rotating_menu_id,
+        resultPayload: {
           generated_days: result.generated_days,
           profiles: result.profiles,
           shopping_list_items: result.shopping_list_items,
         },
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", jobId);
+        completedAt: new Date().toISOString(),
+      },
+    });
 
     return { success: true, completed: true };
   } catch (error: any) {
-    await supabase
-      .from("menu_generation_jobs")
-      .update({
+    const errorData = error?.data?.data || error?.data || null;
+    const errorMessage =
+      error?.data?.message ||
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      error?.message ||
+      "Error generando menú";
+    await logger.log({
+      level: "error",
+      step: "job_failed",
+      status: "failed",
+      message: errorMessage,
+      metadata: {
+        error: sanitizeGenerationMetadata(error),
+        error_data: errorData,
+        status_code: error?.statusCode || 500,
+      },
+      progress: {
         status: "failed",
         progress: 100,
-        error_message:
-          error?.data?.message ||
-          error?.statusMessage ||
-          error?.message ||
-          "Error generando menú",
-        result_payload: {
-          error_data: error?.data || null,
+        currentStep: "job_failed",
+        errorMessage,
+        resultPayload: {
+          error_data: errorData,
           status_code: error?.statusCode || 500,
         },
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", jobId);
+        completedAt: new Date().toISOString(),
+      },
+    });
 
     throw createError({
       statusCode: 500,

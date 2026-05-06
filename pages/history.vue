@@ -47,6 +47,12 @@
                 {{ statusLabel(job.status) }}
               </span>
               <button
+                class="rounded border px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                @click="toggleJobLogs(job)"
+              >
+                {{ expandedJobId === job.id ? "Ocultar logs" : "Ver logs" }}
+              </button>
+              <button
                 class="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
                 @click="deleteJob(job)"
               >
@@ -84,6 +90,35 @@
               class="h-2 rounded bg-indigo-600 transition-all"
               :style="{ width: `${Math.max(0, Math.min(100, job.progress || 0))}%` }"
             />
+          </div>
+          <div
+            v-if="expandedJobId === job.id"
+            class="mt-3 rounded-lg border bg-zinc-950 p-3 text-xs text-zinc-100"
+          >
+            <div v-if="loadingLogs" class="text-zinc-400">Cargando logs...</div>
+            <div
+              v-else-if="(logsByJob[job.id] || []).length === 0"
+              class="text-zinc-400"
+            >
+              Este job todavía no tiene logs persistidos.
+            </div>
+            <ol v-else class="max-h-72 space-y-2 overflow-y-auto">
+              <li
+                v-for="log in logsByJob[job.id]"
+                :key="log.id"
+                class="rounded border border-zinc-800 bg-zinc-900 p-2"
+              >
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <span class="font-medium">{{ log.step }}</span>
+                  <span class="text-zinc-500">{{ formatDateTime(log.created_at) }}</span>
+                </div>
+                <p class="mt-1 text-zinc-300">{{ log.message }}</p>
+                <details v-if="log.metadata" class="mt-2 text-zinc-400">
+                  <summary class="cursor-pointer">metadata</summary>
+                  <pre class="mt-2 overflow-x-auto rounded border border-zinc-800 p-2">{{ JSON.stringify(log.metadata, null, 2) }}</pre>
+                </details>
+              </li>
+            </ol>
           </div>
         </article>
       </div>
@@ -148,6 +183,16 @@ type MenuGenerationJob = {
   created_at: string;
 };
 
+type MenuGenerationLog = {
+  id: string;
+  job_id: string;
+  level: "debug" | "info" | "warn" | "error";
+  step: string;
+  message: string;
+  metadata?: Record<string, any> | null;
+  created_at: string;
+};
+
 const supabase = useSupabase();
 const { loadCurrentUser } = useCurrentUser();
 const router = useRouter();
@@ -157,6 +202,9 @@ const loadingMenus = ref(true);
 const activeJobs = ref<MenuGenerationJob[]>([]);
 const rotatingMenus = ref<RotatingMenu[]>([]);
 const jobsChannel = ref<any>(null);
+const expandedJobId = ref<string | null>(null);
+const loadingLogs = ref(false);
+const logsByJob = ref<Record<string, MenuGenerationLog[]>>({});
 
 const statusLabel = (status: MenuGenerationJob["status"]) => {
   if (status === "pending") return "Pendiente";
@@ -254,11 +302,41 @@ const openShoppingForMenu = async (rotatingMenuId: string) => {
 };
 
 const failedRecipes = (job: MenuGenerationJob) =>
-  (job.result_payload?.error_data?.uncured_recipes || []) as Array<{
+  (job.result_payload?.error_data?.uncured_recipes ||
+    job.result_payload?.error_data?.data?.uncured_recipes ||
+    []) as Array<{
     dish_id: string;
     dish_name: string;
     reason: string;
   }>;
+
+const toggleJobLogs = async (job: MenuGenerationJob) => {
+  if (expandedJobId.value === job.id) {
+    expandedJobId.value = null;
+    return;
+  }
+  expandedJobId.value = job.id;
+  if (logsByJob.value[job.id]) return;
+  loadingLogs.value = true;
+  try {
+    const { data, error } = await supabase
+      .from("menu_generation_logs")
+      .select("*")
+      .eq("job_id", job.id)
+      .order("created_at", { ascending: true })
+      .limit(300);
+    if (error) throw error;
+    logsByJob.value = {
+      ...logsByJob.value,
+      [job.id]: (data || []) as MenuGenerationLog[],
+    };
+  } catch (error) {
+    await logError("web", error, { context: "history.toggleJobLogs" });
+    logsByJob.value = { ...logsByJob.value, [job.id]: [] };
+  } finally {
+    loadingLogs.value = false;
+  }
+};
 
 const deleteJob = async (job: MenuGenerationJob) => {
   const confirmed = confirm("¿Eliminar este job?");

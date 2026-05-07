@@ -1,46 +1,66 @@
 <template>
-  <div class="space-y-6">
-    <header class="flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Biblioteca de recetas</h1>
-        <p class="text-sm text-gray-500">
-          Curación de platos detectados por OCR y confirmación de ingredientes
-          base.
-        </p>
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Header -->
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-200">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+            Biblioteca de recetas
+          </h1>
+          <p class="text-slate-500 text-sm mt-1">Curación de platos detectados por OCR</p>
+        </div>
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-3">
         <NuxtLink
           href="/ingredients"
-          class="px-4 py-2 border rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+          class="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all text-sm font-medium"
         >
-          Ingredientes maestros
+          Ingredientes
         </NuxtLink>
         <button
-          class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          class="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl hover:from-violet-700 hover:to-purple-700 font-medium shadow-lg shadow-purple-200 hover:shadow-xl transition-all flex items-center gap-2"
           @click="loadRecipes"
         >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.582 0A13.93 13.93 0 0120 10c0 3.866-1.598 7.5-4.236 9.94a13.13 13.13 0 01-3.529 2.168A8.994 8.994 0 004 20c1.885 0 3.615.467 5.082 1.257M4 14h5.418a13.93 13.93 0 002.582 2.246c.927.475 1.986.76 3.04.853a8.997 8.997 0 016.336-3.038A8.978 8.978 0 0120 10c0-2.123-.74-4.09-1.96-5.618M4 14h5.418" />
+          </svg>
           Actualizar
         </button>
       </div>
     </header>
 
-    <section class="bg-white rounded-lg border p-4">
-      <div class="flex flex-wrap items-center gap-2">
-        <label class="min-w-[220px] flex-1">
-          <span class="sr-only">Buscar recetas</span>
-          <input
-            v-model.trim="searchTerm"
-            class="w-full rounded-lg border px-3 py-2 text-sm"
-            placeholder="Buscar receta por nombre..."
-          />
+    <!-- Search & Filters -->
+    <section class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-6">
+      <div class="flex flex-wrap items-center gap-4">
+        <label class="flex-1 min-w-[240px]">
+          <div class="relative">
+            <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              v-model.trim="searchTerm"
+              class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+              placeholder="Buscar receta por nombre..."
+            />
+          </div>
         </label>
-        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+        <label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-800">
           <input
             type="checkbox"
             :checked="allFilteredSelected"
             @change="toggleSelectAllFiltered"
+            class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
           />
-          <span>Seleccionar visibles</span>
+          <span class="font-medium">Seleccionar visibles</span>
         </label>
         <button
           v-for="item in filterItems"

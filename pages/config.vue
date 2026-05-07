@@ -1,43 +1,69 @@
 <template>
-  <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-gray-900">Configuración</h1>
-      <p
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      
+      <!-- Status Message -->
+      <div
         v-if="statusMessage"
-        class="text-sm"
-        :class="statusType === 'error' ? 'text-red-600' : 'text-green-600'"
+        class="fixed right-4 top-4 z-50 px-4 py-2 rounded-xl shadow-lg"
+        :class="statusType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'"
       >
-        {{ statusMessage }}
-      </p>
-    </div>
+        <span class="text-sm font-medium">{{ statusMessage }}</span>
+      </div>
 
-    <div class="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-      <section class="bg-white rounded-lg shadow-sm border p-6">
-        <h2 class="text-lg font-semibold mb-4">Objetivos globales</h2>
+      <!-- Header -->
+      <header class="mb-8">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-lg shadow-slate-200">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.83-1.14 2.423-1.14 3.253 0 .83 1.14.83 2.99 0 4.13-.83 1.14-2.423 1.14-3.253 0-.83-1.14-.83-2.99 0-4.13zM12 12h.01M19 12h.01M6 12h.01M12 19h.01M12 6h.01" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+              Configuración
+            </h1>
+            <p class="text-slate-500 text-sm mt-1">Personaliza tus objetivos nutricionales</p>
+          </div>
+        </div>
+      </header>
 
-        <div class="space-y-4">
-          <label class="block">
-            <span class="block text-sm font-medium text-gray-700 mb-1"
-              >Calorías diarias</span
-            >
-            <input
-              v-model.number="config.daily_kcal_target"
-              type="number"
-              min="1000"
-              max="5000"
-              step="50"
-              class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </label>
+      <div class="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+        <!-- Global Objectives -->
+        <section class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h2 class="text-lg font-bold text-slate-900">Objetivos globales</h2>
+          </div>
 
-          <label class="block">
-            <span class="block text-sm font-medium text-gray-700 mb-1"
-              >Proteína objetivo (g/día)</span
-            >
-            <input
-              v-model.number="config.daily_protein_target"
-              type="number"
-              min="20"
+          <div class="space-y-5">
+            <label class="block">
+              <span class="block text-sm font-semibold text-slate-700 mb-2"
+                >Calorías diarias</span
+              >
+              <input
+                v-model.number="config.daily_kcal_target"
+                type="number"
+                min="1000"
+                max="5000"
+                step="50"
+                class="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              />
+            </label>
+
+            <label class="block">
+              <span class="block text-sm font-semibold text-slate-700 mb-2"
+                >Proteína objetivo (g/día)</span
+              >
+              <input
+                v-model.number="config.daily_protein_target"
+                type="number"
+                min="20"
+                max="300"
               max="400"
               step="1"
               class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"

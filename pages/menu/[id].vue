@@ -771,6 +771,57 @@ const ensureRecipeLibrary = async ( weeklyMeals: WeeklyMeal[] ) => {
         context: "menu.ensureRecipeLibrary.autoCurate",
       } );
     }
+
+    await expandAndMergeIngredients( currentUser.id, insertedDishes );
+  }
+};
+
+const expandAndMergeIngredients = async ( userId: string, dishes: any[] ) => {
+  if ( dishes.length === 0 ) return;
+
+  const config = useRuntimeConfig();
+  const dishNames = dishes.map( ( d: any ) => d.name );
+
+  try {
+    const response = await fetch(
+      `${ config.public.supabaseUrl }/functions/v1/expand-ingredients`,
+      {
+        method: "POST",
+        headers: {
+          apikey: config.public.supabaseAnonKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify( { dishNames, userId } ),
+      },
+    );
+
+    const { results } = await response.json();
+
+    for ( const result of results || [] ) {
+      if ( !result.expanded || !result.ingredients?.length ) continue;
+
+      const dish = dishes.find( ( d: any ) => d.name === result.original );
+      if ( !dish ) continue;
+
+      const expandedIngredients = result.ingredients.map( ( ing: any ) => ( {
+        recipe_id: dish.id,
+        ingredient_id: null,
+        name: ing.name,
+        normalized_name: ing.name.toLowerCase().trim(),
+        quantity: ing.quantity || null,
+        unit_type: ing.unit_type || null,
+        is_confirmed: true,
+        is_suggested: false,
+        needs_review: false,
+        source: "expansion_rule",
+      } ) );
+
+      await supabase
+        .from( "recipe_ingredients" )
+        .upsert( expandedIngredients, { onConflict: "recipe_id,normalized_name" } );
+    }
+  } catch ( error ) {
+    console.error( "expandAndMergeIngredients error:", error );
   }
 };
 

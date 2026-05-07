@@ -142,13 +142,13 @@
     <div v-if=" showNewMenuModal " class="fixed inset-0 z-50 flex items-center justify-center p-4"
       @click.self="showNewMenuModal = false">
       <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-      <div class="relative bg-white rounded-2xl shadow-2xl shadow-slate-900/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="relative bg-white rounded-2xl shadow-2xl shadow-slate-900/20 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
           <h2 class="text-xl font-bold text-white">Crear nuevo menú semanal</h2>
           <p class="text-indigo-100 text-sm mt-1">Configura las opciones de tu menú</p>
         </div>
 
-        <div class="p-6 space-y-6">
+        <div class="p-6 space-y-6 overflow-y-auto">
           <div class="space-y-2">
             <label class="block text-sm font-semibold text-slate-700">
               Nombre del menú
@@ -275,13 +275,13 @@
             </article>
           </div>
         </div>
-        <div class="flex gap-3 justify-end pt-4 border-t border-slate-100">
+        <div class="flex gap-3 justify-end p-4 border-t border-slate-100 bg-white shrink-0">
           <button @click="showNewMenuModal = false"
             class="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-medium hover:bg-slate-50 hover:border-slate-300 transition-all">
             Cancelar
           </button>
-          <button @click=" createMenu " :disabled=" !newMenuName.trim() "
-            class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95">
+          <button @click=" createMenu "
+            class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300/30 transition-all active:scale-95">
             Crear menú
           </button>
         </div>
@@ -507,7 +507,10 @@ const loadSavedRecipes = async () => {
 };
 
 const createMenu = async () => {
-  if ( !newMenuName.value.trim() ) return;
+  if ( !newMenuName.value.trim() ) {
+    alert( "Pon un nombre para el menú semanal." );
+    return;
+  }
   const currentUser = await loadCurrentUser();
   if ( !currentUser ) {
     alert( "No hay usuario configurado. Usa /start en Telegram primero." );

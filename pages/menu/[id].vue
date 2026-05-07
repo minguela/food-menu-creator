@@ -490,12 +490,7 @@ const blockStartDay = ref( 1 );
 const blockDayCount = ref( 7 );
 const OCR_WEEKLY_MEAL_TYPES: MealType[] = [ "comida", "cena" ];
 
-const compoundDays = ref<Array<{
-  id: string;
-  name: string;
-  first_dish: { id: string; name: string; kcal: number };
-  second_dish: { id: string; name: string; kcal: number };
-}>>( [] );
+const compoundDays = ref<any[]>( [] );
 const showCompoundDayModal = ref( false );
 const editingCompoundDay = ref<any>( null );
 const compoundDayForm = ref( {
@@ -773,12 +768,12 @@ const ensureRecipeLibrary = async ( weeklyMeals: WeeklyMeal[] ) => {
       } );
     }
 
-    await expandAndMergeIngredients( currentUser.id, insertedDishes );
+    await expandAndMergeIngredients( currentUser.id, insertedDishes || [] );
   }
 };
 
 const expandAndMergeIngredients = async ( userId: string, dishes: any[] ) => {
-  if ( dishes.length === 0 ) return;
+  if ( !dishes || dishes.length === 0 ) return;
 
   const config = useRuntimeConfig();
   const dishNames = dishes.map( ( d: any ) => d.name );
@@ -1427,11 +1422,11 @@ const loadCompoundDays = async () => {
 
   loadingCompoundDays.value = true;
   try {
-    const { data } = await useFetch( "/api/compound-day-meals", {
+    const result = await $fetch<{ compoundDays: any[] }>( "/api/compound-day-meals", {
       query: { userId: user.id },
     } );
-    if ( data.value?.compoundDays ) {
-      compoundDays.value = data.value.compoundDays;
+    if ( result?.compoundDays ) {
+      compoundDays.value = result.compoundDays;
     }
   } catch ( error ) {
     console.error( "Error loading compound days:", error );
@@ -1444,11 +1439,11 @@ const loadAllDishes = async () => {
   const user = await loadCurrentUser();
   if ( !user ) return;
 
-  const { data } = await useFetch( "/api/dishes", {
+  const result = await $fetch<{ dishes: any[] }>( "/api/dishes", {
     query: { userId: user.id },
   } );
-  if ( data.value?.dishes ) {
-    allDishes.value = data.value.dishes.map( ( d: any ) => ( {
+  if ( result?.dishes ) {
+    allDishes.value = result.dishes.map( ( d: any ) => ( {
       id: d.id,
       name: d.name,
     } ) );
@@ -1538,9 +1533,5 @@ const deleteCompoundDay = async ( id: string ) => {
 
 onMounted( async () => {
   await Promise.all( [ loadMenu(), loadSavedRecipes(), loadCompoundDays() ] );
-} );
-
-onMounted( async () => {
-  await Promise.all( [ loadMenu(), loadSavedRecipes() ] );
 } );
 </script>

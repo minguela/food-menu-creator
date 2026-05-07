@@ -361,7 +361,7 @@ const loadDetail = async () => {
     debug.value = err?.data?.data?.debug || err?.data?.debug || null;
     await logError("web", err, {
       context: "rotating.detail.loadDetail",
-      rotatingMenuId: String(route.params.id || ""),
+      extra: { rotatingMenuId: String(route.params.id || "") },
     });
   } finally {
     loading.value = false;
@@ -371,7 +371,6 @@ const loadDetail = async () => {
 const selectDay = async (dayNumber: number) => {
   selectedDayNumber.value = dayNumber;
   collapsedDays.value.delete(dayNumber);
-  collapsedDays.value = new Set(collapsedDays.value);
   await nextTick();
   document.getElementById(`day-${dayNumber}`)?.scrollIntoView({
     behavior: "smooth",
@@ -385,7 +384,6 @@ const toggleDay = (dayNumber: number) => {
   } else {
     collapsedDays.value.add(dayNumber);
   }
-  collapsedDays.value = new Set(collapsedDays.value);
 };
 
 const toggleAllDays = () => {
@@ -395,7 +393,7 @@ const toggleAllDays = () => {
       detail.value.days.map((day: any) => day.day_number),
     );
   } else {
-    collapsedDays.value = new Set();
+    collapsedDays.value.clear();
   }
 };
 

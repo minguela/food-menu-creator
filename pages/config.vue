@@ -1,13 +1,10 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      
+
       <!-- Status Message -->
-      <div
-        v-if="statusMessage"
-        class="fixed right-4 top-4 z-50 px-4 py-2 rounded-xl shadow-lg"
-        :class="statusType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'"
-      >
+      <div v-if="statusMessage" class="fixed right-4 top-4 z-50 px-4 py-2 rounded-xl shadow-lg"
+        :class="statusType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'">
         <span class="text-sm font-medium">{{ statusMessage }}</span>
       </div>
 
@@ -16,7 +13,8 @@
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-lg shadow-slate-200">
             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.83-1.14 2.423-1.14 3.253 0 .83 1.14.83 2.99 0 4.13-.83 1.14-2.423 1.14-3.253 0-.83-1.14-.83-2.99 0-4.13zM12 12h.01M19 12h.01M6 12h.01M12 19h.01M12 6h.01" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10.325 4.317c.83-1.14 2.423-1.14 3.253 0 .83 1.14.83 2.99 0 4.13-.83 1.14-2.423 1.14-3.253 0-.83-1.14-.83-2.99 0-4.13zM12 12h.01M19 12h.01M6 12h.01M12 19h.01M12 6h.01" />
             </svg>
           </div>
           <div>
@@ -42,211 +40,118 @@
 
           <div class="space-y-5">
             <label class="block">
-              <span class="block text-sm font-semibold text-slate-700 mb-2"
-                >Calorías diarias</span
-              >
-              <input
-                v-model.number="config.daily_kcal_target"
-                type="number"
-                min="1000"
-                max="5000"
-                step="50"
-                class="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-              />
+              <span class="block text-sm font-semibold text-slate-700 mb-2">Calorías diarias</span>
+              <input v-model.number="config.daily_kcal_target" type="number" min="1000" max="5000" step="50"
+                class="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" />
             </label>
 
             <label class="block">
-              <span class="block text-sm font-semibold text-slate-700 mb-2"
-                >Proteína objetivo (g/día)</span
-              >
-              <input
-                v-model.number="config.daily_protein_target"
-                type="number"
-                min="20"
-                max="300"
-              max="400"
-              step="1"
-              class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </label>
-
-          <label class="block">
-            <span class="block text-sm font-medium text-gray-700 mb-1"
-              >Personas para cantidades</span
-            >
-            <input
-              v-model.number="config.persons_count"
-              type="number"
-              min="1"
-              max="10"
-              class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </label>
-
-          <div class="grid grid-cols-2 gap-3">
-            <label class="block">
-              <span class="block text-sm font-medium text-gray-700 mb-1"
-                >Grasas objetivo (%)</span
-              >
-              <input
-                v-model.number="config.fat_pct_target"
-                type="number"
-                min="10"
-                max="70"
-                class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
+              <span class="block text-sm font-semibold text-slate-700 mb-2">Proteína objetivo (g/día)</span>
+              <input v-model.number="config.daily_protein_target" type="number" min="20" max="400" step="1"
+                class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
             </label>
-            <label class="block">
-              <span class="block text-sm font-medium text-gray-700 mb-1"
-                >Hidratos objetivo (%)</span
-              >
-              <input
-                v-model.number="config.carbs_pct_target"
-                type="number"
-                min="10"
-                max="80"
-                class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-            </label>
-          </div>
 
-          <div
-            class="rounded-lg border p-4"
-            :class="
-              macroValidation.valid
+            <label class="block">
+              <span class="block text-sm font-medium text-gray-700 mb-1">Personas para cantidades</span>
+              <input v-model.number="config.persons_count" type="number" min="1" max="10"
+                class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+            </label>
+
+            <div class="grid grid-cols-2 gap-3">
+              <label class="block">
+                <span class="block text-sm font-medium text-gray-700 mb-1">Grasas objetivo (%)</span>
+                <input v-model.number="config.fat_pct_target" type="number" min="10" max="70"
+                  class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+              </label>
+              <label class="block">
+                <span class="block text-sm font-medium text-gray-700 mb-1">Hidratos objetivo (%)</span>
+                <input v-model.number="config.carbs_pct_target" type="number" min="10" max="80"
+                  class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+              </label>
+            </div>
+
+            <div class="rounded-lg border p-4" :class="macroValidation.valid
                 ? 'bg-green-50 border-green-200'
                 : 'bg-red-50 border-red-200'
-            "
-          >
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-700">Proteína deducida</span>
-              <span class="font-semibold"
-                >{{ macroValidation.proteinPct }}%</span
-              >
-            </div>
-            <p
-              class="text-xs mt-2"
-              :class="macroValidation.valid ? 'text-green-700' : 'text-red-700'"
-            >
-              {{
-                macroValidation.valid
-                  ? macroSummaryText
-                  : macroValidation.message
-              }}
-            </p>
-          </div>
-
-          <button
-            @click="saveConfig"
-            :disabled="saving || !isDirty || !macroValidation.valid"
-            class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-          >
-            {{ saving ? "Guardando..." : "Guardar objetivos" }}
-          </button>
-        </div>
-      </section>
-
-      <section class="bg-white rounded-lg shadow-sm border p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold">Personas</h2>
-          <button
-            @click="resetProfileForm"
-            class="px-3 py-2 text-sm text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100"
-          >
-            Nuevo perfil
-          </button>
-        </div>
-
-        <form
-          class="grid gap-3 md:grid-cols-6 mb-5"
-          @submit.prevent="saveProfile"
-        >
-          <input
-            v-model.trim="profileForm.name"
-            class="md:col-span-2 border rounded-lg px-3 py-2"
-            placeholder="Nombre"
-            required
-          />
-          <select v-model="profileForm.sex" class="border rounded-lg px-3 py-2">
-            <option value="female">Mujer</option>
-            <option value="male">Hombre</option>
-            <option value="other">Otro</option>
-          </select>
-          <input
-            v-model.number="profileForm.age"
-            type="number"
-            min="1"
-            max="120"
-            class="border rounded-lg px-3 py-2"
-            placeholder="Edad"
-            required
-          />
-          <input
-            v-model.number="profileForm.daily_kcal_target"
-            type="number"
-            min="800"
-            max="6000"
-            step="50"
-            class="border rounded-lg px-3 py-2"
-            placeholder="kcal"
-            required
-          />
-          <input
-            v-model.number="profileForm.daily_protein_target"
-            type="number"
-            min="20"
-            max="400"
-            step="1"
-            class="border rounded-lg px-3 py-2"
-            placeholder="proteína g"
-            required
-          />
-          <button
-            type="submit"
-            :disabled="!profileFormValid || profileSaving"
-            class="bg-gray-900 text-white rounded-lg px-3 py-2 disabled:opacity-50"
-          >
-            {{ profileForm.id ? "Actualizar" : "Añadir" }}
-          </button>
-        </form>
-
-        <div
-          v-if="profiles.length === 0"
-          class="text-sm text-gray-500 border rounded-lg p-4"
-        >
-          Añade al menos un perfil para adaptar objetivos por persona.
-        </div>
-        <div v-else class="divide-y border rounded-lg">
-          <div
-            v-for="profile in profiles"
-            :key="profile.id"
-            class="flex flex-wrap items-center justify-between gap-3 p-4"
-          >
-            <div>
-              <p class="font-medium text-gray-900">{{ profile.name }}</p>
-              <p class="text-sm text-gray-500">
-                {{ sexLabel(profile.sex) }} · {{ profile.age }} años ·
-                {{ profile.daily_kcal_target }} kcal ·
-                {{ profile.daily_protein_target }}g proteína
+              ">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-700">Proteína deducida</span>
+                <span class="font-semibold">{{ macroValidation.proteinPct }}%</span>
+              </div>
+              <p class="text-xs mt-2" :class="macroValidation.valid ? 'text-green-700' : 'text-red-700'">
+                {{
+                  macroValidation.valid
+                    ? macroSummaryText
+                    : macroValidation.message
+                }}
               </p>
             </div>
-            <div class="flex gap-2">
-              <button
-                @click="editProfile(profile)"
-                class="px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded"
-              >
-                Editar
-              </button>
-              <button
-                @click="deleteProfile(profile.id)"
-                class="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded"
-              >
-                Eliminar
-              </button>
+
+            <button @click="saveConfig" :disabled="saving || !isDirty || !macroValidation.valid"
+              class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">
+              {{ saving ? "Guardando..." : "Guardar objetivos" }}
+            </button>
+          </div>
+        </section>
+
+        <!-- Personas -->
+        <section class="bg-white rounded-lg shadow-sm border p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">Personas</h2>
+            <button @click="resetProfileForm"
+              class="px-3 py-2 text-sm text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100">
+              Nuevo perfil
+            </button>
+          </div>
+
+          <form class="grid gap-3 md:grid-cols-6 mb-5" @submit.prevent="saveProfile">
+            <input v-model.trim="profileForm.name" class="md:col-span-2 border rounded-lg px-3 py-2"
+              placeholder="Nombre" required />
+            <select v-model="profileForm.sex" class="border rounded-lg px-3 py-2">
+              <option value="female">Mujer</option>
+              <option value="male">Hombre</option>
+              <option value="other">Otro</option>
+            </select>
+            <input v-model.number="profileForm.age" type="number" min="1" max="120" class="border rounded-lg px-3 py-2"
+              placeholder="Edad" required />
+            <input v-model.number="profileForm.daily_kcal_target" type="number" min="800" max="6000" step="50"
+              class="border rounded-lg px-3 py-2" placeholder="kcal" required />
+            <input v-model.number="profileForm.daily_protein_target" type="number" min="20" max="400" step="1"
+              class="border rounded-lg px-3 py-2" placeholder="proteína g" required />
+            <button type="submit" :disabled="!profileFormValid || profileSaving"
+              class="bg-gray-900 text-white rounded-lg px-3 py-2 disabled:opacity-50">
+              {{ profileForm.id ? "Actualizar" : "Añadir" }}
+            </button>
+          </form>
+
+          <div v-if="profiles.length === 0" class="text-sm text-gray-500 border rounded-lg p-4">
+            Añade al menos un perfil para adaptar objetivos por persona.
+          </div>
+          <div v-else class="divide-y border rounded-lg">
+            <div v-for="profile in profiles" :key="profile.id"
+              class="flex flex-wrap items-center justify-between gap-3 p-4">
+              <div>
+                <p class="font-medium text-gray-900">{{ profile.name }}</p>
+                <p class="text-sm text-gray-500">
+                  {{ sexLabel(profile.sex) }} · {{ profile.age }} años ·
+                  {{ profile.daily_kcal_target }} kcal ·
+                  {{ profile.daily_protein_target }}g proteína
+                </p>
+              </div>
+              <div class="flex gap-2">
+                <button @click="editProfile(profile)"
+                  class="px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded">
+                  Editar
+                </button>
+                <button @click="deleteProfile(profile.id)"
+                  class="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded">
+                  Eliminar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   </div>
 </template>
@@ -414,9 +319,9 @@ const saveProfile = async () => {
 
   const request = profileForm.value.id
     ? supabase
-        .from("person_profiles")
-        .update(payload)
-        .eq("id", profileForm.value.id)
+      .from("person_profiles")
+      .update(payload)
+      .eq("id", profileForm.value.id)
     : supabase.from("person_profiles").insert(payload);
 
   const { error } = await request;

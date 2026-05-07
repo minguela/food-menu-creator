@@ -1,12 +1,12 @@
 <template>
   <div class="min-h-screen overflow-x-hidden">
-    <header class="sticky top-0 z-40 border-b bg-[#18181bdd] backdrop-blur-xl">
+    <header class="sticky top-0 z-40 border-b ui-divider bg-[#0f1623d9] backdrop-blur-xl">
       <div
         class="mx-auto flex h-16 w-full max-w-7xl items-center px-4 sm:px-6 lg:px-8"
       >
         <NuxtLink
           href="/"
-          class="text-lg font-bold tracking-tight text-sky-300"
+          class="ui-title text-xl font-bold tracking-tight text-[#dff1ff]"
         >
           MenuPlanner
         </NuxtLink>
@@ -22,13 +22,13 @@
             :class="
               $route.path === item.path
                 ? 'ui-chip'
-                : 'text-zinc-300 hover:bg-zinc-800'
-            "
+                : 'ui-muted hover:bg-[#27364a] hover:text-[#eef5ff]'
+             "
           >
             {{ item.label }}
           </NuxtLink>
         </nav>
-        <div class="ml-3 hidden text-right text-[11px] text-zinc-400 lg:block">
+        <div class="ml-3 hidden text-right text-[11px] ui-subtle lg:block">
           <p>v{{ appVersion }}</p>
           <p v-if="appCommitShort">{{ appCommitShort }}</p>
         </div>
@@ -36,16 +36,16 @@
     </header>
 
     <main
-      class="mx-auto w-full max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-8"
+      class="mx-auto w-full max-w-7xl px-4 pb-24 pt-8 sm:px-6 lg:px-8 lg:pb-8"
     >
       <NuxtPage />
     </main>
 
     <nav
       aria-label="Navegación móvil"
-      class="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-700 bg-[#16161ce8] p-2 backdrop-blur-xl md:hidden"
+      class="fixed inset-x-0 bottom-0 z-50 border-t ui-divider bg-[#111a28eb] p-2 backdrop-blur-xl md:hidden"
     >
-      <div class="mb-2 text-center text-[10px] text-zinc-400">
+      <div class="mb-2 text-center text-[10px] ui-subtle">
         v{{ appVersion
         }}<span v-if="appCommitShort"> · {{ appCommitShort }}</span>
       </div>
@@ -57,7 +57,7 @@
             :class="
               $route.path === item.path
                 ? 'ui-chip'
-                : 'text-zinc-300 hover:bg-zinc-800'
+                : 'ui-muted hover:bg-[#27364a] hover:text-[#eef5ff]'
             "
           >
             <span class="text-sm">{{ item.icon }}</span>

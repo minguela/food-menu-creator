@@ -248,6 +248,20 @@
           Marcar todo como comprado
         </button>
         <button
+          @click="exportAsText"
+          :disabled="exportLoading"
+          class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+        >
+          {{ exportLoading ? "Exportando..." : "Exportar texto" }}
+        </button>
+        <button
+          @click="exportAsCsv"
+          :disabled="exportLoading"
+          class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+        >
+          {{ exportLoading ? "Exportando..." : "Exportar CSV" }}
+        </button>
+        <button
           @click="downloadCsv"
           class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
         >
@@ -287,6 +301,7 @@ const phoneNumber = ref("");
 const mobileChannel = ref<"sms" | "whatsapp">("sms");
 const rotatingMenus = ref<RotatingMenu[]>([]);
 const selectedRotatingMenuId = ref("");
+const exportLoading = ref(false);
 
 const itemsByCategory = computed(() => {
   return items.value.reduce(
@@ -545,6 +560,58 @@ const downloadCsv = () => {
   link.download = "lista-compra.csv";
   link.click();
   URL.revokeObjectURL(url);
+};
+
+const exportAsText = async () => {
+  const currentUser = await loadCurrentUser();
+  if (!currentUser) return;
+  
+  exportLoading.value = true;
+  try {
+    const response = await fetch(
+      `${useRuntimeConfig().public.supabaseUrl}/functions/v1/export-shopping-list?user_id=${currentUser.id}&format=text`
+    );
+    const text = await response.text();
+    
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "lista-compra.txt";
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Export error:", err);
+    alert("Error al exportar");
+  } finally {
+    exportLoading.value = false;
+  }
+};
+
+const exportAsCsv = async () => {
+  const currentUser = await loadCurrentUser();
+  if (!currentUser) return;
+  
+  exportLoading.value = true;
+  try {
+    const response = await fetch(
+      `${useRuntimeConfig().public.supabaseUrl}/functions/v1/export-shopping-list?user_id=${currentUser.id}&format=csv`
+    );
+    const text = await response.text();
+    
+    const blob = new Blob([text], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "lista-compra.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Export error:", err);
+    alert("Error al exportar");
+  } finally {
+    exportLoading.value = false;
+  }
 };
 
 const printList = () => window.print();

@@ -207,51 +207,24 @@
 
                 <td v-for=" day in 7 " :key=" `${ day }-${ type }` "
                   class="align-top border-r border-slate-700 last:border-r-0 p-2 bg-slate-900">
-                  <button type="button"
-                    class="w-full min-h-[120px] rounded-lg border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    :class=" cellClass( getPrimaryMeal( day, type ) ) "
-                    @click="openMealModal( day, type, getPrimaryMeal( day, type ) )">
-                    <template v-if=" getPrimaryMeal( day, type ) ">
-                      <p class="text-sm font-semibold leading-snug text-white">
-                        {{ getPrimaryMeal( day, type )?.dish_name }}
-                      </p>
-
-                      <div v-if=" getPrimaryMeal( day, type )?.is_special "
-                        class="mt-2 inline-flex items-center rounded-full bg-amber-400/15 px-2 py-0.5 text-[11px] font-medium text-amber-200 border border-amber-300/20">
-                        Libre ·
-                        {{
-                          getPrimaryMeal( day, type )?.special_kcal_reserved || 700
-                        }}
-                        kcal
+                  <div class="space-y-2">
+                    <button type="button" v-for=" meal in getMealsForDayType( day, type ) " :key=" meal.id "
+                      class="w-full min-h-[92px] rounded-lg border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      :class=" cellClass( meal ) " @click="openMealModal( day, type, meal)">
+                      <div class="mb-1 flex items-center justify-between gap-2">
+                        <p class="text-[11px] font-semibold text-slate-300">Plato {{ meal.meal_slot || 1 }}</p>
+                        <p v-if=" meal.is_special " class="text-[11px] text-amber-200">Libre · {{ meal.special_kcal_reserved || 700 }} kcal</p>
                       </div>
+                      <p class="text-sm font-semibold leading-snug text-white">{{ meal.dish_name }}</p>
+                      <p v-if=" recipeStatusText( meal ) " class="mt-2 text-[11px] text-slate-400">{{ recipeStatusText( meal ) }}</p>
+                    </button>
 
-                      <div v-if=" getCompositeParts( getPrimaryMeal( day, type )?.dish_name ).length > 1 "
-                        class="mt-3 space-y-1">
-                        <p class="text-[11px] font-medium text-slate-400">
-                          Platos unidos:
-                        </p>
-                        <ul class="space-y-1">
-                          <li v-for=" part in getCompositeParts( getPrimaryMeal( day, type )?.dish_name ) "
-                            :key=" `${ day }-${ type }-${ part }` " class="text-xs text-slate-300">
-                            · {{ part }}
-                          </li>
-                        </ul>
-                      </div>
-
-                      <p v-if=" recipeStatusText( getPrimaryMeal( day, type ) ) "
-                        class="mt-3 text-[11px] text-slate-400">
-                        {{ recipeStatusText( getPrimaryMeal( day, type ) ) }}
-                      </p>
-                    </template>
-
-                    <template v-else>
-                      <div class="flex h-full min-h-[96px] items-center justify-center">
-                        <span class="text-sm font-medium text-slate-500">
-                          + Añadir {{ mealLabel( type ).toLowerCase() }}
-                        </span>
-                      </div>
-                    </template>
-                  </button>
+                    <button type="button"
+                      class="w-full rounded-lg border border-dashed border-slate-600 bg-slate-950/40 px-3 py-2 text-left text-xs text-slate-300 hover:border-indigo-400 hover:text-indigo-300"
+                      @click="openMealModal( day, type )">
+                      + Añadir plato {{ mealLabel( type ).toLowerCase() }}
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -822,11 +795,13 @@ const expandAndMergeIngredients = async ( userId: string, dishes: any[] ) => {
 };
 
 const getPrimaryMeal = ( day: number, type: MealType ) => {
-  return (
-    meals.value.find(
-      ( meal ) => meal.day_number === day && meal.meal_type === type,
-    ) || null
-  );
+  return getMealsForDayType( day, type )[ 0 ] || null;
+};
+
+const getMealsForDayType = ( day: number, type: MealType ) => {
+  return meals.value
+    .filter( ( meal ) => meal.day_number === day && meal.meal_type === type )
+    .sort( ( a, b ) => Number( a.meal_slot || 1 ) - Number( b.meal_slot || 1 ) );
 };
 
 const getDayImage = ( day: number ) => {
@@ -996,11 +971,15 @@ const saveMeal = async () => {
       ( ingredient ) => ingredient.name && Number( ingredient.quantity ) > 0,
     );
 
+  const nextMealSlot = editingMealId.value
+    ? Number( meals.value.find( ( meal ) => meal.id === editingMealId.value )?.meal_slot || 1 )
+    : getMealsForDayType( selectedDay.value, selectedType.value ).length + 1;
+
   const payload = {
     weekly_menu_id: menu.value.id,
     day_number: selectedDay.value,
     meal_type: selectedType.value,
-    meal_slot: 1,
+    meal_slot: Math.max( 1, nextMealSlot ),
     dish_name: normalizedDishName,
     dish_description: newMeal.value.dish_description || null,
     is_special: isSpecial,

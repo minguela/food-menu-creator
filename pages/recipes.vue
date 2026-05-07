@@ -57,6 +57,11 @@
               class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500" />
             <span class="font-medium">Seleccionar visibles</span>
           </label>
+          <label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-800">
+            <input v-model=" showOnlyWithoutIngredients " type="checkbox"
+              class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500" />
+            <span class="font-medium">Solo sin ingredientes</span>
+          </label>
           <button v-for=" item in filterItems " :key=" item.value " class="px-3 py-1.5 rounded-lg border text-sm" :class=" filter === item.value
               ? 'bg-indigo-600 text-white border-indigo-600'
               : 'text-gray-700'
@@ -114,6 +119,12 @@
       </section>
 
       <section class="space-y-3">
+        <article v-if=" filteredDishes.length === 0 " class="bg-white rounded-lg border p-5 text-sm text-gray-500">
+          {{ showOnlyWithoutIngredients
+            ? "No se encontraron recetas sin ingredientes con los filtros actuales."
+            : "No hay recetas que coincidan con los filtros actuales."
+          }}
+        </article>
         <article v-for=" dish in filteredDishes " :key=" dish.id " class="bg-white rounded-lg border p-4">
           <div class="flex flex-wrap justify-between gap-3">
             <div class="flex items-start gap-3">
@@ -442,6 +453,7 @@ const savingSelectedRecipes = ref( false );
 const savingBatch = ref( false );
 const savingBulkIngredients = ref( false );
 const searchTerm = ref( "" );
+const showOnlyWithoutIngredients = ref( false );
 const bulkIngredientInput = ref( "" );
 const showMergePanel = ref( false );
 const mergeTargetId = ref( "" );
@@ -478,6 +490,11 @@ const filteredDishes = computed( () =>
     ) {
       return false;
     }
+
+    if ( showOnlyWithoutIngredients.value && ingredientCount( dish ) > 0 ) {
+      return false;
+    }
+
     if ( filter.value === "all" ) return true;
     if ( filter.value === "suggested" )
       return (
@@ -486,7 +503,8 @@ const filteredDishes = computed( () =>
         dish.recipe_status === "incomplete_nutrition"
       );
     if ( filter.value === "complete" ) return dish.recipe_status === "complete";
-    return dish.recipe_status === "not_required";
+    if ( filter.value === "not_required" ) return dish.recipe_status === "not_required";
+    return true;
   } ),
 );
 

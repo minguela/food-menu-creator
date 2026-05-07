@@ -772,7 +772,7 @@ const ensureRecipeLibrary = async ( weeklyMeals: WeeklyMeal[] ) => {
       } );
     }
 
-    await expandAndMergeIngredients( currentUser.id, insertedDishes );
+    await expandAndMergeIngredients( currentUser.id, insertedDishes || [] );
   }
 };
 
@@ -1412,12 +1412,12 @@ const recipeStatusText = ( meal?: WeeklyMeal | null ) => {
   return "";
 };
 
-const formatDate = ( dateString: string ) => {
+const formatDate = ( dateString: string ): string => {
   return new Date( dateString ).toLocaleDateString( "es-ES", {
     day: "numeric",
     month: "short",
     year: "numeric",
-  );
+  } );
 };
 
 const loadCompoundDays = async () => {
@@ -1430,7 +1430,7 @@ const loadCompoundDays = async () => {
       query: { userId: user.id },
     } );
     if ( data.value?.compoundDays ) {
-      compoundDays.value = data.value.compoundDays;
+      compoundDays.value = (data.value as any)?.compoundDays;
     }
   } catch ( error ) {
     console.error( "Error loading compound days:", error );
@@ -1446,8 +1446,9 @@ const loadAllDishes = async () => {
   const { data } = await useFetch( "/api/dishes", {
     query: { userId: user.id },
   } );
-  if ( data.value?.dishes ) {
-    allDishes.value = data.value.dishes.map( ( d: any ) => ( {
+  const allDishesData = ( data.value as any)?.dishes;
+  if ( allDishesData ) {
+    allDishes.value = allDishesData.map( ( d: any ) => ( {
       id: d.id,
       name: d.name,
     } ) );
@@ -1537,10 +1538,5 @@ const deleteCompoundDay = async ( id: string ) => {
 
 onMounted( async () => {
   await Promise.all( [ loadMenu(), loadSavedRecipes(), loadCompoundDays() ] );
-} );
-};
-
-onMounted( async () => {
-  await Promise.all( [ loadMenu(), loadSavedRecipes() ] );
 } );
 </script>

@@ -361,7 +361,6 @@ const loadDetail = async () => {
     debug.value = err?.data?.data?.debug || err?.data?.debug || null;
     await logError("web", err, {
       context: "rotating.detail.loadDetail",
-      rotatingMenuId: String(route.params.id || ""),
     });
   } finally {
     loading.value = false;

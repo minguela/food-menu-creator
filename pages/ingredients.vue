@@ -447,6 +447,8 @@ import { validateIngredientNutritionQuality } from "~/utils/ingredient-nutrition
 import { saveIngredientFromCandidate as persistCandidate } from "~/utils/save-ingredient-from-candidate";
 import type { Ingredient } from "~/types";
 
+const { loadCurrentUser } = useCurrentUser();
+
 type IngredientRow = Ingredient & {
   default_unit_type: "kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad";
   is_verified: boolean;
@@ -1074,6 +1076,14 @@ onMounted(() => {
 
 const expansionMappings = ref<any[]>([]);
 const loadingExpansions = ref(false);
+const showExpansionModal = ref(false);
+const editingExpansion = ref<any>(null);
+const expansionForm = ref({
+  dishName: "",
+  aliases: "",
+  ingredients: "[]",
+  isGlobal: false,
+});
 
 const loadExpansions = async () => {
   const user = await loadCurrentUser();
@@ -1092,96 +1102,6 @@ const loadExpansions = async () => {
     loadingExpansions.value = false;
   }
 };
-
-const openExpansionModal = (mapping?: any) => {
-  if (mapping) {
-    editingExpansion.value = mapping;
-    expansionForm.value = {
-      dishName: mapping.dish_name || "",
-      aliases: (mapping.aliases || []).join(", "),
-      ingredients: JSON.stringify(mapping.ingredients || [], null, 2),
-      isGlobal: mapping.is_global || false,
-    };
-  } else {
-    editingExpansion.value = null;
-    expansionForm.value = {
-      dishName: "",
-      aliases: "",
-      ingredients: "[]",
-      isGlobal: false,
-    };
-  }
-  showExpansionModal.value = true;
-};
-
-const saveExpansion = async () => {
-  const user = await loadCurrentUser();
-  if (!user) return;
-
-  try {
-    let parsedIngredients;
-    try {
-      parsedIngredients = JSON.parse(expansionForm.value.ingredients);
-    } catch {
-      throw new Error("JSON de ingredientes inválido");
-    }
-
-    const aliases = expansionForm.value.aliases
-      .split(",")
-      .map((a: string) => a.trim())
-      .filter(Boolean);
-
-    const body = {
-      userId: user.id,
-      dishName: expansionForm.value.dishName,
-      aliases,
-      ingredients: parsedIngredients,
-      isGlobal: expansionForm.value.isGlobal,
-    };
-
-    if (editingExpansion.value) {
-      await useFetch("/api/ingredient-mappings", {
-        method: "PUT",
-        body: { id: editingExpansion.value.id, ...body },
-      });
-    } else {
-      await useFetch("/api/ingredient-mappings", {
-        method: "POST",
-        body,
-      });
-    }
-
-    showExpansionModal.value = false;
-    await loadExpansions();
-  } catch (error: any) {
-    alert(error.message || "Error guardando");
-  }
-};
-
-const deleteExpansion = async (id: string) => {
-  if (!confirm("¿Eliminar esta expansión?")) return;
-  const user = await loadCurrentUser();
-  if (!user) return;
-
-  try {
-    await useFetch("/api/ingredient-mappings", {
-      method: "DELETE",
-      body: { id, userId: user.id },
-    });
-    await loadExpansions();
-  } catch (error) {
-    console.error("deleteExpansion error:", error);
-  }
-};
-
-const showExpansionModal = ref(false);
-const editingExpansion = ref<any>(null);
-const expansionForm = ref({
-  dishName: "",
-  aliases: "",
-  ingredients: "[]",
-  isGlobal: false,
-});
 
 const openExpansionModal = (mapping?: any) => {
   if (mapping) {
@@ -1221,6 +1141,21 @@ const saveExpansion = async () => {
     await loadExpansions();
   } catch (e: any) {
     alert(e.message || "Error");
+  }
+};
+
+const deleteExpansion = async (id: string) => {
+  if (!confirm("¿Eliminar esta expansión?")) return;
+  const user = await loadCurrentUser();
+  if (!user) return;
+  try {
+    await useFetch("/api/ingredient-mappings", {
+      method: "DELETE",
+      body: { id, userId: user.id },
+    });
+    await loadExpansions();
+  } catch (error) {
+    console.error("deleteExpansion error:", error);
   }
 };
 </script>

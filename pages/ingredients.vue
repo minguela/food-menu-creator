@@ -259,7 +259,7 @@
     <div class="absolute inset-0 bg-emerald-950/30 backdrop-blur-sm transition-opacity"
       @click="showExpansionModal = false"></div>
     <div
-      class="relative bg-white rounded-2xl shadow-2xl shadow-emerald-900/20 w-full max-w-lg overflow-hidden animate-in fade-in zoom-95 duration-200">
+      class="relative bg-white rounded-2xl shadow-2xl shadow-emerald-900/20 w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in fade-in zoom-95 duration-200">
       <div class="bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-4">
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-bold text-white">

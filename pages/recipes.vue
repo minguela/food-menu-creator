@@ -370,7 +370,7 @@ aceite de oliva" />
       </section>
       <div v-if=" showSplitPanel " class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
         @click.self=" closeSplitPanel ">
-        <div class="w-full max-w-2xl rounded-lg bg-white p-4 space-y-3">
+        <div class="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-4 space-y-3">
           <h3 class="text-lg font-semibold text-gray-900">Dividir receta</h3>
           <p class="text-sm text-gray-600">
             Receta original:
@@ -406,7 +406,7 @@ aceite de oliva" />
       <div v-if=" showCreateRecipeModal " class="fixed inset-0 z-50 flex items-center justify-center p-4"
         @click.self="showCreateRecipeModal = false">
         <div class="absolute inset-0 bg-black/50"></div>
-        <div class="relative w-full max-w-2xl rounded-lg bg-white p-4 space-y-3">
+        <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-4 space-y-3">
           <h3 class="text-lg font-semibold text-gray-900">Crear receta nueva</h3>
           <label class="block">
             <span class="block text-xs text-gray-600 mb-1">Nombre</span>

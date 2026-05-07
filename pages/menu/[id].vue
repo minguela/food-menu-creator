@@ -256,8 +256,9 @@
       <div v-if=" showMealModal " class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
         @click.self=" closeMealModal ">
         <form
-          class="bg-slate-900 border border-slate-700 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl"
+          class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-xl flex flex-col"
           @submit.prevent=" saveMeal ">
+          <div class="p-6 overflow-y-auto">
           <div class="flex items-start justify-between gap-4 mb-4">
             <div>
               <h2 class="text-xl font-bold text-white">
@@ -398,6 +399,7 @@
                 {{ savingMeal ? "Guardando..." : editingMealId ? "Actualizar" : "Guardar" }}
               </button>
             </div>
+          </div>
           </div>
         </form>
       </div>

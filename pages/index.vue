@@ -142,7 +142,7 @@
     <div v-if=" showNewMenuModal " class="fixed inset-0 z-50 flex items-center justify-center p-4"
       @click.self="showNewMenuModal = false">
       <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-      <div class="relative bg-white rounded-2xl shadow-2xl shadow-slate-900/20 w-full max-w-2xl overflow-hidden">
+      <div class="relative bg-white rounded-2xl shadow-2xl shadow-slate-900/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
           <h2 class="text-xl font-bold text-white">Crear nuevo menú semanal</h2>
           <p class="text-indigo-100 text-sm mt-1">Configura las opciones de tu menú</p>
@@ -377,21 +377,29 @@ const loadMenus = async () => {
     if ( menuIds.length > 0 ) {
       const { data: mealRows, error: mealRowsError } = await supabase
         .from( "weekly_meals" )
-        .select( "weekly_menu_id, meal_type" )
+        .select( "weekly_menu_id, meal_type, day_number" )
         .in( "weekly_menu_id", menuIds );
 
       if ( mealRowsError ) {
         console.error( "Error cargando breakdown de comidas:", mealRowsError );
       } else {
+        const daySetByMenuType: Record<string, Set<number>> = {};
+
         for ( const row of mealRows || [] ) {
           const menuId = String( ( row as any ).weekly_menu_id || "" );
           const mealType = String( ( row as any ).meal_type || "" );
+          const dayNumber = Number( ( row as any ).day_number || 0 );
           if ( !menuId || !mealType ) continue;
           if ( !mealBreakdownByMenu[ menuId ] ) {
             mealBreakdownByMenu[ menuId ] = { desayuno: 0, comida: 0, cena: 0 };
           }
           if ( mealType in mealBreakdownByMenu[ menuId ] ) {
-            mealBreakdownByMenu[ menuId ][ mealType ] += 1;
+            const key = `${ menuId }:${ mealType }`;
+            if ( !daySetByMenuType[ key ] ) daySetByMenuType[ key ] = new Set<number>();
+            if ( dayNumber >= 1 && dayNumber <= 7 ) {
+              daySetByMenuType[ key ].add( dayNumber );
+              mealBreakdownByMenu[ menuId ][ mealType ] = daySetByMenuType[ key ].size;
+            }
           }
         }
       }

@@ -1,37 +1,56 @@
 <template>
-  <div>
-    <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Lista de la Compra</h1>
-        <p class="text-sm text-gray-500">
-          Cantidades normalizadas a gramos, con edición manual cuando la
-          conversión es dudosa.
-        </p>
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-200">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 8a2 2 0 100-4 2 2 0 000 4z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+            Lista de la Compra
+          </h1>
+          <p class="text-slate-500 text-sm mt-1">Cantidades normalizadas a gramos</p>
+        </div>
       </div>
       <button
         @click="loadShoppingList"
         :disabled="loading"
-        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+        class="group bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-xl hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 font-medium shadow-lg shadow-amber-200 hover:shadow-xl transition-all flex items-center gap-2"
       >
+        <svg class="w-4 h-4 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.582 0A13.93 13.93 0 0120 10c0 3.866-1.598 7.5-4.236 9.94a13.13 13.13 0 01-3.529 2.168A8.994 8.994 0 004 20c1.885 0 3.615.467 5.082 1.257M4 14h5.418a13.93 13.93 0 002.582 2.246c.927.475 1.986.76 3.04.853a8.997 8.997 0 016.336-3.038A8.978 8.978 0 0120 10c0-2.123-.74-4.09-1.96-5.618M4 14h5.418" />
+        </svg>
         Actualizar
       </button>
     </div>
 
-    <section class="bg-white rounded-lg border p-4 mb-6">
-        <h2 class="font-semibold text-gray-900 mb-3">
-          Generar desde menú rotativo
-        </h2>
-        <p class="mb-3 text-xs text-gray-500">
-          También se genera automáticamente al crear el menú en `/generar`.
-        </p>
-        <div class="flex flex-wrap gap-2 items-end">
-        <label class="min-w-[260px] flex-1">
-          <span class="block text-sm text-gray-700 mb-1">Menú rotativo</span>
+    <!-- Generate from menu section -->
+    <section class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 mb-6">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+          <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Generar desde menú rotativo</h2>
+          <p class="text-xs text-slate-500">Selecciona un menú para generar la lista</p>
+        </div>
+      </div>
+        
+      <div class="flex flex-wrap gap-4 items-end">
+        <label class="flex-1 min-w-[280px]">
+          <span class="block text-sm font-semibold text-slate-700 mb-2">Menú rotativo</span>
           <select
             v-model="selectedRotatingMenuId"
-            class="w-full border rounded-lg px-3 py-2"
+            class="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-white"
           >
-            <option value="">Selecciona...</option>
+            <option value="">Selecciona un menú...</option>
             <option
               v-for="menu in rotatingMenus"
               :key="menu.id"
@@ -42,11 +61,16 @@
           </select>
         </label>
         <button
-          class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+          class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 font-medium shadow-lg shadow-amber-200 hover:shadow-xl transition-all active:scale-95"
           :disabled="!selectedRotatingMenuId || loading"
           @click="buildFromRotatingMenu"
         >
-          Generar lista
+          <span class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            Generar lista
+          </span>
         </button>
       </div>
     </section>

@@ -1,95 +1,122 @@
 <template>
-  <div class="space-y-6">
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Notification Toast -->
     <div
       v-if="notificationMessage"
-      class="fixed right-4 top-20 z-50 max-w-sm rounded-lg border bg-white p-3 text-sm shadow-lg"
-      :class="
-        notificationLevel === 'error'
-          ? 'border-red-200 text-red-700'
-          : 'border-emerald-200 text-emerald-700'
-      "
+      class="fixed right-4 top-20 z-50 max-w-sm rounded-xl border bg-white p-4 shadow-xl"
+      :class="notificationLevel === 'error' ? 'border-red-200' : 'border-emerald-200'"
     >
       <div class="flex items-start justify-between gap-3">
-        <p>{{ notificationMessage }}</p>
-        <button class="text-xs text-gray-500" @click="notificationMessage = ''">
-          Cerrar
+        <p class="text-sm" :class="notificationLevel === 'error' ? 'text-red-700' : 'text-emerald-700'">
+          {{ notificationMessage }}
+        </p>
+        <button class="text-xs text-gray-400 hover:text-gray-600" @click="notificationMessage = ''">
+          ✕
         </button>
       </div>
     </div>
-    <header class="flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Generar menú rotativo</h1>
-        <p class="text-sm text-gray-500">
-          Mismas recetas para todos los perfiles, cantidades ajustadas por
-          objetivos.
-        </p>
+
+    <!-- Header -->
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-200">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+            Generar menú rotativo
+          </h1>
+          <p class="text-slate-500 text-sm mt-1">Mismas recetas, cantidades ajustadas por objetivos</p>
+        </div>
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-3">
         <NuxtLink
           href="/shopping"
-          class="rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          class="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all text-sm font-medium"
         >
           Ir a compra
         </NuxtLink>
         <button
-          class="rounded-lg bg-gray-700 px-4 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-50"
+          class="px-5 py-2.5 bg-slate-800 text-white rounded-xl hover:bg-slate-900 disabled:opacity-50 text-sm font-medium shadow-lg shadow-slate-200 hover:shadow-xl transition-all disabled:cursor-not-allowed"
           :disabled="generatedDays.length === 0"
           @click="printMenu"
         >
-          PDF / Imprimir
+          <span class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            PDF / Imprimir
+          </span>
         </button>
       </div>
     </header>
 
-    <section class="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-      <article class="rounded-lg border bg-white p-4">
-        <h2 class="mb-3 font-semibold text-gray-900">Configuración</h2>
-        <div class="grid gap-3 md:grid-cols-2">
-          <label>
-            <span class="mb-1 block text-xs font-medium text-gray-600">
-              Nombre
-            </span>
-            <input
-              v-model.trim="name"
-              class="w-full rounded-lg border px-3 py-2"
-            />
-          </label>
-          <label>
-            <span class="mb-1 block text-xs font-medium text-gray-600">
-              Duración (días)
-            </span>
-            <input
-              v-model.number="days"
-              type="number"
-              min="1"
-              max="90"
-              class="w-full rounded-lg border px-3 py-2"
-            />
-          </label>
-          <label>
-            <span class="mb-1 block text-xs font-medium text-gray-600">
-              Inicio
-            </span>
-            <input
-              v-model="startDate"
-              type="date"
-              class="w-full rounded-lg border px-3 py-2"
-            />
-          </label>
-          <label>
-            <span class="mb-1 block text-xs font-medium text-gray-600">
-              kcal comida libre (por defecto)
-            </span>
-            <input
-              v-model.number="specialMealKcal"
-              type="number"
-              min="0"
-              max="2000"
-              step="10"
-              class="w-full rounded-lg border px-3 py-2"
-            />
-          </label>
+    <div class="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      <!-- Config Section -->
+      <article class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+            <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.83-1.14 2.423-1.14 3.253 0 .83 1.14.83 2.99 0 4.13-.83 1.14-2.423 1.14-3.253 0-.83-1.14-.83-2.99 0-4.13zM12 12h.01M19 12h.01M6 12h.01" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Configuración</h2>
+            <p class="text-xs text-slate-500">Ajusta los parámetros del menú</p>
+          </div>
         </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <label class="space-y-2">
+              <span class="block text-sm font-semibold text-slate-700">
+                Nombre
+              </span>
+              <input
+                v-model.trim="name"
+                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                placeholder="Mi menú rotativo"
+              />
+            </label>
+            <label class="space-y-2">
+              <span class="block text-sm font-semibold text-slate-700">
+                Duración (días)
+              </span>
+              <input
+                v-model.number="days"
+                type="number"
+                min="1"
+                max="90"
+                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+              />
+            </label>
+            <label class="space-y-2">
+              <span class="block text-sm font-semibold text-slate-700">
+                Inicio
+              </span>
+              <input
+                v-model="startDate"
+                type="date"
+                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+              />
+            </label>
+            <label class="space-y-2">
+              <span class="block text-sm font-semibold text-slate-700">
+                kcal comida libre
+              </span>
+              <input
+                v-model.number="specialMealKcal"
+                type="number"
+                min="0"
+                max="2000"
+                step="10"
+                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                placeholder="700"
+              />
+            </label>
+          </div>
 
         <div class="mt-4">
           <p class="mb-2 text-sm font-medium text-gray-700">Perfiles</p>

@@ -1,118 +1,182 @@
 <template>
-  <div>
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Menús Semanales</h1>
-      <button
-        @click="showNewMenuModal = true"
-        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
-      >
-        <span class="text-xl">+</span> Nuevo Menú
-      </button>
-    </div>
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+              Menús Semanales
+            </h1>
+            <p class="text-slate-500 text-sm mt-1">Planifica tu alimentación esta semana</p>
+          </div>
+        </div>
+        <button
+          @click="showNewMenuModal = true"
+          class="group bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300/30 flex items-center gap-2 active:scale-95"
+        >
+          <svg class="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span class="font-semibold">Nuevo Menú</span>
+        </button>
+      </div>
 
-    <!-- Estado de carga -->
-    <div v-if="loading" class="text-center py-12">
-      <div
-        class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"
-      ></div>
-      <p class="mt-4 text-gray-600">Cargando menús...</p>
-    </div>
+      <!-- Estado de carga -->
+      <div v-if="loading" class="flex flex-col items-center justify-center py-20">
+        <div class="relative">
+          <div class="w-16 h-16 rounded-full border-4 border-indigo-100 border-t-indigo-500 animate-spin"></div>
+          <div class="absolute inset-0 w-16 h-16 rounded-full border-4 border-indigo-50 border-b-indigo-200 animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+        </div>
+        <p class="mt-6 text-slate-500 font-medium">Cargando menús...</p>
+      </div>
 
-    <!-- Lista de menús -->
-    <div
-      v-else-if="menus.length > 0"
-      class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-    >
+      <!-- Lista de menús -->
       <div
-        v-for="menu in menus"
-        :key="menu.id"
-        class="bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow cursor-pointer"
-        @click="viewMenu(menu)"
+        v-else-if="menus.length > 0"
+        class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
       >
-        <div class="flex justify-between items-start gap-3 mb-2">
-          <h3 class="text-lg font-semibold text-gray-900">{{ menu.name }}</h3>
-          <div class="flex items-center gap-2">
-            <span
-              class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full"
-            >
-              Semana {{ menu.week_number }}
-            </span>
+        <div
+          v-for="(menu, index) in menus"
+          :key="menu.id"
+          class="group bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+          :style="{ animationDelay: `${index * 50}ms` }"
+          @click="viewMenu(menu)"
+        >
+          <div class="flex items-start justify-between gap-3 mb-4">
+            <div class="flex-1 min-w-0">
+              <h3 class="text-lg font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">
+                {{ menu.name }}
+              </h3>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="inline-flex items-center gap-1 text-xs font-medium bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Semana {{ menu.week_number }}
+                </span>
+              </div>
+            </div>
             <button
               type="button"
-              class="text-red-600 hover:text-red-800 text-sm"
+              class="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
               title="Eliminar menú"
               @click.stop="confirmDeleteMenu(menu)"
             >
-              🗑️
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v4m0-4v4m-4 4h4m4-4h4m4 4h4m-4-4v4m0-4v4" />
+              </svg>
             </button>
           </div>
+          
+          <div class="flex items-center gap-2 mb-3">
+            <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div 
+                class="h-full rounded-full transition-all duration-500"
+                :class="(menu.meals_count || 0) >= 21 ? 'bg-gradient-to-r from-green-400 to-green-500' : 'bg-gradient-to-r from-amber-400 to-orange-400'"
+                :style="{ width: `${Math.min(((menu.meals_count || 0) / 21) * 100, 100)}%` }"
+              ></div>
+            </div>
+            <span class="text-sm font-semibold" :class="(menu.meals_count || 0) >= 21 ? 'text-green-600' : 'text-amber-600'">
+              {{ menu.meals_count }}/21
+            </span>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span class="flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {{ formatDate(menu.created_at) }}
+            </span>
+            <span v-if="(menu.meals_count || 0) >= 21" class="inline-flex items-center gap-1 text-green-600 font-medium">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Completo
+            </span>
+          </div>
         </div>
-        <div class="flex items-center gap-2 text-sm">
-          <span
-            :class="
-              (menu.meals_count || 0) >= 21
-                ? 'text-green-600'
-                : 'text-amber-600'
-            "
-          >
-            {{ (menu.meals_count || 0) >= 21 ? "✅" : "⏳" }}
-            {{ menu.meals_count }}/21 comidas
-          </span>
-        </div>
-        <p class="text-xs text-gray-500 mt-2">
-          Creado: {{ formatDate(menu.created_at) }}
-        </p>
       </div>
-    </div>
 
     <!-- Sin menús -->
-    <div v-else class="text-center py-12 bg-white rounded-lg border">
-      <p class="text-gray-600 mb-4">No tienes menús creados</p>
+    <div v-else class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
+      <div class="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-6">
+        <svg class="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <p class="text-slate-600 font-medium text-lg mb-2">No tienes menús creados</p>
+      <p class="text-slate-400 text-sm mb-6">Crea tu primer menú semanal para empezar</p>
       <button
         @click="showNewMenuModal = true"
-        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+        class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-200 hover:shadow-xl flex items-center gap-2"
       >
-        Crear primer menú
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Crear mi primer menú
       </button>
     </div>
 
     <!-- Modal para nuevo menú -->
     <div
       v-if="showNewMenuModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4"
       @click.self="showNewMenuModal = false"
     >
-      <div class="bg-white rounded-lg p-6 w-full max-w-3xl">
-        <h2 class="text-xl font-bold mb-4">Crear nuevo menú semanal</h2>
-        <label class="block mb-4">
-          <span class="block text-sm font-medium text-gray-700 mb-1">
-            Nombre del menú
-          </span>
-          <input
-            v-model="newMenuName"
-            type="text"
-            placeholder="Nombre del menú (ej: Semana 1)"
-            class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            @keyup.enter="createMenu"
-          />
-        </label>
-
-        <section class="border rounded-lg p-4 mb-4">
-          <h3 class="font-semibold text-gray-900 mb-2">
-            Comidas fijas para los 7 días (opcional)
-          </h3>
-          <div class="flex flex-wrap gap-2 mb-3">
-            <label
-              v-for="type in mealTypes"
-              :key="`fixed-${type}`"
-              class="inline-flex items-center gap-2 px-3 py-1.5 border rounded-lg text-sm"
-            >
-              <input v-model="fixedMealTypes" type="checkbox" :value="type" />
-              <span>{{ mealLabel(type) }}</span>
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+      <div class="relative bg-white rounded-2xl shadow-2xl shadow-slate-900/20 w-full max-w-2xl overflow-hidden">
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+          <h2 class="text-xl font-bold text-white">Crear nuevo menú semanal</h2>
+          <p class="text-indigo-100 text-sm mt-1">Configura las opciones de tu menú</p>
+        </div>
+        
+        <div class="p-6 space-y-6">
+          <div class="space-y-2">
+            <label class="block text-sm font-semibold text-slate-700">
+              Nombre del menú
             </label>
+            <div class="relative">
+              <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4z" />
+                </svg>
+              </div>
+              <input
+                v-model="newMenuName"
+                type="text"
+                placeholder="Ej: Semana 1, Menú Fitness..."
+                class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                @keyup.enter="createMenu"
+              />
+            </div>
           </div>
 
-          <div v-if="fixedMealTypes.length > 0" class="space-y-4">
+          <div class="border border-slate-100 rounded-xl p-5">
+            <h3 class="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Comidas fijas para los 7 días
+              <span class="text-xs font-normal text-slate-400">(opcional)</span>
+            </h3>
+            <div class="flex flex-wrap gap-3 mb-4">
+              <label
+                v-for="type in mealTypes"
+                :key="`fixed-${type}`"
+                class="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+                :class="fixedMealTypes.includes(type) ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : ''"
+              >
+                <input v-model="fixedMealTypes" type="checkbox" :value="type" class="sr-only" />
+                <span class="font-medium">{{ mealLabel(type) }}</span>
+              </label>
+            </div>
             <article
               v-for="type in fixedMealTypes"
               :key="`fixed-card-${type}`"
@@ -263,19 +327,19 @@
             </article>
           </div>
         </section>
-        <div class="flex gap-2 justify-end">
+        <div class="flex gap-3 justify-end pt-4 border-t border-slate-100">
           <button
             @click="showNewMenuModal = false"
-            class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+            class="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-medium hover:bg-slate-50 hover:border-slate-300 transition-all"
           >
             Cancelar
           </button>
           <button
             @click="createMenu"
             :disabled="!newMenuName.trim()"
-            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
           >
-            Crear
+            Crear menú
           </button>
         </div>
       </div>

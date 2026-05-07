@@ -18,14 +18,26 @@
             <p class="text-slate-500 text-sm mt-1">Planifica tu alimentación esta semana</p>
           </div>
         </div>
-        <button @click="showNewMenuModal = true"
-          class="group bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300/30 flex items-center gap-2 active:scale-95">
-          <svg class="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor"
-            viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          <span class="font-semibold">Nuevo Menú</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button @click="toggleSelectAllMenus"
+            class="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all text-sm font-medium"
+            :disabled="menus.length === 0">
+            {{ allMenusSelected ? "Deseleccionar" : "Seleccionar" }} menús
+          </button>
+          <button @click="deleteSelectedMenus"
+            class="px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all text-sm font-medium disabled:opacity-50"
+            :disabled="selectedMenuIds.length === 0">
+            Eliminar seleccionados ({{ selectedMenuIds.length }})
+          </button>
+          <button @click="showNewMenuModal = true"
+            class="group bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300/30 flex items-center gap-2 active:scale-95">
+            <svg class="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span class="font-semibold">Nuevo Menú</span>
+          </button>
+        </div>
       </div>
 
       <!-- Estado de carga -->
@@ -45,6 +57,9 @@
           class="group bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
           :style=" { animationDelay: `${ index * 50 }ms` } " @click="viewMenu( menu )">
           <div class="flex items-start justify-between gap-3 mb-4">
+            <label class="inline-flex items-center pt-1" @click.stop>
+              <input type="checkbox" :checked="selectedMenuIds.includes(menu.id)" @change="toggleMenuSelected(menu.id)" />
+            </label>
             <div class="flex-1 min-w-0">
               <h3 class="text-lg font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">
                 {{ menu.name }}
@@ -70,15 +85,15 @@
             </button>
           </div>
 
-          <div class="flex items-center gap-2 mb-3">
-            <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div class="h-full rounded-full transition-all duration-500"
-                :class=" ( menu.meals_count || 0 ) >= 21 ? 'bg-gradient-to-r from-green-400 to-green-500' : 'bg-gradient-to-r from-amber-400 to-orange-400' "
-                :style=" { width: `${ Math.min( ( ( menu.meals_count || 0 ) / 21 ) * 100, 100 ) }%` } "></div>
-            </div>
-            <span class="text-sm font-semibold"
-              :class=" ( menu.meals_count || 0 ) >= 21 ? 'text-green-600' : 'text-amber-600' ">
-              {{ menu.meals_count }}/21
+          <div class="mb-3 grid grid-cols-3 gap-2 text-xs">
+            <span class="rounded-lg border px-2 py-1 text-center" :class="mealCountClass(menu, 'desayuno')">
+              D {{ menuMealCount(menu, "desayuno") }}/7
+            </span>
+            <span class="rounded-lg border px-2 py-1 text-center" :class="mealCountClass(menu, 'comida')">
+              C {{ menuMealCount(menu, "comida") }}/7
+            </span>
+            <span class="rounded-lg border px-2 py-1 text-center" :class="mealCountClass(menu, 'cena')">
+              N {{ menuMealCount(menu, "cena") }}/7
             </span>
           </div>
 
@@ -90,7 +105,7 @@
               </svg>
               {{ formatDate( menu.created_at ) }}
             </span>
-            <span v-if=" ( menu.meals_count || 0 ) >= 21 "
+            <span v-if=" isMenuComplete( menu ) "
               class="inline-flex items-center gap-1 text-green-600 font-medium">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -283,6 +298,7 @@ const router = useRouter();
 const { loadCurrentUser } = useCurrentUser();
 
 const menus = ref<WeeklyMenu[]>( [] );
+const selectedMenuIds = ref<string[]>( [] );
 const loading = ref( true );
 const showNewMenuModal = ref( false );
 const newMenuName = ref( "" );
@@ -350,13 +366,112 @@ const loadMenus = async () => {
   if ( error ) {
     console.error( "Error cargando menús:", error );
   } else {
-    menus.value = ( data || [] ).map( ( m ) => ( {
+    const baseMenus = ( data || [] ).map( ( m ) => ( {
       ...m,
       meals_count: m.meals_count?.[ 0 ]?.count || 0,
     } ) );
+
+    const menuIds = baseMenus.map( ( menu ) => menu.id );
+    const mealBreakdownByMenu: Record<string, Record<string, number>> = {};
+
+    if ( menuIds.length > 0 ) {
+      const { data: mealRows, error: mealRowsError } = await supabase
+        .from( "weekly_meals" )
+        .select( "weekly_menu_id, meal_type" )
+        .in( "weekly_menu_id", menuIds );
+
+      if ( mealRowsError ) {
+        console.error( "Error cargando breakdown de comidas:", mealRowsError );
+      } else {
+        for ( const row of mealRows || [] ) {
+          const menuId = String( ( row as any ).weekly_menu_id || "" );
+          const mealType = String( ( row as any ).meal_type || "" );
+          if ( !menuId || !mealType ) continue;
+          if ( !mealBreakdownByMenu[ menuId ] ) {
+            mealBreakdownByMenu[ menuId ] = { desayuno: 0, comida: 0, cena: 0 };
+          }
+          if ( mealType in mealBreakdownByMenu[ menuId ] ) {
+            mealBreakdownByMenu[ menuId ][ mealType ] += 1;
+          }
+        }
+      }
+    }
+
+    menus.value = baseMenus.map( ( menu ) => ( {
+      ...menu,
+      meal_breakdown: mealBreakdownByMenu[ menu.id ] || {
+        desayuno: 0,
+        comida: 0,
+        cena: 0,
+      },
+    } as WeeklyMenu & { meal_breakdown: Record<string, number> } ) );
+
+    selectedMenuIds.value = selectedMenuIds.value.filter( ( id ) =>
+      menus.value.some( ( menu ) => menu.id === id ),
+    );
   }
 
   loading.value = false;
+};
+
+const menuMealCount = ( menu: WeeklyMenu, type: "desayuno" | "comida" | "cena" ) => {
+  const breakdown = ( menu as any ).meal_breakdown || {};
+  return Number( breakdown[ type ] || 0 );
+};
+
+const mealCountClass = ( menu: WeeklyMenu, type: "desayuno" | "comida" | "cena" ) =>
+  menuMealCount( menu, type ) >= 7
+    ? "border-green-200 bg-green-50 text-green-700"
+    : "border-amber-200 bg-amber-50 text-amber-700";
+
+const isMenuComplete = ( menu: WeeklyMenu ) =>
+  menuMealCount( menu, "desayuno" ) >= 7 &&
+  menuMealCount( menu, "comida" ) >= 7 &&
+  menuMealCount( menu, "cena" ) >= 7;
+
+const toggleMenuSelected = ( menuId: string ) => {
+  if ( selectedMenuIds.value.includes( menuId ) ) {
+    selectedMenuIds.value = selectedMenuIds.value.filter( ( id ) => id !== menuId );
+  } else {
+    selectedMenuIds.value.push( menuId );
+  }
+};
+
+const allMenusSelected = computed( () =>
+  menus.value.length > 0 && menus.value.every( ( menu ) => selectedMenuIds.value.includes( menu.id ) ),
+);
+
+const toggleSelectAllMenus = () => {
+  if ( allMenusSelected.value ) {
+    selectedMenuIds.value = [];
+  } else {
+    selectedMenuIds.value = menus.value.map( ( menu ) => menu.id );
+  }
+};
+
+const deleteSelectedMenus = async () => {
+  if ( selectedMenuIds.value.length === 0 ) return;
+  if ( !confirm( `¿Eliminar ${ selectedMenuIds.value.length } menús semanales seleccionados?` ) ) return;
+
+  const currentUser = await loadCurrentUser();
+  if ( !currentUser ) {
+    alert( "No hay usuario configurado. Usa /start en Telegram primero." );
+    return;
+  }
+
+  const { error } = await supabase
+    .from( "weekly_menus" )
+    .delete()
+    .eq( "user_id", currentUser.id )
+    .in( "id", selectedMenuIds.value );
+
+  if ( error ) {
+    alert( "Error eliminando menús: " + error.message );
+    return;
+  }
+
+  selectedMenuIds.value = [];
+  await loadMenus();
 };
 
 const loadSavedRecipes = async () => {

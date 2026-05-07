@@ -359,8 +359,6 @@ import { useCurrentUser } from "~/composables/useCurrentUser";
 
 const { loadCurrentUser } = useCurrentUser();
 
-const { loadCurrentUser } = useCurrentUser();
-
 type IngredientRow = Ingredient & {
   default_unit_type: "kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad";
   is_verified: boolean;
@@ -992,14 +990,6 @@ const expansionForm = ref( {
 
 const expansionMappings = ref<any[]>( [] );
 const loadingExpansions = ref( false );
-const showExpansionModal = ref( false );
-const editingExpansion = ref<any>( null );
-const expansionForm = ref( {
-  dishName: "",
-  aliases: "",
-  ingredients: "[]",
-  isGlobal: false,
-} );
 
 const loadExpansions = async () => {
   const user = await loadCurrentUser();

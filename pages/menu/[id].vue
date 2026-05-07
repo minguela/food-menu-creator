@@ -115,6 +115,52 @@
         </p>
       </section>
 
+      <section class="bg-slate-900 rounded-xl shadow-sm border border-slate-700 p-4">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 class="font-semibold text-white">Días compuestos</h2>
+            <p class="text-sm text-slate-400 mt-1">
+              Crea días con 2 platos que siempre irán juntos en los menús rotativos.
+            </p>
+          </div>
+          <button type="button" @click="openCompoundDayModal()"
+            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 text-sm font-medium">
+            + Nuevo día compuesto
+          </button>
+        </div>
+
+        <div v-if=" loadingCompoundDays " class="mt-4 text-center text-slate-400">
+          Cargando...
+        </div>
+
+        <div v-else-if=" compoundDays.length === 0 " class="mt-4 text-sm text-slate-400">
+          No hay días compuestos todavía. Crea uno para empezar.
+        </div>
+
+        <div v-else class="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          <div v-for=" cd in compoundDays " :key=" cd.id "
+            class="bg-slate-800 rounded-lg p-3 border border-slate-700">
+            <div class="flex justify-between items-start">
+              <h3 class="font-medium text-white">{{ cd.name }}</h3>
+              <div class="flex gap-2">
+                <button @click="openCompoundDayModal( cd )" class="text-indigo-400 hover:text-indigo-300 text-sm">
+                  Editar
+                </button>
+                <button @click="deleteCompoundDay( cd.id )" class="text-red-400 hover:text-red-300 text-sm">
+                  Eliminar
+                </button>
+              </div>
+            </div>
+            <p class="text-sm text-slate-400 mt-2">
+              1º: {{ cd.first_dish?.name || "Sin asignar" }}
+            </p>
+            <p class="text-sm text-slate-400">
+              2º: {{ cd.second_dish?.name || "Sin asignar" }}
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section class="bg-slate-900 rounded-xl shadow-sm border border-slate-700 overflow-hidden">
         <div class="px-4 py-3 border-b border-slate-700 bg-slate-950">
           <h2 class="font-semibold text-white">Menú semanal</h2>
@@ -257,15 +303,22 @@
 
           <label class="block mb-4">
             <span class="block text-sm font-medium text-slate-300 mb-1">
-              Usar receta existente como plantilla
+              Usar receta existente o día compuesto
             </span>
             <select v-model=" selectedRecipeId "
               class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800"
               @change=" applySavedRecipeToModal ">
               <option value="">Editar manualmente...</option>
-              <option v-for=" recipe in savedRecipes " :key=" recipe.id " :value=" recipe.id ">
-                {{ recipe.name }}
-              </option>
+              <optgroup label="Días compuestos" v-if="compoundDays.length > 0">
+                <option v-for=" cd in compoundDays " :key=" cd.id " :value=" 'COMPOUND:' + cd.id ">
+                  {{ cd.name }} ({{ cd.first_dish?.name }} + {{ cd.second_dish?.name }})
+                </option>
+              </optgroup>
+              <optgroup label="Recetas">
+                <option v-for=" recipe in savedRecipes " :key=" recipe.id " :value=" recipe.id ">
+                  {{ recipe.name }}
+                </option>
+              </optgroup>
             </select>
           </label>
 
@@ -435,6 +488,22 @@ const creationMode = ref<"daily" | "block">( "daily" );
 const blockStartDay = ref( 1 );
 const blockDayCount = ref( 7 );
 const OCR_WEEKLY_MEAL_TYPES: MealType[] = [ "comida", "cena" ];
+
+const compoundDays = ref<Array<{
+  id: string;
+  name: string;
+  first_dish: { id: string; name: string; kcal: number };
+  second_dish: { id: string; name: string; kcal: number };
+}>>( [] );
+const showCompoundDayModal = ref( false );
+const editingCompoundDay = ref<any>( null );
+const compoundDayForm = ref( {
+  name: "",
+  firstDishId: "",
+  secondDishId: "",
+} );
+const allDishes = ref<Array<{ id: string; name: string }>>( [] );
+const loadingCompoundDays = ref( false );
 
 const savedRecipes = ref<
   Array<{
@@ -811,6 +880,17 @@ const openMealModal = ( day: number, type: MealType, meal?: WeeklyMeal | null ) 
 
 const applySavedRecipeToModal = () => {
   if ( !selectedRecipeId.value ) return;
+
+  if ( selectedRecipeId.value.startsWith( "COMPOUND:" ) ) {
+    const compoundDayId = selectedRecipeId.value.replace( "COMPOUND:", "" );
+    const compoundDay = compoundDays.value.find( ( cd ) => cd.id === compoundDayId );
+    if ( !compoundDay ) return;
+
+    newMeal.value.dish_name = `${ compoundDay.first_dish?.name } + ${ compoundDay.second_dish?.name }`;
+    newMeal.value.dish_description = `Día compuesto: ${ compoundDay.name }`;
+    ingredientRows.value = [ { name: "", quantity: 1, unit_type: "g" } ];
+    return;
+  }
 
   const recipe = savedRecipes.value.find(
     ( item ) => item.id === selectedRecipeId.value,
@@ -1286,7 +1366,127 @@ const formatDate = ( dateString: string ) => {
     day: "numeric",
     month: "short",
     year: "numeric",
+  );
+};
+
+const loadCompoundDays = async () => {
+  const user = await loadCurrentUser();
+  if ( !user ) return;
+
+  loadingCompoundDays.value = true;
+  try {
+    const { data } = await useFetch( "/api/compound-day-meals", {
+      query: { userId: user.id },
+    } );
+    if ( data.value?.compoundDays ) {
+      compoundDays.value = data.value.compoundDays;
+    }
+  } catch ( error ) {
+    console.error( "Error loading compound days:", error );
+  } finally {
+    loadingCompoundDays.value = false;
+  }
+};
+
+const loadAllDishes = async () => {
+  const user = await loadCurrentUser();
+  if ( !user ) return;
+
+  const { data } = await useFetch( "/api/dishes", {
+    query: { userId: user.id },
   } );
+  if ( data.value?.dishes ) {
+    allDishes.value = data.value.dishes.map( ( d: any ) => ( {
+      id: d.id,
+      name: d.name,
+    } ) );
+  }
+};
+
+const openCompoundDayModal = ( compoundDay?: any ) => {
+  if ( compoundDay ) {
+    editingCompoundDay.value = compoundDay;
+    compoundDayForm.value = {
+      name: compoundDay.name,
+      firstDishId: compoundDay.first_dish?.id || "",
+      secondDishId: compoundDay.second_dish?.id || "",
+    };
+  } else {
+    editingCompoundDay.value = null;
+    compoundDayForm.value = {
+      name: "",
+      firstDishId: "",
+      secondDishId: "",
+    };
+  }
+  showCompoundDayModal.value = true;
+};
+
+const saveCompoundDay = async () => {
+  const user = await loadCurrentUser();
+  if ( !user ) return;
+
+  if ( !compoundDayForm.value.name || !compoundDayForm.value.firstDishId || !compoundDayForm.value.secondDishId ) {
+    formError.value = "Todos los campos son obligatorios";
+    return;
+  }
+
+  if ( compoundDayForm.value.firstDishId === compoundDayForm.value.secondDishId ) {
+    formError.value = "Los dos platos deben ser diferentes";
+    return;
+  }
+
+  try {
+    if ( editingCompoundDay.value ) {
+      await useFetch( "/api/compound-day-meals", {
+        method: "PUT",
+        body: {
+          id: editingCompoundDay.value.id,
+          userId: user.id,
+          name: compoundDayForm.value.name,
+          firstDishId: compoundDayForm.value.firstDishId,
+          secondDishId: compoundDayForm.value.secondDishId,
+        },
+      } );
+    } else {
+      await useFetch( "/api/compound-day-meals", {
+        method: "POST",
+        body: {
+          userId: user.id,
+          name: compoundDayForm.value.name,
+          firstDishId: compoundDayForm.value.firstDishId,
+          secondDishId: compoundDayForm.value.secondDishId,
+        },
+      } );
+    }
+
+    showCompoundDayModal.value = false;
+    await loadCompoundDays();
+  } catch ( error: any ) {
+    formError.value = error.message || "Error guardando día compuesto";
+  }
+};
+
+const deleteCompoundDay = async ( id: string ) => {
+  const user = await loadCurrentUser();
+  if ( !user ) return;
+
+  if ( !confirm( "¿Estás seguro de que quieres eliminar este día compuesto?" ) ) return;
+
+  try {
+    await useFetch( "/api/compound-day-meals", {
+      method: "DELETE",
+      body: { id, userId: user.id },
+    } );
+    await loadCompoundDays();
+  } catch ( error ) {
+    console.error( "Error deleting compound day:", error );
+  }
+};
+
+onMounted( async () => {
+  await Promise.all( [ loadMenu(), loadSavedRecipes(), loadCompoundDays() ] );
+} );
 };
 
 onMounted( async () => {

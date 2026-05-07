@@ -1408,7 +1408,7 @@ const recipeStatusText = ( meal?: WeeklyMeal | null ) => {
   return "";
 };
 
-const formatDate = ( dateString: string ) => {
+const formatDate = ( dateString: string ): string => {
   return new Date( dateString ).toLocaleDateString( "es-ES", {
     day: "numeric",
     month: "short",

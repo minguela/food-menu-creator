@@ -50,15 +50,15 @@
 
           <div class="inline-flex rounded-lg border border-slate-700 overflow-hidden">
             <button type="button" @click="creationMode = 'daily'" class="px-3 py-2 text-sm font-medium" :class=" creationMode === 'daily'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              ? 'bg-indigo-600 text-white'
+              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
               ">
               Día a día
             </button>
             <button type="button" @click="creationMode = 'block'"
               class="px-3 py-2 text-sm font-medium border-l border-slate-700" :class=" creationMode === 'block'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                 ">
               Por bloque
             </button>
@@ -138,8 +138,7 @@
         </div>
 
         <div v-else class="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          <div v-for=" cd in compoundDays " :key=" cd.id "
-            class="bg-slate-800 rounded-lg p-3 border border-slate-700">
+          <div v-for=" cd in compoundDays " :key=" cd.id " class="bg-slate-800 rounded-lg p-3 border border-slate-700">
             <div class="flex justify-between items-start">
               <h3 class="font-medium text-white">{{ cd.name }}</h3>
               <div class="flex gap-2">
@@ -239,7 +238,8 @@
                         </ul>
                       </div>
 
-                      <p v-if=" recipeStatusText( getPrimaryMeal( day, type ) ) " class="mt-3 text-[11px] text-slate-400">
+                      <p v-if=" recipeStatusText( getPrimaryMeal( day, type ) ) "
+                        class="mt-3 text-[11px] text-slate-400">
                         {{ recipeStatusText( getPrimaryMeal( day, type ) ) }}
                       </p>
                     </template>
@@ -309,7 +309,7 @@
               class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800"
               @change=" applySavedRecipeToModal ">
               <option value="">Editar manualmente...</option>
-              <optgroup label="Días compuestos" v-if="compoundDays.length > 0">
+              <optgroup label="Días compuestos" v-if=" compoundDays.length > 0 ">
                 <option v-for=" cd in compoundDays " :key=" cd.id " :value=" 'COMPOUND:' + cd.id ">
                   {{ cd.name }} ({{ cd.first_dish?.name }} + {{ cd.second_dish?.name }})
                 </option>
@@ -362,7 +362,8 @@
               Esta celda contiene varios platos:
             </p>
             <ul class="mt-2 space-y-1">
-              <li v-for=" part in getCompositeParts( newMeal.dish_name ) " :key=" part " class="text-sm text-indigo-200">
+              <li v-for=" part in getCompositeParts( newMeal.dish_name ) " :key=" part "
+                class="text-sm text-indigo-200">
                 · {{ part }}
               </li>
             </ul>
@@ -489,12 +490,7 @@ const blockStartDay = ref( 1 );
 const blockDayCount = ref( 7 );
 const OCR_WEEKLY_MEAL_TYPES: MealType[] = [ "comida", "cena" ];
 
-const compoundDays = ref<Array<{
-  id: string;
-  name: string;
-  first_dish: { id: string; name: string; kcal: number };
-  second_dish: { id: string; name: string; kcal: number };
-}>>( [] );
+const compoundDays = ref<any[]>( [] );
 const showCompoundDayModal = ref( false );
 const editingCompoundDay = ref<any>( null );
 const compoundDayForm = ref( {
@@ -777,7 +773,7 @@ const ensureRecipeLibrary = async ( weeklyMeals: WeeklyMeal[] ) => {
 };
 
 const expandAndMergeIngredients = async ( userId: string, dishes: any[] ) => {
-  if ( dishes.length === 0 ) return;
+  if ( !dishes || dishes.length === 0 ) return;
 
   const config = useRuntimeConfig();
   const dishNames = dishes.map( ( d: any ) => d.name );
@@ -1426,11 +1422,11 @@ const loadCompoundDays = async () => {
 
   loadingCompoundDays.value = true;
   try {
-    const { data } = await useFetch( "/api/compound-day-meals", {
+    const result = await $fetch<{ compoundDays: any[] }>( "/api/compound-day-meals", {
       query: { userId: user.id },
     } );
-    if ( data.value?.compoundDays ) {
-      compoundDays.value = (data.value as any)?.compoundDays;
+    if ( result?.compoundDays ) {
+      compoundDays.value = result.compoundDays;
     }
   } catch ( error ) {
     console.error( "Error loading compound days:", error );
@@ -1443,12 +1439,11 @@ const loadAllDishes = async () => {
   const user = await loadCurrentUser();
   if ( !user ) return;
 
-  const { data } = await useFetch( "/api/dishes", {
+  const result = await $fetch<{ dishes: any[] }>( "/api/dishes", {
     query: { userId: user.id },
   } );
-  const allDishesData = ( data.value as any)?.dishes;
-  if ( allDishesData ) {
-    allDishes.value = allDishesData.map( ( d: any ) => ( {
+  if ( result?.dishes ) {
+    allDishes.value = result.dishes.map( ( d: any ) => ( {
       id: d.id,
       name: d.name,
     } ) );

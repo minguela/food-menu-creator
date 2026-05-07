@@ -3,6 +3,7 @@ type ErrorSource = "web" | "telegram" | "ocr";
 type LogErrorOptions = {
   context?: string;
   config?: ReturnType<typeof useRuntimeConfig>;
+  extra?: Record<string, any>;
 };
 
 function extractErrorPayload(err: unknown) {

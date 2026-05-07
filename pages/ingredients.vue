@@ -125,8 +125,8 @@
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <button v-for=" option in filterOptions " :key=" option.value "
           class="rounded-full border px-3 py-1.5 text-xs font-medium" :class=" filterMode === option.value
-              ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-              : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+            ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
             " @click="filterMode = option.value">
           {{ option.label }} {{ option.count }}
         </button>
@@ -228,17 +228,18 @@
       </div>
 
       <IngredientCard v-for=" row in filtered " :key=" row.id " :row=" row " :original=" originalForRow( row.id ) "
-        :quality=" qualityForRow( row ) " :changed-fields=" changedFieldsForRow( row ) " :selected=" isSelected( row.id ) "
-        :active=" activeIngredientId === row.id " :saving=" savingStatusForRow( row.id ) === 'saving' "
-        :save-state=" savingStatusForRow( row.id ) " :enriching=" isRowEnriching( row.id ) "
-        :is-temporary=" String( row.id ).startsWith( 'tmp-' ) "
+        :quality=" qualityForRow( row ) " :changed-fields=" changedFieldsForRow( row ) "
+        :selected=" isSelected( row.id ) " :active=" activeIngredientId === row.id "
+        :saving=" savingStatusForRow( row.id ) === 'saving' " :save-state=" savingStatusForRow( row.id ) "
+        :enriching=" isRowEnriching( row.id ) " :is-temporary=" String( row.id ).startsWith( 'tmp-' ) "
         :is-first=" filtered.findIndex( ( item ) => item.id === row.id ) === 0 " :is-last=" filtered.findIndex( ( item ) => item.id === row.id ) ===
           filtered.length - 1
-          " :unit-types=" unitTypes " :recipes=" recipesForIngredient( row.id ) " :candidates=" candidatesForIngredient( row.id ) "
-        @patch="patchRow( row.id, $event )" @save="save( row )" @save-next="save( row, { goNext: true } )"
-        @enrich="enrichOne( row )" @autocomplete="autocompleteRow( row )" @restore-original="restoreOriginal( row )"
-        @toggle-selected="toggleSelected( row.id )" @previous="moveActive( row.id, -1 )" @next="moveActive( row.id, 1 )"
-        @delete="deleteOne( row.id )" @apply-candidate=" applyCandidate " />
+          " :unit-types=" unitTypes " :recipes=" recipesForIngredient( row.id ) "
+        :candidates=" candidatesForIngredient( row.id ) " @patch="patchRow( row.id, $event )" @save="save( row )"
+        @save-next="save( row, { goNext: true } )" @enrich="enrichOne( row )" @autocomplete="autocompleteRow( row )"
+        @restore-original="restoreOriginal( row )" @toggle-selected="toggleSelected( row.id )"
+        @previous="moveActive( row.id, -1 )" @next="moveActive( row.id, 1 )" @delete="deleteOne( row.id )"
+        @apply-candidate=" applyCandidate " />
     </section>
   </div>
 
@@ -262,8 +263,8 @@
           </button>
         </div>
         <p class="text-emerald-100 text-sm mt-1">
-          {{ editingExpansion ? 'Modifica los ingredientes de este plato' : 'Define qué ingredientes se añaden
-          automáticamente' }}
+          {{ editingExpansion ?
+            'Modifica los ingredientes de este plato' : 'Define qué ingredientes se añadenautomáticamente' }}
         </p>
       </div>
 

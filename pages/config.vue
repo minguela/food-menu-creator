@@ -72,8 +72,8 @@
             </div>
 
             <div class="rounded-lg border p-4" :class=" macroValidation.valid
-                ? 'bg-green-50 border-green-200'
-                : 'bg-red-50 border-red-200'
+              ? 'bg-green-50 border-green-200'
+              : 'bg-red-50 border-red-200'
               ">
               <div class="flex justify-between text-sm">
                 <span class="text-gray-700">Proteína deducida</span>
@@ -95,6 +95,7 @@
           </div>
         </section>
 
+        <!-- Personas -->
         <section class="bg-white rounded-lg shadow-sm border p-6">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold">Personas</h2>

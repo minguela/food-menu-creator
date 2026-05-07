@@ -370,7 +370,8 @@ aceite de oliva" />
       </section>
       <div v-if=" showSplitPanel " class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
         @click.self=" closeSplitPanel ">
-        <div class="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-4 space-y-3">
+        <div class="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-lg bg-white flex flex-col">
+          <div class="p-4 space-y-3 overflow-y-auto">
           <h3 class="text-lg font-semibold text-gray-900">Dividir receta</h3>
           <p class="text-sm text-gray-600">
             Receta original:
@@ -391,7 +392,8 @@ aceite de oliva" />
               </button>
             </div>
           </div>
-          <div class="flex justify-end gap-2">
+          </div>
+          <div class="flex justify-end gap-2 p-4 border-t bg-white shrink-0">
             <button class="px-3 py-1.5 rounded-lg border" @click=" closeSplitPanel ">
               Cancelar
             </button>
@@ -406,7 +408,8 @@ aceite de oliva" />
       <div v-if=" showCreateRecipeModal " class="fixed inset-0 z-50 flex items-center justify-center p-4"
         @click.self="showCreateRecipeModal = false">
         <div class="absolute inset-0 bg-black/50"></div>
-        <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-4 space-y-3">
+        <div class="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-lg bg-white flex flex-col">
+          <div class="p-4 space-y-3 overflow-y-auto">
           <h3 class="text-lg font-semibold text-gray-900">Crear receta nueva</h3>
           <label class="block">
             <span class="block text-xs text-gray-600 mb-1">Nombre</span>
@@ -427,7 +430,8 @@ aceite de oliva" />
             <input v-model=" newRecipeForm.isSpecial " type="checkbox" />
             Marcar receta como comida libre/especial
           </label>
-          <div class="flex justify-end gap-2">
+          </div>
+          <div class="flex justify-end gap-2 p-4 border-t bg-white shrink-0">
             <button class="px-3 py-1.5 rounded-lg border" @click=" showCreateRecipeModal = false ">
               Cancelar
             </button>

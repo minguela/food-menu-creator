@@ -259,7 +259,7 @@
     <div class="absolute inset-0 bg-emerald-950/30 backdrop-blur-sm transition-opacity"
       @click="showExpansionModal = false"></div>
     <div
-      class="relative bg-white rounded-2xl shadow-2xl shadow-emerald-900/20 w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in fade-in zoom-95 duration-200">
+      class="relative bg-white rounded-2xl shadow-2xl shadow-emerald-900/20 w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-95 duration-200">
       <div class="bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-4">
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-bold text-white">
@@ -278,7 +278,7 @@
         </p>
       </div>
 
-      <div class="p-6 space-y-5">
+      <div class="p-6 space-y-5 overflow-y-auto">
         <div class="space-y-2">
           <label class="block text-sm font-semibold text-gray-700">Nombre del plato</label>
           <div class="relative">
@@ -343,7 +343,7 @@
         </div>
       </div>
 
-      <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+      <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3 shrink-0 border-t border-gray-100">
         <button
           class="px-5 py-2.5 border border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-100 transition-colors"
           @click="showExpansionModal = false">

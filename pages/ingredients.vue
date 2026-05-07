@@ -130,6 +130,10 @@
             " @click="filterMode = option.value">
           {{ option.label }} {{ option.count }}
         </button>
+        <label class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600">
+          <input v-model=" showOnlyWithoutRecipes " type="checkbox" class="h-3.5 w-3.5" />
+          Solo sin recetas
+        </label>
       </div>
       <div class="mt-2">
         <label class="text-xs text-gray-600 block mb-1">Fuente</label>
@@ -240,6 +244,12 @@
         @restore-original="restoreOriginal( row )" @toggle-selected="toggleSelected( row.id )"
         @previous="moveActive( row.id, -1 )" @next="moveActive( row.id, 1 )" @delete="deleteOne( row.id )"
         @apply-candidate=" applyCandidate " />
+      <div v-if=" filtered.length === 0 " class="rounded-lg border bg-white p-4 text-sm text-gray-500">
+        {{ showOnlyWithoutRecipes
+          ? "No se encontraron ingredientes sin recetas con los filtros actuales."
+          : "No hay ingredientes que coincidan con los filtros actuales."
+        }}
+      </div>
     </section>
   </div>
 
@@ -422,6 +432,7 @@ const enrichingRowIds = ref<string[]>( [] );
 const savingRowStates = ref<Record<string, SaveState>>( {} );
 const activeIngredientId = ref<string | null>( null );
 const filterMode = ref<FilterMode>( "all" );
+const showOnlyWithoutRecipes = ref( false );
 const recipeLinksByIngredientId = ref<Record<string, RecipeLink[]>>( {} );
 const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
   "g",
@@ -450,6 +461,11 @@ const filtered = computed( () => {
       .includes( q );
     const matchesSearch = !q || byName || byNormalized;
     if ( !matchesSearch ) return false;
+
+    if ( showOnlyWithoutRecipes.value ) {
+      const recipeCount = ( recipeLinksByIngredientId.value[ item.id ] || [] ).length;
+      if ( recipeCount > 0 ) return false;
+    }
 
     const quality = qualityForRow( item );
     if ( filterMode.value === "review" ) {

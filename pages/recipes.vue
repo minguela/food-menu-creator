@@ -20,6 +20,11 @@
           </div>
         </div>
         <div class="flex gap-3">
+          <button
+            class="px-5 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-medium shadow-lg shadow-emerald-200 hover:shadow-xl transition-all"
+            @click="showCreateRecipeModal = true">
+            Nueva receta
+          </button>
           <NuxtLink href="/ingredients"
             class="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all text-sm font-medium">
             Ingredientes
@@ -397,6 +402,42 @@ aceite de oliva" />
           </div>
         </div>
       </div>
+
+      <div v-if=" showCreateRecipeModal " class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        @click.self="showCreateRecipeModal = false">
+        <div class="absolute inset-0 bg-black/50"></div>
+        <div class="relative w-full max-w-2xl rounded-lg bg-white p-4 space-y-3">
+          <h3 class="text-lg font-semibold text-gray-900">Crear receta nueva</h3>
+          <label class="block">
+            <span class="block text-xs text-gray-600 mb-1">Nombre</span>
+            <input v-model.trim=" newRecipeForm.name " class="w-full border rounded-lg px-3 py-2"
+              placeholder="Ej: Ensalada templada" />
+          </label>
+          <label class="block">
+            <span class="block text-xs text-gray-600 mb-1">Descripción</span>
+            <input v-model.trim=" newRecipeForm.description " class="w-full border rounded-lg px-3 py-2"
+              placeholder="Opcional" />
+          </label>
+          <label class="block">
+            <span class="block text-xs text-gray-600 mb-1">Ingredientes (uno por línea)</span>
+            <textarea v-model=" newRecipeForm.ingredientsText " class="w-full min-h-[96px] border rounded-lg px-3 py-2 text-sm"
+              placeholder="Ej:\ntomate\nmozzarella\naove" />
+          </label>
+          <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <input v-model=" newRecipeForm.isSpecial " type="checkbox" />
+            Marcar receta como comida libre/especial
+          </label>
+          <div class="flex justify-end gap-2">
+            <button class="px-3 py-1.5 rounded-lg border" @click=" showCreateRecipeModal = false ">
+              Cancelar
+            </button>
+            <button class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white disabled:opacity-50"
+              :disabled=" creatingRecipe || !newRecipeForm.name " @click=" createRecipeManual ">
+              {{ creatingRecipe ? "Creando..." : "Crear receta" }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -463,6 +504,14 @@ const showSplitPanel = ref( false );
 const splitSourceDish = ref<DishRow | null>( null );
 const splitCandidates = ref<string[]>( [] );
 const splittingRecipe = ref( false );
+const showCreateRecipeModal = ref( false );
+const creatingRecipe = ref( false );
+const newRecipeForm = reactive( {
+  name: "",
+  description: "",
+  ingredientsText: "",
+  isSpecial: false,
+} );
 const recipeForm = reactive( {
   name: "",
   description: "",
@@ -546,6 +595,74 @@ const openRecipeFromRoute = async () => {
   if ( !dish ) return;
   searchTerm.value = dish.name || "";
   await toggleEdit( recipeId );
+};
+
+const createRecipeManual = async () => {
+  if ( !newRecipeForm.name.trim() ) return;
+  const currentUser = await loadCurrentUser();
+  if ( !currentUser ) return;
+
+  creatingRecipe.value = true;
+  try {
+    const normalizedName = normalizeIngredientName( newRecipeForm.name );
+    const status = newRecipeForm.isSpecial
+      ? "not_required"
+      : "pending_ingredients";
+
+    const { data: createdDish, error: dishError } = await supabase
+      .from( "dishes" )
+      .insert( {
+        user_id: currentUser.id,
+        name: newRecipeForm.name.trim(),
+        normalized_name: normalizedName,
+        description: newRecipeForm.description.trim() || null,
+        recipe_status: status,
+        is_special: Boolean( newRecipeForm.isSpecial ),
+        special_kcal_reserved: newRecipeForm.isSpecial ? 700 : 0,
+      } )
+      .select( "id" )
+      .single();
+
+    if ( dishError || !createdDish?.id ) {
+      throw dishError || new Error( "No se pudo crear la receta" );
+    }
+
+    const ingredientLines = newRecipeForm.ingredientsText
+      .split( /\r?\n/g )
+      .map( ( line ) => line.trim() )
+      .filter( Boolean );
+
+    if ( ingredientLines.length > 0 ) {
+      const ingredientRows = ingredientLines.map( ( name ) => ( {
+        recipe_id: createdDish.id,
+        name,
+        normalized_name: normalizeIngredientName( name ),
+        quantity: 1,
+        unit_type: "g",
+        is_confirmed: true,
+        source: "manual",
+      } ) );
+
+      const { error: ingredientsError } = await supabase
+        .from( "recipe_ingredients" )
+        .insert( ingredientRows );
+      if ( ingredientsError ) throw ingredientsError;
+    }
+
+    showCreateRecipeModal.value = false;
+    newRecipeForm.name = "";
+    newRecipeForm.description = "";
+    newRecipeForm.ingredientsText = "";
+    newRecipeForm.isSpecial = false;
+
+    await loadRecipes();
+    await toggleEdit( createdDish.id );
+  } catch ( error ) {
+    await logError( "web", error, { context: "recipes.createRecipeManual" } );
+    alert( "Error creando receta" );
+  } finally {
+    creatingRecipe.value = false;
+  }
 };
 
 const refreshEditingDish = async ( dishId: string ) => {

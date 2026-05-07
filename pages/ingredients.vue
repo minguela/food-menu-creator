@@ -30,6 +30,49 @@
       </div>
     </section>
 
+    <section class="bg-emerald-50 rounded-lg border border-emerald-200 p-4">
+      <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-emerald-900">Expansiones de ingredientes</h2>
+          <p class="text-sm text-emerald-700">
+            Define qué ingredientes se añaden al crear platos desde OCR.
+          </p>
+        </div>
+        <button
+          class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+          @click="openExpansionModal()"
+        >
+          + Nueva expansión
+        </button>
+      </div>
+
+      <div v-if="loadingExpansions" class="text-center py-4 text-emerald-600">
+        Cargando...
+      </div>
+      <div v-else-if="expansionMappings.length === 0" class="text-center py-4 text-emerald-600">
+        No hay expansiones. Crea una para empezar.
+      </div>
+      <div v-else class="grid gap-2 md:grid-cols-2">
+        <div
+          v-for="m in expansionMappings"
+          :key="m.id"
+          class="bg-white rounded border p-2 flex justify-between items-start"
+        >
+          <div>
+            <p class="font-medium text-sm">{{ m.dish_name }}</p>
+            <p class="text-xs text-gray-500">
+              {{ m.ingredients?.length || 0 }} ingredientes
+              <span v-if="m.is_global" class="text-blue-600 ml-1">[Global]</span>
+            </p>
+          </div>
+          <div class="flex gap-1">
+            <button class="text-xs text-indigo-600" @click="openExpansionModal(m)">Edit</button>
+            <button class="text-xs text-red-600" @click="deleteExpansion(m.id)">Del</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="bg-white rounded-lg border p-4">
       <div class="grid gap-2 md:grid-cols-[1fr_auto]">
         <input
@@ -227,6 +270,35 @@
       />
     </section>
   </div>
+<div v-if="showExpansionModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showExpansionModal = false">
+  <div class="bg-white rounded-lg p-4 w-full max-w-md">
+    <h2 class="text-lg font-bold mb-4">{{ editingExpansion ? 'Editar' : 'Nueva' }} expansión</h2>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-sm font-medium">Nombre del plato</label>
+        <input v-model="expansionForm.dishName" class="w-full border rounded px-2 py-1" placeholder="ej: tortilla" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Alias (separados por coma)</label>
+        <input v-model="expansionForm.aliases" class="w-full border rounded px-2 py-1" placeholder="ej: tortilla española, tortilla de patatas" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Ingredientes (JSON)</label>
+        <textarea v-model="expansionForm.ingredients" class="w-full border rounded px-2 py-1 font-mono text-xs" rows="4" placeholder='[{"name": "huevos", "quantity": 3, "unit_type": "ud"}]'></textarea>
+      </div>
+      <div>
+        <label class="flex items-center gap-2">
+          <input v-model="expansionForm.isGlobal" type="checkbox" />
+          <span class="text-sm">Regla global (visible a todos)</span>
+        </label>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-4">
+      <button class="px-3 py-1 border rounded" @click="showExpansionModal = false">Cancelar</button>
+      <button class="px-3 py-1 bg-emerald-600 text-white rounded" @click="saveExpansion">Guardar</button>
+    </div>
+  </div>
+</div>
 </template>
 
 <script setup lang="ts">
@@ -856,5 +928,160 @@ const importCsv = async () => {
   }
 };
 
-onMounted(load);
+onMounted(() => {
+  load();
+  loadExpansions();
+});
+
+const expansionMappings = ref<any[]>([]);
+const loadingExpansions = ref(false);
+
+const loadExpansions = async () => {
+  const user = await loadCurrentUser();
+  if (!user) return;
+  loadingExpansions.value = true;
+  try {
+    const { data } = await useFetch("/api/ingredient-mappings", {
+      query: { userId: user.id },
+    });
+    if (data.value?.mappings) {
+      expansionMappings.value = data.value.mappings;
+    }
+  } catch (error) {
+    console.error("loadExpansions error:", error);
+  } finally {
+    loadingExpansions.value = false;
+  }
+};
+
+const openExpansionModal = (mapping?: any) => {
+  if (mapping) {
+    editingExpansion.value = mapping;
+    expansionForm.value = {
+      dishName: mapping.dish_name || "",
+      aliases: (mapping.aliases || []).join(", "),
+      ingredients: JSON.stringify(mapping.ingredients || [], null, 2),
+      isGlobal: mapping.is_global || false,
+    };
+  } else {
+    editingExpansion.value = null;
+    expansionForm.value = {
+      dishName: "",
+      aliases: "",
+      ingredients: "[]",
+      isGlobal: false,
+    };
+  }
+  showExpansionModal.value = true;
+};
+
+const saveExpansion = async () => {
+  const user = await loadCurrentUser();
+  if (!user) return;
+
+  try {
+    let parsedIngredients;
+    try {
+      parsedIngredients = JSON.parse(expansionForm.value.ingredients);
+    } catch {
+      throw new Error("JSON de ingredientes inválido");
+    }
+
+    const aliases = expansionForm.value.aliases
+      .split(",")
+      .map((a: string) => a.trim())
+      .filter(Boolean);
+
+    const body = {
+      userId: user.id,
+      dishName: expansionForm.value.dishName,
+      aliases,
+      ingredients: parsedIngredients,
+      isGlobal: expansionForm.value.isGlobal,
+    };
+
+    if (editingExpansion.value) {
+      await useFetch("/api/ingredient-mappings", {
+        method: "PUT",
+        body: { id: editingExpansion.value.id, ...body },
+      });
+    } else {
+      await useFetch("/api/ingredient-mappings", {
+        method: "POST",
+        body,
+      });
+    }
+
+    showExpansionModal.value = false;
+    await loadExpansions();
+  } catch (error: any) {
+    alert(error.message || "Error guardando");
+  }
+};
+
+const deleteExpansion = async (id: string) => {
+  if (!confirm("¿Eliminar esta expansión?")) return;
+  const user = await loadCurrentUser();
+  if (!user) return;
+
+  try {
+    await useFetch("/api/ingredient-mappings", {
+      method: "DELETE",
+      body: { id, userId: user.id },
+    });
+    await loadExpansions();
+  } catch (error) {
+    console.error("deleteExpansion error:", error);
+  }
+};
+
+const showExpansionModal = ref(false);
+const editingExpansion = ref<any>(null);
+const expansionForm = ref({
+  dishName: "",
+  aliases: "",
+  ingredients: "[]",
+  isGlobal: false,
+});
+
+const openExpansionModal = (mapping?: any) => {
+  if (mapping) {
+    editingExpansion.value = mapping;
+    expansionForm.value = {
+      dishName: mapping.dish_name || "",
+      aliases: (mapping.aliases || []).join(", "),
+      ingredients: JSON.stringify(mapping.ingredients || [], null, 2),
+      isGlobal: mapping.is_global || false,
+    };
+  } else {
+    editingExpansion.value = null;
+    expansionForm.value = { dishName: "", aliases: "", ingredients: "[]", isGlobal: false };
+  }
+  showExpansionModal.value = true;
+};
+
+const saveExpansion = async () => {
+  const user = await loadCurrentUser();
+  if (!user) return;
+  try {
+    let parsed = JSON.parse(expansionForm.value.ingredients);
+    const aliases = expansionForm.value.aliases.split(",").map((a: string) => a.trim()).filter(Boolean);
+    const body = {
+      userId: user.id,
+      dishName: expansionForm.value.dishName,
+      aliases,
+      ingredients: parsed,
+      isGlobal: expansionForm.value.isGlobal,
+    };
+    if (editingExpansion.value) {
+      await useFetch("/api/ingredient-mappings", { method: "PUT", body: { id: editingExpansion.value.id, ...body } });
+    } else {
+      await useFetch("/api/ingredient-mappings", { method: "POST", body });
+    }
+    showExpansionModal.value = false;
+    await loadExpansions();
+  } catch (e: any) {
+    alert(e.message || "Error");
+  }
+};
 </script>

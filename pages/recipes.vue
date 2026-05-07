@@ -640,12 +640,20 @@ const createRecipeManual = async () => {
         quantity: 1,
         unit_type: "g",
         is_confirmed: true,
-        source: "manual",
+      } ) );
+
+      const sanitizedIngredientRows = ingredientRows.map( ( row ) => ( {
+        recipe_id: row.recipe_id,
+        name: row.name,
+        normalized_name: row.normalized_name,
+        quantity: row.quantity,
+        unit_type: row.unit_type,
+        is_confirmed: row.is_confirmed,
       } ) );
 
       const { error: ingredientsError } = await supabase
         .from( "recipe_ingredients" )
-        .insert( ingredientRows );
+        .insert( sanitizedIngredientRows );
       if ( ingredientsError ) throw ingredientsError;
     }
 

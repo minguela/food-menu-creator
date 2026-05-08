@@ -354,7 +354,7 @@
               <div class="flex flex-wrap gap-2">
                 <input
                   v-model.trim="existingIngredientQuery"
-                  list="existing-ingredients-list"
+                  :list="`existing-ingredients-list-${dish.id}`"
                   class="min-w-[260px] flex-1 border rounded-lg px-3 py-2 text-sm"
                   placeholder="Busca: aceite, pollo, arroz..." />
                 <button
@@ -375,7 +375,7 @@
                 class="text-xs text-slate-500 dark:text-slate-400">
                 No hay coincidencias en catálogo.
               </p>
-              <datalist id="existing-ingredients-list">
+              <datalist :id="`existing-ingredients-list-${dish.id}`">
                 <option
                   v-for="ingredient in filteredExistingIngredients"
                   :key="`existing-${ingredient.id}`"
@@ -501,6 +501,7 @@ const supabase = useSupabase();
 const route = useRoute();
 const { loadCurrentUser } = useCurrentUser();
 const appToast = useAppToast();
+const { confirm: confirmDialog } = useConfirmDialog();
 
 const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
   "g",
@@ -1366,9 +1367,7 @@ const confirmRow = async ( dishId: string, row: RecipeIngredient ) => {
     formError.value = "Para confirmar, indica nombre y unidad.";
     return;
   }
-  const ingredientId =
-    row.ingredient_id ||
-    ( await upsertMasterIngredient( row.name, row.unit_type ) );
+  const ingredientId = await upsertMasterIngredient( row.name, row.unit_type );
   if ( !ingredientId ) {
     formError.value = "No se pudo asociar el ingrediente maestro.";
     return;
@@ -1416,9 +1415,7 @@ const saveConfirmedRow = async ( dishId: string, row: RecipeIngredient ) => {
     formError.value = "Ingrediente confirmado inválido: revisa nombre/unidad.";
     return;
   }
-  const ingredientId =
-    row.ingredient_id ||
-    ( await upsertMasterIngredient( row.name, row.unit_type ) );
+  const ingredientId = await upsertMasterIngredient( row.name, row.unit_type );
   if ( !ingredientId ) {
     formError.value = "No se pudo asociar el ingrediente maestro.";
     return;
@@ -1475,6 +1472,50 @@ const saveConfirmedRow = async ( dishId: string, row: RecipeIngredient ) => {
     current.needs_review = false;
   }
   updateOpenDishRows();
+};
+
+const saveAllConfirmedRowsBatch = async ( dishId: string ) => {
+  const rows = [ ...confirmedRows.value ].filter(
+    (row) => row.name && row.unit_type,
+  );
+  if ( rows.length === 0 ) {
+    formError.value = "No hay ingredientes confirmados válidos para guardar.";
+    return;
+  }
+
+  const payloadRows = rows.map( ( row ) => ( {
+    id: row.id,
+    name: row.name,
+    unit_type: row.unit_type,
+  } ) );
+
+  const response = await $fetch<{
+    success: boolean;
+    savedRows: RecipeIngredient[];
+    createdIngredients: number;
+    savedRecipeIngredients: number;
+  }>( "/api/recipe-confirmed-ingredients-save", {
+    method: "POST",
+    body: {
+      dishId,
+      rows: payloadRows,
+    },
+  } );
+
+  const savedRows = Array.isArray( response?.savedRows ) ? response.savedRows : [];
+  confirmedRows.value = savedRows.map( ( row ) => ( {
+    ...row,
+    unit_type: row.unit_type || "g",
+  } ) );
+  updateOpenDishRows();
+  await syncRecipeStatus( dishId );
+  appToast.success(
+    `Guardados ${ response?.savedRecipeIngredients || savedRows.length } ingredientes${
+      ( response?.createdIngredients || 0 ) > 0
+        ? ` · nuevos en catálogo: ${ response?.createdIngredients }`
+        : ""
+    }.`,
+  );
 };
 
 const deleteRow = async ( dishId: string, rowId: string ) => {
@@ -1542,17 +1583,31 @@ const saveAllConfirmedRows = async ( dishId: string ) => {
   savingBatch.value = true;
   formError.value = "";
   try {
-    const rows = [ ...confirmedRows.value ];
-    for ( const row of rows ) {
-      await saveConfirmedRow( dishId, row );
-    }
+    await saveAllConfirmedRowsBatch( dishId );
+    await refreshEditingDish( dishId );
+  } catch ( error ) {
+    formError.value =
+      error instanceof Error
+        ? error.message
+        : "No se pudieron guardar los ingredientes confirmados.";
+    await logError( "web", error, { context: "recipes.saveAllConfirmedRows" } );
+    appToast.fromError(
+      "No se pudieron guardar los ingredientes confirmados.",
+      error,
+    );
   } finally {
     savingBatch.value = false;
   }
 };
 
 const deleteRecipe = async ( dishId: string ) => {
-  if ( !confirm( "¿Eliminar esta receta y sus ingredientes?" ) ) return;
+  const confirmed = await confirmDialog( {
+    title: "Eliminar receta",
+    message: "¿Eliminar esta receta y sus ingredientes?",
+    confirmText: "Eliminar",
+    danger: true,
+  } );
+  if ( !confirmed ) return;
   try {
     const { error } = await supabase.from( "dishes" ).delete().eq( "id", dishId );
     if ( error ) throw error;
@@ -1570,7 +1625,13 @@ const deleteRecipe = async ( dishId: string ) => {
 
 const deleteSelectedRecipes = async () => {
   if ( selectedDishIds.value.length === 0 ) return;
-  if ( !confirm( `¿Eliminar ${ selectedDishIds.value.length } recetas?` ) ) return;
+  const confirmed = await confirmDialog( {
+    title: "Eliminar recetas",
+    message: `¿Eliminar ${ selectedDishIds.value.length } recetas?`,
+    confirmText: "Eliminar",
+    danger: true,
+  } );
+  if ( !confirmed ) return;
   try {
     const { error } = await supabase
       .from( "dishes" )

@@ -42,6 +42,7 @@
     </main>
 
     <Toaster rich-colors position="top-right" :expand="true" />
+    <AppConfirmDialog />
 
     <nav
       aria-label="Navegación móvil"

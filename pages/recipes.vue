@@ -364,6 +364,17 @@
                   Añadir desde catálogo
                 </button>
               </div>
+              <p v-if="catalogSearchLoading" class="text-xs text-sky-700">
+                Buscando ingredientes...
+              </p>
+              <p v-else-if="catalogSearchError" class="text-xs text-red-600">
+                {{ catalogSearchError }}
+              </p>
+              <p
+                v-else-if="existingIngredientQuery.trim().length >= 2 && filteredExistingIngredients.length === 0"
+                class="text-xs text-slate-500">
+                No hay coincidencias en catálogo.
+              </p>
               <datalist id="existing-ingredients-list">
                 <option
                   v-for="ingredient in filteredExistingIngredients"
@@ -538,8 +549,11 @@ const splitCandidates = ref<string[]>( [] );
 const splittingRecipe = ref( false );
 const showCreateRecipeModal = ref( false );
 const creatingRecipe = ref( false );
-const ingredientsCatalog = ref<Ingredient[]>( [] );
+const ingredientsCatalogResults = ref<Ingredient[]>( [] );
 const existingIngredientQuery = ref( "" );
+const catalogSearchLoading = ref( false );
+const catalogSearchError = ref( "" );
+let catalogSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const newRecipeForm = reactive( {
   name: "",
   description: "",
@@ -554,17 +568,11 @@ const recipeForm = reactive( {
 } );
 
 const ingredientById = computed( () =>
-  new Map( ingredientsCatalog.value.map( ( ingredient ) => [ ingredient.id, ingredient ] ) ),
+  new Map( ingredientsCatalogResults.value.map( ( ingredient ) => [ ingredient.id, ingredient ] ) ),
 );
 
 const filteredExistingIngredients = computed( () => {
-  const query = normalizeIngredientName( existingIngredientQuery.value || "" );
-  if ( !query ) return ingredientsCatalog.value.slice( 0, 8 );
-  return ingredientsCatalog.value
-    .filter( ( ingredient ) =>
-      normalizeIngredientName( ingredient.name || "" ).includes( query ),
-    )
-    .slice( 0, 8 );
+  return ingredientsCatalogResults.value;
 } );
 
 const statusMeta = ( dish: DishRow ) => {
@@ -915,17 +923,39 @@ const saveRecipeMeta = async ( dishId: string ) => {
   return true;
 };
 
-const loadIngredientsCatalog = async () => {
-  const { data, error } = await supabase
-    .from( "ingredients" )
-    .select( "id,name,normalized_name,default_unit_type,unit_type" )
-    .order( "name", { ascending: true } )
-    .limit( 1500 );
-  if ( error ) {
-    await logError( "web", error, { context: "recipes.loadIngredientsCatalog" } );
+const searchIngredientsCatalog = async () => {
+  const query = existingIngredientQuery.value.trim();
+  if ( query.length < 2 ) {
+    ingredientsCatalogResults.value = [];
+    catalogSearchError.value = "";
+    catalogSearchLoading.value = false;
     return;
   }
-  ingredientsCatalog.value = ( data || [] ) as Ingredient[];
+  catalogSearchLoading.value = true;
+  catalogSearchError.value = "";
+  try {
+    const payload = await $fetch<{ success: boolean; ingredients?: Ingredient[] }>(
+      "/api/ingredients-catalog-search",
+      {
+        method: "GET",
+        query: {
+          query,
+          limit: 8,
+        },
+      },
+    );
+    ingredientsCatalogResults.value = Array.isArray( payload?.ingredients )
+      ? payload.ingredients
+      : [];
+  } catch ( error ) {
+    ingredientsCatalogResults.value = [];
+    catalogSearchError.value = "No se pudo buscar en catálogo.";
+    await logError( "web", error, {
+      context: "recipes.searchIngredientsCatalog",
+    } );
+  } finally {
+    catalogSearchLoading.value = false;
+  }
 };
 
 const addExistingIngredientToRecipe = ( dishId: string, ingredient: Ingredient ) => {
@@ -954,6 +984,7 @@ const addExistingIngredientToRecipe = ( dishId: string, ingredient: Ingredient )
   };
   confirmedRows.value.unshift( draftRow );
   existingIngredientQuery.value = "";
+  ingredientsCatalogResults.value = [];
   formError.value = "";
   updateOpenDishRows();
 };
@@ -961,7 +992,7 @@ const addExistingIngredientToRecipe = ( dishId: string, ingredient: Ingredient )
 const addExistingIngredientByQuery = ( dishId: string ) => {
   const normalizedQuery = normalizeIngredientName( existingIngredientQuery.value || "" );
   if ( !normalizedQuery ) return;
-  const exact = ingredientsCatalog.value.find(
+  const exact = ingredientsCatalogResults.value.find(
     ( ingredient ) =>
       normalizeIngredientName( ingredient.name || "" ) === normalizedQuery ||
       String( ingredient.normalized_name || "" ) === normalizedQuery,
@@ -972,6 +1003,18 @@ const addExistingIngredientByQuery = ( dishId: string ) => {
     return;
   }
   addExistingIngredientToRecipe( dishId, exact );
+};
+
+const hasDuplicateNormalizedInOpenRecipe = (
+  rowId: string,
+  normalizedName: string,
+) => {
+  if ( !normalizedName ) return false;
+  return [ ...pendingRows.value, ...confirmedRows.value ].some(
+    ( item ) =>
+      item.id !== rowId &&
+      normalizeIngredientName( item.name || "" ) === normalizedName,
+  );
 };
 
 const saveRecipeForm = async ( dishId: string ) => {
@@ -992,6 +1035,12 @@ const toggleEdit = async ( dishId: string ) => {
     recipeForm.special_kcal_reserved = 700;
     bulkIngredientInput.value = "";
     existingIngredientQuery.value = "";
+    ingredientsCatalogResults.value = [];
+    catalogSearchError.value = "";
+    if ( catalogSearchDebounceTimer ) {
+      clearTimeout( catalogSearchDebounceTimer );
+      catalogSearchDebounceTimer = null;
+    }
     return;
   }
   editingDishId.value = dishId;
@@ -1300,12 +1349,18 @@ const confirmRow = async ( dishId: string, row: RecipeIngredient ) => {
   }
   const canonicalName =
     ( ingredientId && ingredientById.value.get( ingredientId )?.name ) || row.name;
+  const canonicalNormalized = normalizeIngredientName( canonicalName );
+  if ( hasDuplicateNormalizedInOpenRecipe( row.id, canonicalNormalized ) ) {
+    formError.value =
+      "Ya existe un ingrediente con ese nombre normalizado en esta receta.";
+    return;
+  }
   const { error } = await supabase
     .from( "recipe_ingredients" )
     .update( {
       ingredient_id: ingredientId,
       name: canonicalName,
-      normalized_name: normalizeIngredientName( canonicalName ),
+      normalized_name: canonicalNormalized,
       quantity: 1,
       unit_type: row.unit_type,
       is_confirmed: true,
@@ -1321,7 +1376,7 @@ const confirmRow = async ( dishId: string, row: RecipeIngredient ) => {
   await syncRecipeStatus( dishId );
   row.ingredient_id = ingredientId;
   row.name = canonicalName;
-  row.normalized_name = normalizeIngredientName( canonicalName );
+  row.normalized_name = canonicalNormalized;
   row.is_confirmed = true;
   row.is_suggested = false;
   pendingRows.value = pendingRows.value.filter( ( item ) => item.id !== row.id );
@@ -1344,11 +1399,17 @@ const saveConfirmedRow = async ( dishId: string, row: RecipeIngredient ) => {
   }
   const canonicalName =
     ( ingredientId && ingredientById.value.get( ingredientId )?.name ) || row.name;
+  const canonicalNormalized = normalizeIngredientName( canonicalName );
+  if ( hasDuplicateNormalizedInOpenRecipe( row.id, canonicalNormalized ) ) {
+    formError.value =
+      "Ya existe un ingrediente con ese nombre normalizado en esta receta.";
+    return;
+  }
   const payload = {
     recipe_id: dishId,
     ingredient_id: ingredientId,
     name: canonicalName,
-    normalized_name: normalizeIngredientName( canonicalName ),
+    normalized_name: canonicalNormalized,
     quantity: 1,
     unit_type: row.unit_type,
     is_confirmed: true,
@@ -1381,7 +1442,7 @@ const saveConfirmedRow = async ( dishId: string, row: RecipeIngredient ) => {
     current.name = canonicalName;
     current.unit_type = row.unit_type;
     current.ingredient_id = ingredientId;
-    current.normalized_name = normalizeIngredientName( canonicalName );
+    current.normalized_name = canonicalNormalized;
     current.recipe_id = dishId;
     current.is_confirmed = true;
     current.is_suggested = false;
@@ -1781,10 +1842,21 @@ const addBulkIngredients = async ( dishId: string ) => {
 };
 
 onMounted( async () => {
-  await loadIngredientsCatalog();
   await loadRecipes();
   await openRecipeFromRoute();
 } );
+
+watch(
+  existingIngredientQuery,
+  () => {
+    if ( catalogSearchDebounceTimer ) {
+      clearTimeout( catalogSearchDebounceTimer );
+    }
+    catalogSearchDebounceTimer = setTimeout( () => {
+      searchIngredientsCatalog();
+    }, 220 );
+  },
+);
 
 watch(
   () => route.query.recipe,

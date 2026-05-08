@@ -36,93 +36,20 @@
       </div>
     </section>
 
-    <section class="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border border-emerald-100 p-6 shadow-sm">
-      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 4v5h.582m15.582 0A13.93 13.93 0 0120 10c0 3.866-1.598 7.5-4.236 9.94a13.13 13.13 0 01-3.529 2.168A8.994 8.994 0 004 20c1.885 0 3.615.467 5.082 1.257M4 14h5.418a13.93 13.93 0 002.582 2.246c.927.475 1.986.76 3.04.853a8.997 8.997 0 016.336-3.038A8.978 8.978 0 0120 10c0-2.123-.74-4.09-1.96-5.618M4 14h5.418" />
-            </svg>
-          </div>
-          <div>
-            <h2 class="text-xl font-bold text-emerald-900">Expansiones de ingredientes</h2>
-            <p class="text-sm text-emerald-700/70">
-              Define qué ingredientes se añaden al crear platos OCR
-            </p>
-          </div>
+    <section class="ui-surface rounded-xl p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-semibold text-white">Expansiones de ingredientes</h2>
+          <p class="text-sm ui-muted">
+            Gestiona reglas de expansion en una pagina dedicada.
+          </p>
         </div>
-        <button
-          class="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-medium shadow-lg shadow-emerald-200 hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-300/30 transition-all duration-300 active:scale-95 flex items-center gap-2"
-          @click="openExpansionModal()">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Nueva expansión
-        </button>
-      </div>
-
-      <div v-if=" loadingExpansions " class="py-12 flex flex-col items-center justify-center">
-        <div class="w-8 h-8 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin"></div>
-        <p class="mt-3 text-sm text-emerald-600/70">Cargando expansiones...</p>
-      </div>
-
-      <div v-else-if=" expansionMappings.length === 0 "
-        class="py-12 flex flex-col items-center justify-center text-center">
-        <div class="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
-          <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-        </div>
-        <p class="text-emerald-800 font-medium">No hay expansiones definidas</p>
-        <p class="text-sm text-emerald-600/60 mt-1">Crea tu primera expansión para automatizar ingredientes</p>
-      </div>
-
-      <div v-else class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <div v-for=" ( m, index ) in expansionMappings " :key=" m.id "
-          class="group bg-white dark:bg-slate-900 rounded-xl border border-emerald-100 p-4 hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-100/50 transition-all duration-300 cursor-pointer"
-          :style=" { animationDelay: `${ index * 50 }ms` } ">
-          <div class="flex items-start justify-between">
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <h3 class="font-semibold text-emerald-900 truncate">{{ m.dish_name }}</h3>
-                <span v-if=" m.is_global "
-                  class="shrink-0 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
-                  Global
-                </span>
-              </div>
-              <p class="text-xs text-emerald-600/60 mt-1 truncate">
-                {{ m.aliases?.length ? m.aliases.join( ', ' ) : 'Sin alias' }}
-              </p>
-            </div>
-            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <button class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                @click.stop="openExpansionModal( m )">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-              </button>
-              <button class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                @click.stop="deleteExpansion( m.id )">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v4m0-4v4m-4 4h4m4-4h4m4 4h4m-4-4v4m0-4v4" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div class="mt-3 flex flex-wrap gap-1.5">
-            <span v-for=" ( ing, i ) in ( m.ingredients || [] ).slice( 0, 4 ) " :key=" i "
-              class="px-2 py-1 text-xs bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100">
-              {{ ing.name }}
-            </span>
-            <span v-if=" ( m.ingredients?.length || 0 ) > 4 " class="px-2 py-1 text-xs text-emerald-500">
-              +{{ m.ingredients.length - 4 }} más
-            </span>
-          </div>
-        </div>
+        <NuxtLink
+          href="/ingredients/expansions"
+          class="rounded-2xl border border-white/30 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
+        >
+          Abrir expansiones
+        </NuxtLink>
       </div>
     </section>
 
@@ -228,110 +155,6 @@
     </div>
   </div>
 
-  <!-- Expansion Modal -->
-  <div v-if=" showExpansionModal " class="fixed inset-0 z-50 flex items-center justify-center p-4"
-    @click.self="showExpansionModal = false">
-    <div class="absolute inset-0 bg-emerald-950/30 backdrop-blur-sm transition-opacity"
-      @click="showExpansionModal = false"></div>
-    <div
-      class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl shadow-emerald-900/20 w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-95 duration-200">
-      <div class="bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-bold text-white">
-            {{ editingExpansion ? 'Editar' : 'Nueva' }} expansión
-          </h2>
-          <button class="text-white/70 hover:text-white p-1 rounded-lg hover:bg-white dark:bg-slate-900/10 transition-colors"
-            @click="showExpansionModal = false">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <p class="text-emerald-100 text-sm mt-1">
-          {{ editingExpansion ?
-            'Modifica los ingredientes de este plato' : 'Define qué ingredientes se añadenautomáticamente' }}
-        </p>
-      </div>
-
-      <div class="p-6 space-y-5 overflow-y-auto">
-        <div class="space-y-2">
-          <label class="block text-sm font-semibold text-gray-700 dark:text-slate-200">Nombre del plato</label>
-          <div class="relative">
-            <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-            </div>
-            <input v-model=" expansionForm.dishName "
-              class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-gray-400"
-              placeholder="ej: tortilla, ensalada, paella" />
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <label class="block text-sm font-semibold text-gray-700 dark:text-slate-200">
-            Alias
-            <span class="font-normal text-gray-400">(opcional)</span>
-          </label>
-          <div class="relative">
-            <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4z" />
-              </svg>
-            </div>
-            <input v-model=" expansionForm.aliases "
-              class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-gray-400"
-              placeholder="ej: tortilla española, tortilla de patatas (separados por coma)" />
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <label class="block text-sm font-semibold text-gray-700 dark:text-slate-200">
-            Ingredientes
-            <span class="font-normal text-gray-400">(formato JSON)</span>
-          </label>
-          <div class="relative">
-            <div class="absolute left-3 top-3 text-gray-400">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-            </div>
-            <textarea v-model=" expansionForm.ingredients "
-              class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono text-sm resize-none placeholder:text-gray-400"
-              rows="5" placeholder='[{"name": "huevos", "quantity": 3, "unit_type": "ud"}]'></textarea>
-          </div>
-          <p class="text-xs text-gray-500 dark:text-slate-400">
-            Formato: <code class="bg-gray-100 dark:bg-slate-800 px-1 rounded">{"name": "x", "quantity": y, "unit_type": "z"}</code>
-          </p>
-        </div>
-
-        <div class="flex items-center gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-          <input v-model=" expansionForm.isGlobal " type="checkbox" id="isGlobalCheckbox"
-            class="w-5 h-5 rounded border-gray-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-2" />
-          <label for="isGlobalCheckbox" class="flex-1 cursor-pointer">
-            <span class="font-semibold text-gray-700 dark:text-slate-200">Regla global</span>
-            <p class="text-sm text-gray-500 dark:text-slate-400">Visible para todos los usuarios</p>
-          </label>
-        </div>
-      </div>
-
-      <div class="px-6 py-4 bg-gray-50 dark:bg-slate-900 flex justify-end gap-3 shrink-0 border-t border-gray-100 dark:border-slate-800">
-        <button
-          class="px-5 py-2.5 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 rounded-xl font-medium hover:bg-gray-100 dark:bg-slate-800 transition-colors"
-          @click="showExpansionModal = false">
-          Cancelar
-        </button>
-        <button
-          class="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-medium shadow-lg shadow-emerald-200 hover:bg-emerald-700 hover:shadow-xl transition-all active:scale-95"
-          @click=" saveExpansion ">
-          {{ editingExpansion ? 'Actualizar' : 'Crear' }} expansión
-        </button>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -343,10 +166,8 @@ import {
   classifyCaloricDensity,
 } from "~/utils/caloric-density";
 import type { Ingredient } from "~/types";
-import { useCurrentUser } from "~/composables/useCurrentUser";
 import { useAppToast } from "~/composables/use-app-toast";
 
-const { loadCurrentUser } = useCurrentUser();
 const appToast = useAppToast();
 const { confirm: confirmDialog } = useConfirmDialog();
 
@@ -919,124 +740,6 @@ const mergeSelectedIngredients = async () => {
   }
 };
 
-const showExpansionModal = ref( false );
-const editingExpansion = ref<any>( null );
-const expansionForm = ref( {
-  dishName: "",
-  aliases: "",
-  ingredients: "[]",
-  isGlobal: false,
-} );
-
-const expansionMappings = ref<any[]>( [] );
-const loadingExpansions = ref( false );
-
-const loadExpansions = async () => {
-  const user = await loadCurrentUser();
-  if ( !user ) return;
-  loadingExpansions.value = true;
-  try {
-    const { data } = await useFetch( "/api/ingredient-mappings", {
-      query: { userId: user.id },
-    } );
-    if ( data.value?.mappings ) {
-      expansionMappings.value = data.value.mappings;
-    }
-  } catch ( error ) {
-    console.error( "loadExpansions error:", error );
-  } finally {
-    loadingExpansions.value = false;
-  }
-};
-
-const openExpansionModal = ( mapping?: any ) => {
-  if ( mapping ) {
-    editingExpansion.value = mapping;
-    expansionForm.value = {
-      dishName: mapping.dish_name || "",
-      aliases: ( mapping.aliases || [] ).join( ", " ),
-      ingredients: JSON.stringify( mapping.ingredients || [], null, 2 ),
-      isGlobal: mapping.is_global || false,
-    };
-  } else {
-    editingExpansion.value = null;
-    expansionForm.value = {
-      dishName: "",
-      aliases: "",
-      ingredients: "[]",
-      isGlobal: false,
-    };
-  }
-  showExpansionModal.value = true;
-};
-
-const saveExpansion = async () => {
-  const user = await loadCurrentUser();
-  if ( !user ) return;
-
-  try {
-    let parsedIngredients;
-    try {
-      parsedIngredients = JSON.parse( expansionForm.value.ingredients );
-    } catch {
-      throw new Error( "JSON de ingredientes inválido" );
-    }
-
-    const aliases = expansionForm.value.aliases
-      .split( "," )
-      .map( ( a: string ) => a.trim() )
-      .filter( Boolean );
-
-    const body = {
-      userId: user.id,
-      dishName: expansionForm.value.dishName,
-      aliases,
-      ingredients: parsedIngredients,
-      isGlobal: expansionForm.value.isGlobal,
-    };
-
-    if ( editingExpansion.value ) {
-      await useFetch( "/api/ingredient-mappings", {
-        method: "PUT",
-        body: { id: editingExpansion.value.id, ...body },
-      } );
-    } else {
-      await useFetch( "/api/ingredient-mappings", {
-        method: "POST",
-        body,
-      } );
-    }
-
-    showExpansionModal.value = false;
-    await loadExpansions();
-    appToast.success(editingExpansion.value ? "Expansión actualizada." : "Expansión creada.");
-  } catch ( error: any ) {
-    appToast.error( error.message || "Error guardando" );
-  }
-};
-
-const deleteExpansion = async ( id: string ) => {
-  const confirmed = await confirmDialog( {
-    title: "Eliminar expansión",
-    message: "¿Eliminar esta expansión?",
-    confirmText: "Eliminar",
-    danger: true,
-  } );
-  if ( !confirmed ) return;
-  const user = await loadCurrentUser();
-  if ( !user ) return;
-  try {
-    await useFetch( "/api/ingredient-mappings", {
-      method: "DELETE",
-      body: { id, userId: user.id },
-    } );
-    await loadExpansions();
-    appToast.success("Expansión eliminada.");
-  } catch ( error ) {
-    console.error( "deleteExpansion error:", error );
-    appToast.fromError("No se pudo eliminar la expansión.", error);
-  }
-};
 
 onMounted( () => {
   const queryFromRoute = String( route.query.q || "" ).trim();
@@ -1044,6 +747,5 @@ onMounted( () => {
     query.value = queryFromRoute;
   }
   load();
-  loadExpansions();
 } );
 </script>

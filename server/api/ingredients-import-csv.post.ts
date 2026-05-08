@@ -38,7 +38,8 @@ const parseCsv = (csv: string): CsvRow[] => {
     .map((line) => line.trim())
     .filter(Boolean);
   if (lines.length < 2) return [];
-  const headers = lines[0].split(",").map((h) => h.trim());
+  const headerLine = lines[0] || "";
+  const headers = headerLine.split(",").map((h) => h.trim());
   return lines.slice(1).map((line) => {
     const cells = line.split(",").map((c) => c.trim());
     const row: Record<string, string> = {};

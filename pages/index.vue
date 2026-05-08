@@ -296,6 +296,7 @@ import type { WeeklyMenu } from "~/types";
 const supabase = useSupabase();
 const router = useRouter();
 const { loadCurrentUser } = useCurrentUser();
+const appToast = useAppToast();
 
 const menus = ref<WeeklyMenu[]>( [] );
 const selectedMenuIds = ref<string[]>( [] );
@@ -463,7 +464,7 @@ const deleteSelectedMenus = async () => {
 
   const currentUser = await loadCurrentUser();
   if ( !currentUser ) {
-    alert( "No hay usuario configurado. Usa /start en Telegram primero." );
+    appToast.error( "No hay usuario configurado. Usa /start en Telegram primero." );
     return;
   }
 
@@ -474,12 +475,13 @@ const deleteSelectedMenus = async () => {
     .in( "id", selectedMenuIds.value );
 
   if ( error ) {
-    alert( "Error eliminando menús: " + error.message );
+    appToast.error( "Error eliminando menús: " + error.message );
     return;
   }
 
   selectedMenuIds.value = [];
   await loadMenus();
+  appToast.success( "Menús eliminados correctamente." );
 };
 
 const loadSavedRecipes = async () => {
@@ -508,12 +510,12 @@ const loadSavedRecipes = async () => {
 
 const createMenu = async () => {
   if ( !newMenuName.value.trim() ) {
-    alert( "Pon un nombre para el menú semanal." );
+    appToast.error( "Pon un nombre para el menú semanal." );
     return;
   }
   const currentUser = await loadCurrentUser();
   if ( !currentUser ) {
-    alert( "No hay usuario configurado. Usa /start en Telegram primero." );
+    appToast.error( "No hay usuario configurado. Usa /start en Telegram primero." );
     return;
   }
 
@@ -534,7 +536,7 @@ const createMenu = async () => {
     .single();
 
   if ( error ) {
-    alert( "Error creando menú: " + error.message );
+    appToast.error( "Error creando menú: " + error.message );
     return;
   }
 
@@ -664,7 +666,7 @@ const createMenu = async () => {
       }
 
       if ( fixedError ) {
-        alert( "Menú creado, pero falló la comida fija: " + fixedError.message );
+        appToast.error( "Menú creado, pero falló la comida fija: " + fixedError.message );
       } else if ( insertedMeals ) {
         for ( const meal of insertedMeals ) {
           const mealType = meal.meal_type as ( typeof mealTypes )[ number ];
@@ -727,6 +729,7 @@ const createMenu = async () => {
   resetFixedMeals();
   showNewMenuModal.value = false;
   await loadMenus();
+  appToast.success( "Menú creado correctamente." );
 
   // Ir a la página de detalle del menú creado
   router.push( `/menu/${ data.id }` );
@@ -810,7 +813,7 @@ const confirmDeleteMenu = async ( menu: WeeklyMenu ) => {
 
   const currentUser = await loadCurrentUser();
   if ( !currentUser ) {
-    alert( "No hay usuario configurado. Usa /start en Telegram primero." );
+    appToast.error( "No hay usuario configurado. Usa /start en Telegram primero." );
     return;
   }
 
@@ -821,11 +824,12 @@ const confirmDeleteMenu = async ( menu: WeeklyMenu ) => {
     .eq( "user_id", currentUser.id );
 
   if ( error ) {
-    alert( "Error eliminando menú: " + error.message );
+    appToast.error( "Error eliminando menú: " + error.message );
     return;
   }
 
   await loadMenus();
+  appToast.success( "Menú eliminado." );
 };
 
 const formatDate = ( dateString: string ) => {

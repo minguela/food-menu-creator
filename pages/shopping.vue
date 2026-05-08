@@ -233,6 +233,7 @@ import type { RotatingMenu } from "~/types";
 
 const supabase = useSupabase();
 const { loadCurrentUser, user } = useCurrentUser();
+const appToast = useAppToast();
 
 const items = ref<ShoppingListItem[]>( [] );
 const loading = ref( true );
@@ -342,7 +343,7 @@ const buildFromRotatingMenu = async () => {
     await loadShoppingList();
   } catch ( err ) {
     await logError( "web", err, { context: "shopping.buildFromRotatingMenu" } );
-    alert( err instanceof Error ? err.message : "Error generando lista" );
+    appToast.fromError( "Error generando lista", err );
   } finally {
     loading.value = false;
   }
@@ -403,7 +404,10 @@ const updateGrams = async ( item: ShoppingListItem, event: Event ) => {
     } )
     .eq( "id", item.id );
 
-  if ( error ) return alert( "Error guardando cantidad: " + error.message );
+  if ( error ) {
+    appToast.error( "Error guardando cantidad: " + error.message );
+    return;
+  }
 
   item.quantity_grams = grams;
   item.quantity_needed = grams;
@@ -430,11 +434,15 @@ const addExtraItem = async () => {
     estimated_price: 0,
   } );
 
-  if ( error ) return alert( "Error añadiendo artículo: " + error.message );
+  if ( error ) {
+    appToast.error( "Error añadiendo artículo: " + error.message );
+    return;
+  }
 
   extraName.value = "";
   extraGrams.value = null;
   await loadShoppingList();
+  appToast.success( "Artículo añadido correctamente." );
 };
 
 const markAllAsPurchased = async () => {
@@ -526,7 +534,7 @@ const exportAsText = async () => {
     URL.revokeObjectURL( url );
   } catch ( err ) {
     console.error( "Export error:", err );
-    alert( "Error al exportar" );
+    appToast.fromError( "Error al exportar", err );
   } finally {
     exportLoading.value = false;
   }
@@ -552,7 +560,7 @@ const exportAsCsv = async () => {
     URL.revokeObjectURL( url );
   } catch ( err ) {
     console.error( "Export error:", err );
-    alert( "Error al exportar" );
+    appToast.fromError( "Error al exportar", err );
   } finally {
     exportLoading.value = false;
   }

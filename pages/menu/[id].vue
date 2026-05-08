@@ -434,6 +434,7 @@ const route = useRoute();
 const router = useRouter();
 const runtimeConfig = useRuntimeConfig();
 const { loadCurrentUser } = useCurrentUser();
+const appToast = useAppToast();
 
 const displayMealTypes: MealType[] = [ "comida", "cena" ];
 const unitTypes: WeeklyMealIngredient[ "unit_type" ][] = [
@@ -1083,11 +1084,12 @@ const deleteMeal = async ( mealId: string ) => {
     .eq( "id", mealId );
 
   if ( error ) {
-    alert( "Error: " + error.message );
+    appToast.error( "Error: " + error.message );
     return;
   }
 
   await loadMenu();
+  appToast.success( "Comida eliminada." );
 };
 
 const deleteMenu = async () => {
@@ -1100,7 +1102,7 @@ const deleteMenu = async () => {
   const currentUser = await loadCurrentUser();
 
   if ( !currentUser ) {
-    alert( "No hay usuario configurado. Usa /start en Telegram primero." );
+    appToast.error( "No hay usuario configurado. Usa /start en Telegram primero." );
     return;
   }
 
@@ -1111,10 +1113,11 @@ const deleteMenu = async () => {
     .eq( "user_id", currentUser.id );
 
   if ( error ) {
-    alert( "Error eliminando menú: " + error.message );
+    appToast.error( "Error eliminando menú: " + error.message );
     return;
   }
 
+  appToast.success( "Menú eliminado." );
   await router.push( "/" );
 };
 

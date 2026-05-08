@@ -500,6 +500,7 @@ type DishRow = Dish & {
 const supabase = useSupabase();
 const route = useRoute();
 const { loadCurrentUser } = useCurrentUser();
+const appToast = useAppToast();
 
 const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
   "g",
@@ -721,9 +722,10 @@ const createRecipeManual = async () => {
 
     await loadRecipes();
     await toggleEdit( createdDish.id );
+    appToast.success( "Receta creada correctamente." );
   } catch ( error ) {
     await logError( "web", error, { context: "recipes.createRecipeManual" } );
-    alert( "Error creando receta" );
+    appToast.fromError( "No se pudo crear la receta.", error );
   } finally {
     creatingRecipe.value = false;
   }
@@ -794,7 +796,7 @@ const clearSelection = () => {
   selectedDishIds.value = [];
 };
 
-const saveRecipeQuick = async ( dishId: string ) => {
+const saveRecipeQuick = async ( dishId: string, notify = true ) => {
   if ( isRecipeSaving( dishId ) ) return;
   savingDishIds.value.push( dishId );
   formError.value = "";
@@ -803,9 +805,16 @@ const saveRecipeQuick = async ( dishId: string ) => {
     if ( editingDishId.value === dishId ) {
       await refreshEditingDish( dishId );
     }
+    if ( notify ) {
+      appToast.success( "Receta guardada." );
+    }
   } catch ( error ) {
     await logError( "web", error, { context: "recipes.saveRecipeQuick" } );
     formError.value = "No se pudo guardar la receta.";
+    if ( notify ) {
+      appToast.fromError( "No se pudo guardar la receta.", error );
+    }
+    throw error;
   } finally {
     savingDishIds.value = savingDishIds.value.filter( ( id ) => id !== dishId );
   }
@@ -815,10 +824,26 @@ const saveSelectedRecipes = async () => {
   if ( selectedDishIds.value.length === 0 || savingSelectedRecipes.value ) return;
   savingSelectedRecipes.value = true;
   formError.value = "";
+  const total = selectedDishIds.value.length;
+  let savedCount = 0;
   try {
     for ( const dishId of selectedDishIds.value ) {
-      await saveRecipeQuick( dishId );
+      try {
+        await saveRecipeQuick( dishId, false );
+        savedCount += 1;
+      } catch {
+        // Error already logged in saveRecipeQuick; continue remaining recipes.
+      }
     }
+    if ( savedCount === total ) {
+      appToast.success( `Se guardaron ${ total } recetas.` );
+      return;
+    }
+    if ( savedCount > 0 ) {
+      appToast.error( `Se guardaron ${ savedCount } de ${ total } recetas.` );
+      return;
+    }
+    appToast.error( "No se pudo guardar ninguna receta." );
   } finally {
     savingSelectedRecipes.value = false;
   }
@@ -920,6 +945,7 @@ const saveRecipeMeta = async ( dishId: string ) => {
       Math.min( 2000, Number( recipeForm.special_kcal_reserved ) || 700 ),
     );
   }
+  appToast.success( "Datos de receta guardados." );
   return true;
 };
 
@@ -1535,8 +1561,10 @@ const deleteRecipe = async ( dishId: string ) => {
       editingDishId.value = null;
     }
     await loadRecipes();
+    appToast.success( "Receta eliminada." );
   } catch ( error ) {
     await logError( "web", error, { context: "recipes.deleteRecipe" } );
+    appToast.fromError( "No se pudo eliminar la receta.", error );
   }
 };
 
@@ -1552,8 +1580,10 @@ const deleteSelectedRecipes = async () => {
     selectedDishIds.value = [];
     editingDishId.value = null;
     await loadRecipes();
+    appToast.success( "Recetas eliminadas correctamente." );
   } catch ( error ) {
     await logError( "web", error, { context: "recipes.deleteSelectedRecipes" } );
+    appToast.fromError( "No se pudieron eliminar las recetas.", error );
   }
 };
 
@@ -1670,10 +1700,12 @@ const mergeSelectedRecipes = async () => {
     selectedDishIds.value = [];
     cancelMergePanel();
     await loadRecipes();
+    appToast.success( "Recetas fusionadas correctamente." );
   } catch ( error ) {
     formError.value =
       error instanceof Error ? error.message : "No se pudo fusionar recetas";
     await logError( "web", error, { context: "recipes.mergeSelectedRecipes" } );
+    appToast.fromError( "No se pudieron fusionar las recetas.", error );
   } finally {
     mergingRecipes.value = false;
   }
@@ -1774,10 +1806,12 @@ const splitRecipe = async () => {
 
     closeSplitPanel();
     await loadRecipes();
+    appToast.success( "Receta dividida correctamente." );
   } catch ( error ) {
     formError.value =
       error instanceof Error ? error.message : "No se pudo dividir la receta";
     await logError( "web", error, { context: "recipes.splitRecipe" } );
+    appToast.fromError( "No se pudo dividir la receta.", error );
   } finally {
     splittingRecipe.value = false;
   }
@@ -1833,10 +1867,12 @@ const addBulkIngredients = async ( dishId: string ) => {
     await syncRecipeStatus( dishId );
     await refreshEditingDish( dishId );
     bulkIngredientInput.value = "";
+    appToast.success( "Ingredientes añadidos correctamente." );
   } catch ( error ) {
     formError.value =
       error instanceof Error ? error.message : "Error añadiendo ingredientes";
     await logError( "web", error, { context: "recipes.addBulkIngredients" } );
+    appToast.fromError( "No se pudieron añadir los ingredientes.", error );
   } finally {
     savingBulkIngredients.value = false;
   }

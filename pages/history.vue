@@ -208,6 +208,7 @@ type MenuGenerationLog = {
 
 const supabase = useSupabase();
 const { loadCurrentUser } = useCurrentUser();
+const appToast = useAppToast();
 const router = useRouter();
 
 const loadingJobs = ref(true);
@@ -368,7 +369,7 @@ const deleteJob = async (job: MenuGenerationJob) => {
     await loadData();
   } catch (error) {
     await logError("web", error, { context: "history.deleteJob" });
-    alert("No se pudo eliminar el job.");
+    appToast.fromError("No se pudo eliminar el job.", error);
   }
 };
 
@@ -387,7 +388,7 @@ const cleanupFinishedJobs = async () => {
     await loadData();
   } catch (error) {
     await logError("web", error, { context: "history.cleanupFinishedJobs" });
-    alert("No se pudieron limpiar los jobs.");
+    appToast.fromError("No se pudieron limpiar los jobs.", error);
   }
 };
 
@@ -408,7 +409,7 @@ const deleteRotatingMenu = async (menu: RotatingMenu) => {
     await loadData();
   } catch (error) {
     await logError("web", error, { context: "history.deleteRotatingMenu" });
-    alert("No se pudo eliminar el menú rotativo.");
+    appToast.fromError("No se pudo eliminar el menú rotativo.", error);
   }
 };
 

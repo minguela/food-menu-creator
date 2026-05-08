@@ -673,7 +673,14 @@ const generateRotatingMenu = async () => {
     if ( Array.isArray( uncured ) && uncured.length > 0 ) {
       const preview = uncured
         .slice( 0, 6 )
-        .map( ( item: any ) => `${ item.dish_name } (${ item.reason })` )
+        .map( ( item: any ) => {
+          const blocking = Array.isArray( item.blocking_ingredients )
+            ? item.blocking_ingredients.filter( Boolean ).slice( 0, 4 )
+            : [];
+          const blockingText =
+            blocking.length > 0 ? ` -> ${ blocking.join( ", " ) }` : "";
+          return `${ item.dish_name } (${ item.reason })${ blockingText }`;
+        } )
         .join( ", " );
       error.value = `No se puede generar todavía: hay recetas/ingredientes sin curar (${ preview }).`;
     } else {

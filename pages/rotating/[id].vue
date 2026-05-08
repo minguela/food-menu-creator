@@ -5,27 +5,27 @@
         <NuxtLink href="/history" class="text-sm text-sky-300 underline">
           Volver a rotativos
         </NuxtLink>
-        <h1 class="mt-2 text-2xl font-bold text-gray-900">
+        <h1 class="mt-2 text-2xl font-bold text-gray-900 dark:text-slate-100">
           {{ detail?.menu?.name || "Menú rotativo" }}
         </h1>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-gray-500 dark:text-slate-400">
           {{ detail?.menu?.duration_days || 0 }} días ·
           {{ detail?.profiles?.length || 0 }} perfiles ·
           {{ detail?.days?.length || 0 }} días cargados
         </p>
       </div>
       <div class="flex flex-wrap gap-2">
-        <NuxtLink href="/shopping" class="rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+        <NuxtLink href="/shopping" class="rounded-lg border px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900">
           Abrir compra
         </NuxtLink>
-        <button class="rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+        <button class="rounded-lg border px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
           @click="showDebug = !showDebug">
           {{ showDebug ? "Ocultar debug" : "Ver debug" }}
         </button>
       </div>
     </header>
 
-    <section v-if=" loading " class="rounded-lg border bg-white p-6 text-sm text-gray-500">
+    <section v-if=" loading " class="rounded-lg border bg-white dark:bg-slate-900 p-6 text-sm text-gray-500 dark:text-slate-400">
       Cargando menú generado...
     </section>
 
@@ -33,7 +33,7 @@
       <p class="font-semibold">No se pudo visualizar el menú generado</p>
       <p class="mt-1">{{ error }}</p>
       <pre v-if=" debug "
-        class="mt-3 max-h-80 overflow-auto rounded border border-red-200 bg-white p-3 text-xs">{{ JSON.stringify( debug, null, 2 ) }}</pre>
+        class="mt-3 max-h-80 overflow-auto rounded border border-red-200 bg-white dark:bg-slate-900 p-3 text-xs">{{ JSON.stringify( debug, null, 2 ) }}</pre>
     </section>
 
     <section v-else-if=" !detail || detail.days.length === 0 "
@@ -47,37 +47,37 @@
 
     <template v-else>
       <section class="grid gap-3 md:grid-cols-4">
-        <article class="rounded-lg border bg-white p-4 text-gray-900">
-          <p class="text-xs text-gray-500">Estado job</p>
-          <p class="mt-1 font-semibold text-gray-900">
+        <article class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-gray-900 dark:text-slate-100">
+          <p class="text-xs text-gray-500 dark:text-slate-400">Estado job</p>
+          <p class="mt-1 font-semibold text-gray-900 dark:text-slate-100">
             {{ detail.job?.status || "Sin job vinculado" }}
           </p>
         </article>
-        <article class="rounded-lg border bg-white p-4 text-gray-900">
-          <p class="text-xs text-gray-500">Días</p>
-          <p class="mt-1 font-semibold text-gray-900">{{ detail.days.length }}</p>
+        <article class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-gray-900 dark:text-slate-100">
+          <p class="text-xs text-gray-500 dark:text-slate-400">Días</p>
+          <p class="mt-1 font-semibold text-gray-900 dark:text-slate-100">{{ detail.days.length }}</p>
         </article>
-        <article class="rounded-lg border bg-white p-4 text-gray-900">
-          <p class="text-xs text-gray-500">Comidas</p>
-          <p class="mt-1 font-semibold text-gray-900">{{ mealsCount }}</p>
+        <article class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-gray-900 dark:text-slate-100">
+          <p class="text-xs text-gray-500 dark:text-slate-400">Comidas</p>
+          <p class="mt-1 font-semibold text-gray-900 dark:text-slate-100">{{ mealsCount }}</p>
         </article>
-        <article class="rounded-lg border bg-white p-4 text-gray-900">
-          <p class="text-xs text-gray-500">Compra</p>
-          <p class="mt-1 font-semibold text-gray-900">
+        <article class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-gray-900 dark:text-slate-100">
+          <p class="text-xs text-gray-500 dark:text-slate-400">Compra</p>
+          <p class="mt-1 font-semibold text-gray-900 dark:text-slate-100">
             {{ detail.shopping_items.length }} líneas
           </p>
         </article>
       </section>
 
-      <section class="rounded-lg border bg-white p-4 text-gray-900">
+      <section class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-gray-900 dark:text-slate-100">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 class="font-semibold text-gray-900">Navegación por días</h2>
-            <p class="text-xs text-gray-500">
+            <h2 class="font-semibold text-gray-900 dark:text-slate-100">Navegación por días</h2>
+            <p class="text-xs text-gray-500 dark:text-slate-400">
               Salta entre días y colapsa los que no estés revisando.
             </p>
           </div>
-          <button class="rounded border px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50" @click=" toggleAllDays ">
+          <button class="rounded border px-3 py-1.5 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900" @click=" toggleAllDays ">
             {{ allExpanded ? "Colapsar días" : "Expandir días" }}
           </button>
         </div>
@@ -85,7 +85,7 @@
           <button v-for=" day in detail.days " :key=" `nav-${ day.id }` " class="min-w-16 rounded border px-3 py-2 text-xs"
             :class=" selectedDayNumber === day.day_number
                 ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                : 'text-gray-700 hover:bg-gray-50'
+                : 'text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900'
               " @click="selectDay( day.day_number )">
             Día {{ day.day_number }}
           </button>
@@ -100,17 +100,17 @@
 
       <section class="space-y-4">
         <article v-for=" day in visibleDays " :id=" `day-${ day.day_number }` " :key=" day.id "
-          class="rounded-lg border bg-white p-4 text-gray-900">
+          class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-gray-900 dark:text-slate-100">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 class="text-lg font-semibold text-gray-900">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-slate-100">
                 Día {{ day.day_number }} · {{ formatDate( day.day_date ) }}
               </h2>
-              <p class="text-xs text-gray-500">
+              <p class="text-xs text-gray-500 dark:text-slate-400">
                 {{ day.meals.length }} comidas · {{ day.profile_totals.length }} perfiles
               </p>
             </div>
-            <button class="rounded border px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+            <button class="rounded border px-3 py-1.5 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
               @click="toggleDay( day.day_number )">
               {{ collapsedDays.has( day.day_number ) ? "Expandir" : "Colapsar" }}
             </button>
@@ -118,14 +118,14 @@
 
           <div v-if=" !collapsedDays.has( day.day_number ) " class="mt-4 space-y-3">
             <article v-for=" meal in day.meals " :key=" meal.id " class="rounded-lg border p-3"
-              :class=" meal.is_special ? 'border-amber-200 bg-amber-50' : 'bg-white' ">
+              :class=" meal.is_special ? 'border-amber-200 bg-amber-50' : 'bg-white dark:bg-slate-900' ">
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p class="text-xs font-semibold uppercase text-gray-500">
+                  <p class="text-xs font-semibold uppercase text-gray-500 dark:text-slate-400">
                     {{ mealLabel( meal.meal_type ) }}
                   </p>
-                  <h3 class="font-semibold text-gray-900">{{ meal.dish_name }}</h3>
-                  <p v-if=" meal.dish_description " class="text-xs text-gray-500">
+                  <h3 class="font-semibold text-gray-900 dark:text-slate-100">{{ meal.dish_name }}</h3>
+                  <p v-if=" meal.dish_description " class="text-xs text-gray-500 dark:text-slate-400">
                     {{ meal.dish_description }}
                   </p>
                 </div>
@@ -135,14 +135,14 @@
               </div>
 
               <div v-if=" meal.is_special "
-                class="mt-3 rounded border border-amber-200 bg-white/70 p-3 text-xs text-amber-800">
+                class="mt-3 rounded border border-amber-200 bg-white dark:bg-slate-900/70 p-3 text-xs text-amber-800">
                 Esta comida no tiene ingredientes calculados, no fuerza macros y
                 no se incluye en la lista de la compra.
               </div>
 
               <div v-else class="mt-3 overflow-x-auto">
                 <table class="min-w-[900px] w-full text-xs">
-                  <thead class="text-left text-gray-600">
+                  <thead class="text-left text-gray-600 dark:text-slate-300">
                     <tr>
                       <th class="px-2 py-2">Perfil</th>
                       <th class="px-2 py-2">x ración</th>
@@ -164,7 +164,7 @@
                       <td class="px-2 py-2">
                         <div v-if=" portion.ingredients.length > 0 " class="flex flex-wrap gap-1">
                           <span v-for=" ingredient in portion.ingredients " :key=" ingredient.id "
-                            class="rounded bg-gray-100 px-1.5 py-0.5">
+                            class="rounded bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5">
                             {{ ingredient.name }}:
                             {{ fixed( ingredient.final_quantity ) }}
                             {{ ingredient.unit_type }}
@@ -180,9 +180,9 @@
               </div>
             </article>
 
-            <div class="overflow-x-auto rounded-lg border bg-white">
-              <table class="min-w-[820px] w-full text-sm text-gray-900">
-                <thead class="text-left text-gray-600">
+            <div class="overflow-x-auto rounded-lg border bg-white dark:bg-slate-900">
+              <table class="min-w-[820px] w-full text-sm text-gray-900 dark:text-slate-100">
+                <thead class="text-left text-gray-600 dark:text-slate-300">
                   <tr>
                     <th class="px-3 py-2">Perfil</th>
                     <th class="px-3 py-2">kcal total</th>
@@ -218,19 +218,19 @@
         </article>
       </section>
 
-      <section class="rounded-lg border bg-white p-4 text-gray-900">
-        <h2 class="font-semibold text-gray-900">Lista de la compra generada</h2>
-        <p class="mt-1 text-xs text-gray-500">
+      <section class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-gray-900 dark:text-slate-100">
+        <h2 class="font-semibold text-gray-900 dark:text-slate-100">Lista de la compra generada</h2>
+        <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">
           Generada desde este menú. Las comidas libres/especiales se ignoran.
         </p>
         <div v-if=" detail.shopping_items.length === 0 "
-          class="mt-3 rounded border border-dashed p-4 text-sm text-gray-500">
+          class="mt-3 rounded border border-dashed p-4 text-sm text-gray-500 dark:text-slate-400">
           No hay líneas de compra para este menú.
         </div>
         <div v-else class="mt-3 grid gap-2 md:grid-cols-2">
           <div v-for=" item in detail.shopping_items " :key=" item.id " class="rounded border p-3 text-sm">
-            <p class="font-medium text-gray-900">{{ item.item_name }}</p>
-            <p class="text-xs text-gray-500">
+            <p class="font-medium text-gray-900 dark:text-slate-100">{{ item.item_name }}</p>
+            <p class="text-xs text-gray-500 dark:text-slate-400">
               {{ Math.round( Number( item.quantity_grams || item.quantity_needed || 0 ) ) }} g
               · {{ item.conversion_status || "exact" }}
             </p>

@@ -22,50 +22,50 @@
             <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
               Configuración
             </h1>
-            <p class="text-slate-500 text-sm mt-1">Personaliza tus objetivos nutricionales</p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Personaliza tus objetivos nutricionales</p>
           </div>
         </div>
       </header>
 
       <div class="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
         <!-- Global Objectives -->
-        <section class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+        <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
           <div class="flex items-center gap-3 mb-6">
             <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
               <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h2 class="text-lg font-bold text-slate-900">Objetivos globales</h2>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Objetivos globales</h2>
           </div>
 
           <div class="space-y-5">
             <label class="block">
-              <span class="block text-sm font-semibold text-slate-700 mb-2">Calorías diarias</span>
+              <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Calorías diarias</span>
               <input v-model.number=" config.daily_kcal_target " type="number" min="1000" max="5000" step="50"
-                class="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" />
+                class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" />
             </label>
 
             <label class="block">
-              <span class="block text-sm font-semibold text-slate-700 mb-2">Proteína objetivo (g/día)</span>
+              <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Proteína objetivo (g/día)</span>
               <input v-model.number=" config.daily_protein_target " type="number" min="20" max="400" step="1"
                 class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
             </label>
 
             <label class="block">
-              <span class="block text-sm font-medium text-gray-700 mb-1">Personas para cantidades</span>
+              <span class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Personas para cantidades</span>
               <input v-model.number=" config.persons_count " type="number" min="1" max="10"
                 class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
             </label>
 
             <div class="grid grid-cols-2 gap-3">
               <label class="block">
-                <span class="block text-sm font-medium text-gray-700 mb-1">Grasas objetivo (%)</span>
+                <span class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Grasas objetivo (%)</span>
                 <input v-model.number=" config.fat_pct_target " type="number" min="10" max="70"
                   class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
               </label>
               <label class="block">
-                <span class="block text-sm font-medium text-gray-700 mb-1">Hidratos objetivo (%)</span>
+                <span class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Hidratos objetivo (%)</span>
                 <input v-model.number=" config.carbs_pct_target " type="number" min="10" max="80"
                   class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
               </label>
@@ -76,7 +76,7 @@
               : 'bg-red-50 border-red-200'
               ">
               <div class="flex justify-between text-sm">
-                <span class="text-gray-700">Proteína deducida</span>
+                <span class="text-gray-700 dark:text-slate-200">Proteína deducida</span>
                 <span class="font-semibold">{{ macroValidation.proteinPct }}%</span>
               </div>
               <p class="text-xs mt-2" :class=" macroValidation.valid ? 'text-green-700' : 'text-red-700' ">
@@ -96,7 +96,7 @@
         </section>
 
         <!-- Personas -->
-        <section class="bg-white rounded-lg shadow-sm border p-6">
+        <section class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-6">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold">Personas</h2>
             <button @click=" resetProfileForm "
@@ -125,15 +125,15 @@
             </button>
           </form>
 
-          <div v-if=" profiles.length === 0 " class="text-sm text-gray-500 border rounded-lg p-4">
+          <div v-if=" profiles.length === 0 " class="text-sm text-gray-500 dark:text-slate-400 border rounded-lg p-4">
             Añade al menos un perfil para adaptar objetivos por persona.
           </div>
           <div v-else class="divide-y border rounded-lg">
             <div v-for=" profile in profiles " :key=" profile.id "
               class="flex flex-wrap items-center justify-between gap-3 p-4">
               <div>
-                <p class="font-medium text-gray-900">{{ profile.name }}</p>
-                <p class="text-sm text-gray-500">
+                <p class="font-medium text-gray-900 dark:text-slate-100">{{ profile.name }}</p>
+                <p class="text-sm text-gray-500 dark:text-slate-400">
                   {{ sexLabel( profile.sex ) }} · {{ profile.age }} años ·
                   {{ profile.daily_kcal_target }} kcal ·
                   {{ profile.daily_protein_target }}g proteína

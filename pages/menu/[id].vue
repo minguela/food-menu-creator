@@ -302,7 +302,7 @@
                 Plato o platos unidos
               </span>
               <textarea v-model.trim=" newMeal.dish_name " rows="3"
-                class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800 placeholder:text-slate-500"
+                class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800 placeholder:text-slate-500 dark:text-slate-400"
                 placeholder="Ej: Crema de calabacín + Pescado a elegir" required />
             </label>
 
@@ -311,7 +311,7 @@
                 Descripción
               </span>
               <input v-model.trim=" newMeal.dish_description "
-                class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800 placeholder:text-slate-500" />
+                class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800 placeholder:text-slate-500 dark:text-slate-400" />
             </label>
 
             <label class="md:col-span-2">
@@ -361,7 +361,7 @@
               <div v-for=" ( ingredient, index ) in ingredientRows " :key=" index "
                 class="grid grid-cols-[1fr_90px_90px_32px] gap-2">
                 <input v-model.trim=" ingredient.name "
-                  class="border border-slate-600 rounded-lg px-3 py-2 text-white bg-slate-800 placeholder:text-slate-500"
+                  class="border border-slate-600 rounded-lg px-3 py-2 text-white bg-slate-800 placeholder:text-slate-500 dark:text-slate-400"
                   placeholder="Nombre" />
                 <input v-model.number=" ingredient.quantity " type="number" min="0.01" step="0.01"
                   class="border border-slate-600 rounded-lg px-3 py-2 text-white bg-slate-800" />
@@ -1349,14 +1349,14 @@ const ocrStatusLabel = ( status?: WeeklyDayImage[ "ocr_status" ] ) => {
 
 const cellClass = ( meal?: WeeklyMeal | null ) => {
   if ( !meal ) {
-    return "border-dashed border-slate-300 bg-slate-50 text-slate-500";
+    return "border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400";
   }
 
   if ( meal.is_special || isFreeMealName( meal.dish_name ) ) {
     return "border-amber-200 bg-amber-50";
   }
 
-  return "border-slate-200 bg-white";
+  return "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900";
 };
 
 const recipeStatusText = ( meal?: WeeklyMeal | null ) => {

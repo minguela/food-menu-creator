@@ -824,14 +824,26 @@ const importCsv = async () => {
   if ( !csvInput.value.trim() ) return;
   importingCsv.value = true;
   try {
-    await $fetch( "/api/ingredients-import-csv", {
+    const result = await $fetch<{
+      success: boolean;
+      imported: number;
+      inserted: number;
+      updated: number;
+      skipped: number;
+      conflicts?: Array<{ name: string; reason: string }>;
+    }>( "/api/ingredients-import-csv", {
       method: "POST",
       body: { csv: csvInput.value },
     } );
     csvInput.value = "";
     showImportCsvModal.value = false;
     await load();
-    appToast.success("CSV importado correctamente.");
+    const conflictCount = Array.isArray( result?.conflicts )
+      ? result.conflicts.length
+      : 0;
+    appToast.success(
+      `CSV importado: ${ result.inserted } nuevos, ${ result.updated } actualizados, ${ result.skipped } repetidos omitidos${ conflictCount > 0 ? `, ${ conflictCount } conflictos` : "" }.`,
+    );
   } catch ( error ) {
     await logError( "web", error, { context: "ingredients.importCsv" } );
     appToast.fromError("No se pudo importar el CSV.", error);

@@ -41,6 +41,8 @@
       <NuxtPage />
     </main>
 
+    <Toaster rich-colors position="top-right" :expand="true" />
+
     <nav
       aria-label="Navegación móvil"
       class="fixed inset-x-0 bottom-0 z-50 border-t ui-divider bg-[#111a28eb] p-2 backdrop-blur-xl md:hidden"
@@ -70,6 +72,8 @@
 </template>
 
 <script setup lang="ts">
+import { Toaster } from "vue-sonner";
+
 const runtimeConfig = useRuntimeConfig();
 const appVersion = computed(
   () => runtimeConfig.public.appVersion || "0.0.0-local",

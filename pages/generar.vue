@@ -504,6 +504,7 @@ const currentJob = ref<{
 } | null>( null );
 const jobChannel = ref<any>( null );
 const generationLogs = ref<MenuGenerationLog[]>( [] );
+let jobPollingTimer: ReturnType<typeof setInterval> | null = null;
 const loading = ref( false );
 const error = ref( "" );
 const notificationMessage = ref( "" );
@@ -658,6 +659,10 @@ const generateRotatingMenu = async () => {
       current_step: response.job.current_step || "job_created",
     };
     subscribeToJob( response.job.id );
+    await $fetch( "/api/rotating-menu-jobs-process", {
+      method: "POST",
+      body: { jobId: response.job.id },
+    } ).catch( () => {} );
   } catch ( err ) {
     const maybeErr = err as
       | ( Error & { data?: any } )
@@ -680,6 +685,42 @@ const generateRotatingMenu = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const startJobPolling = ( jobId: string ) => {
+  if ( jobPollingTimer ) {
+    clearInterval( jobPollingTimer );
+    jobPollingTimer = null;
+  }
+  jobPollingTimer = setInterval( async () => {
+    const { data } = await supabase
+      .from( "menu_generation_jobs" )
+      .select(
+        "id,status,progress,current_step,error_message,result_menu_id,result_payload",
+      )
+      .eq( "id", jobId )
+      .maybeSingle();
+    if ( !data ) return;
+
+    currentJob.value = {
+      id: data.id,
+      status: data.status,
+      progress: Number( data.progress || 0 ),
+      current_step: data.current_step,
+      error_message: data.error_message,
+      result_menu_id: data.result_menu_id,
+    };
+
+    if ( data.status === "completed" || data.status === "failed" ) {
+      if ( jobPollingTimer ) {
+        clearInterval( jobPollingTimer );
+        jobPollingTimer = null;
+      }
+      if ( data.status === "completed" ) {
+        await hydrateFromJobResult( jobId );
+      }
+    }
+  }, 3500 );
 };
 
 const copySummary = async () => {
@@ -756,6 +797,7 @@ const subscribeToJob = ( jobId: string ) => {
   }
   generationLogs.value = [];
   loadGenerationLogs( jobId );
+  startJobPolling( jobId );
   const channel = supabase
     .channel( `menu-job-${ jobId }` )
     .on(
@@ -822,6 +864,10 @@ onUnmounted( () => {
   if ( jobChannel.value ) {
     supabase.removeChannel( jobChannel.value );
     jobChannel.value = null;
+  }
+  if ( jobPollingTimer ) {
+    clearInterval( jobPollingTimer );
+    jobPollingTimer = null;
   }
 } );
 </script>

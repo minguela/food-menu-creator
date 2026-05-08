@@ -1195,14 +1195,16 @@ export default defineEventHandler(async (event) => {
         (meal.profile_portions || [])
           .filter((portion: any) => {
             const hasNoIngredients = (portion.ingredients || []).length === 0;
-            const hasZeroMacros =
-              Number(portion.final_kcal || 0) <= 0 ||
-              Number(portion.final_protein_g || 0) <= 0 ||
-              Number(portion.final_carbs_g || 0) <= 0 ||
-              Number(portion.final_fat_g || 0) <= 0;
+            const kcal = Number(portion.final_kcal || 0);
+            const protein = Number(portion.final_protein_g || 0);
+            const carbs = Number(portion.final_carbs_g || 0);
+            const fat = Number(portion.final_fat_g || 0);
+            const hasInvalidKcal = kcal <= 0;
+            const hasNoMacroMass = protein + carbs + fat <= 0;
             return (
               hasNoIngredients ||
-              hasZeroMacros ||
+              hasInvalidKcal ||
+              hasNoMacroMass ||
               Boolean(portion.nutrition_pending)
             );
           })
@@ -1216,6 +1218,10 @@ export default defineEventHandler(async (event) => {
             final_protein_g: portion.final_protein_g,
             final_carbs_g: portion.final_carbs_g,
             final_fat_g: portion.final_fat_g,
+            total_macro_g:
+              Number(portion.final_protein_g || 0) +
+              Number(portion.final_carbs_g || 0) +
+              Number(portion.final_fat_g || 0),
             ingredients_count: (portion.ingredients || []).length,
             nutrition_pending: Boolean(portion.nutrition_pending),
           })),

@@ -83,6 +83,7 @@ export interface Dish {
   user_id?: string | null;
   menu_image_id?: string;
   name: string;
+  english_name?: string | null;
   normalized_name?: string;
   description?: string;
   recipe_status?:

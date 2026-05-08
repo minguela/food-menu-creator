@@ -24,7 +24,6 @@
           >
             Editado
           </span>
-          <span class="text-xs text-gray-500">{{ row.source || "manual" }}</span>
           <span class="rounded-full bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700">
             {{ caloricLabel }}
           </span>
@@ -40,6 +39,12 @@
           class="w-full rounded-md border border-gray-200 px-3 py-2 text-base font-semibold text-gray-900"
           placeholder="Nombre del ingrediente"
           @input="patchName"
+        />
+        <input
+          :value="row.english_name || ''"
+          class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700"
+          placeholder="Nombre en inglés (opcional)"
+          @input="patchEnglishName"
         />
       </div>
 
@@ -61,7 +66,7 @@
       </div>
     </div>
 
-    <div class="mt-4 grid gap-3 lg:grid-cols-[140px_170px_1fr]">
+    <div class="mt-4 grid gap-3 lg:grid-cols-[140px_1fr]">
       <label class="space-y-1">
         <span class="text-xs font-medium text-gray-600">Unidad</span>
         <select
@@ -72,23 +77,6 @@
           <option v-for="unit in unitTypes" :key="unit" :value="unit">
             {{ unit }}
           </option>
-        </select>
-      </label>
-
-      <label class="space-y-1">
-        <span class="text-xs font-medium text-gray-600">Fuente</span>
-        <select
-          :value="row.source"
-          class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
-          @change="patchSource"
-        >
-          <option value="manual">manual</option>
-          <option value="manual_csv">manual_csv</option>
-          <option value="manual_ai">manual_ai</option>
-          <option value="system">system</option>
-          <option value="imported">imported</option>
-          <option value="usda">usda</option>
-          <option value="open_food_facts">open_food_facts</option>
         </select>
       </label>
 
@@ -119,9 +107,6 @@
           {{ original.protein_per_100g ?? "?" }} · H
           {{ original.carbs_per_100g ?? "?" }} · G
           {{ original.fat_per_100g ?? "?" }}
-        </p>
-        <p v-if="original.source" class="mt-1">
-          Fuente original: {{ original.source }}
         </p>
       </div>
       <div class="rounded-md bg-gray-50 p-3 text-xs text-gray-600">
@@ -173,29 +158,7 @@
       </div>
     </div>
 
-    <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex flex-wrap gap-2">
-        <button
-          class="rounded-md border px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-          :disabled="saving || enriching || isTemporary"
-          @click="$emit('enrich')"
-        >
-          {{ enriching ? "Curando..." : "Curar OFF" }}
-        </button>
-        <button
-          class="rounded-md border px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
-          @click="$emit('autocomplete')"
-        >
-          Autocompletar valores
-        </button>
-        <button
-          class="rounded-md border px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
-          @click="$emit('restore-original')"
-        >
-          Restaurar originales
-        </button>
-      </div>
-
+    <div class="mt-4 flex flex-wrap items-center justify-end gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <span v-if="saveState === 'success'" class="text-xs text-emerald-700">
           Guardado
@@ -236,7 +199,7 @@ type IngredientCardRow = IngredientNutritionValues & {
   id: string;
   name: string;
   default_unit_type: UnitType;
-  source: string;
+  english_name?: string | null;
   review_reason?: string | null;
 };
 type RecipeLink = { id: string; name: string };
@@ -249,14 +212,13 @@ type ReviewCandidate = IngredientNutritionValues & {
 
 const props = defineProps<{
   row: IngredientCardRow;
-  original: IngredientNutritionValues & { source?: string };
+  original: IngredientNutritionValues;
   quality: IngredientNutritionQuality;
   changedFields: string[];
   selected: boolean;
   active: boolean;
   saving: boolean;
   saveState?: "idle" | "saving" | "success" | "error";
-  enriching: boolean;
   isTemporary: boolean;
   isFirst: boolean;
   isLast: boolean;
@@ -270,9 +232,6 @@ const emit = defineEmits<{
   patch: [value: Partial<IngredientCardRow>];
   save: [];
   "save-next": [];
-  enrich: [];
-  autocomplete: [];
-  "restore-original": [];
   "toggle-selected": [];
   previous: [];
   next: [];
@@ -300,8 +259,8 @@ const patchUnit = (event: Event) => {
   });
 };
 
-const patchSource = (event: Event) => {
-  patch({ source: (event.target as HTMLSelectElement).value });
+const patchEnglishName = (event: Event) => {
+  patch({ english_name: (event.target as HTMLInputElement).value || null });
 };
 
 const updateNutrition = (value: IngredientNutritionValues) => {

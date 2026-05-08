@@ -18,6 +18,18 @@
           :disabled=" selectedIds.length === 0 " @click=" deleteSelected ">
           Eliminar seleccionados ({{ selectedIds.length }})
         </button>
+        <button class="px-3 py-2 text-sm bg-slate-700 text-white rounded-lg hover:bg-slate-800"
+          @click="showImportCsvModal = true">
+          Importar CSV
+        </button>
+        <button class="px-3 py-2 text-sm bg-emerald-700 text-white rounded-lg hover:bg-emerald-800"
+          :disabled="exportingCsv" @click="exportCsv">
+          {{ exportingCsv ? "Exportando..." : "Exportar CSV" }}
+        </button>
+        <button class="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+          :disabled="selectedIds.length < 2" @click="openMergeSelectedModal">
+          Fusionar seleccionados
+        </button>
         <span class="text-xs text-gray-500">
           Valores nutricionales expresados por 100 g.
         </span>
@@ -115,12 +127,8 @@
     </section>
 
     <section class="bg-white rounded-lg border p-4">
-      <div class="grid gap-2 md:grid-cols-[1fr_auto]">
+      <div class="grid gap-2 md:grid-cols-1">
         <input v-model.trim=" query " class="w-full border rounded-lg px-3 py-2" placeholder="Buscar ingrediente..." />
-        <button class="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"
-          :disabled=" searchingUsda || !query " @click=" searchFoods ">
-          {{ searchingUsda ? "Buscando..." : "Buscar alimentos" }}
-        </button>
       </div>
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <button v-for=" option in filterOptions " :key=" option.value "
@@ -135,89 +143,6 @@
           Solo sin recetas
         </label>
       </div>
-      <div class="mt-2">
-        <label class="text-xs text-gray-600 block mb-1">Fuente</label>
-        <select v-model=" searchSource " class="border rounded-lg px-3 py-2 text-sm">
-          <option value="open_food_facts">Open Food Facts</option>
-          <option value="usda">USDA</option>
-          <option value="bedca">BEDCA (próximamente)</option>
-        </select>
-      </div>
-      <div class="mt-3 flex items-center gap-2">
-        <button class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
-          :disabled=" enriching " @click=" runEnrichment ">
-          {{
-            enriching
-              ? "Enriqueciendo..."
-              : selectedIds.length > 0
-                ? `Enriquecer seleccionados (${ selectedIds.length })`
-                : query
-                  ? "Enriquecer por búsqueda"
-                  : "Enriquecer siguiente pendiente"
-          }}
-        </button>
-        <button class="px-3 py-2 border rounded-lg text-xs text-gray-700 disabled:opacity-50"
-          :disabled=" mergingDuplicates " @click=" mergeDuplicateIngredients ">
-          {{
-            mergingDuplicates
-              ? "Fusionando..."
-              : "Fusionar duplicados/equivalentes"
-          }}
-        </button>
-        <span v-if=" enrichSummary " class="text-xs text-gray-600">
-          Procesados {{ enrichSummary.processed }} · completos
-          {{ enrichSummary.completed }} · revisión
-          {{ enrichSummary.needs_review }} · no encontrados
-          {{ enrichSummary.not_found }}
-        </span>
-        <button class="px-3 py-2 border rounded-lg text-xs text-gray-700 disabled:opacity-50"
-          :disabled=" backfillingAliases " @click=" backfillAliases ">
-          {{ backfillingAliases ? "Mapeando..." : "Mapear ES→EN (USDA)" }}
-        </button>
-      </div>
-    </section>
-
-    <section class="bg-white rounded-lg border p-4 space-y-2">
-      <h2 class="font-semibold text-gray-900">Importar CSV</h2>
-      <p class="text-xs text-gray-500">
-        Cabeceras:
-        `name,normalized_name,default_unit_type,kcal_per_100g,protein_per_100g,carbs_per_100g,fat_per_100g,source,external_id,barcode,is_verified`
-      </p>
-      <textarea v-model=" csvInput " class="w-full min-h-[140px] border rounded-lg px-3 py-2 text-sm"
-        placeholder="name,normalized_name,default_unit_type,kcal_per_100g,protein_per_100g,carbs_per_100g,fat_per_100g,source,external_id,barcode,is_verified" />
-      <div class="flex gap-2">
-        <button class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
-          :disabled=" importingCsv || !csvInput.trim() " @click=" importCsv ">
-          {{ importingCsv ? "Importando..." : "Importar CSV" }}
-        </button>
-      </div>
-    </section>
-
-    <section v-if=" usdaCandidates.length > 0 " class="bg-white rounded-lg border p-4 space-y-2">
-      <h2 class="font-semibold text-gray-900">Candidatos nutricionales</h2>
-      <p class="text-xs text-gray-500">
-        No se guarda nada automáticamente: selecciona y confirma manualmente.
-      </p>
-      <div v-for=" candidate in usdaCandidates " :key=" candidate.external_id " class="border rounded-lg p-3">
-        <p class="font-medium text-gray-900">{{ candidate.name }}</p>
-        <p class="text-xs text-gray-500">
-          {{ candidate.nutrients.kcal_per_100g ?? "?" }} kcal · P
-          {{ candidate.nutrients.protein_per_100g ?? "?" }} · H
-          {{ candidate.nutrients.carbs_per_100g ?? "?" }} · G
-          {{ candidate.nutrients.fat_per_100g ?? "?" }}
-        </p>
-        <div class="mt-2 flex gap-2">
-          <button class="text-xs text-indigo-700" @click="saveIngredientFromCandidate( candidate )">
-            Guardar candidato
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <section v-if=" reviewCandidates.length > 0 "
-      class="rounded-lg border border-sky-100 bg-sky-50 p-3 text-xs text-sky-800">
-      Hay {{ reviewCandidates.length }} sugerencias pendientes repartidas en
-      las tarjetas de sus ingredientes.
     </section>
 
     <section class="space-y-3">
@@ -236,13 +161,12 @@
         :caloric-label=" caloricLabelForRow( row ) "
         :selected=" isSelected( row.id ) " :active=" activeIngredientId === row.id "
         :saving=" savingStatusForRow( row.id ) === 'saving' " :save-state=" savingStatusForRow( row.id ) "
-        :enriching=" isRowEnriching( row.id ) " :is-temporary=" String( row.id ).startsWith( 'tmp-' ) "
+        :is-temporary=" String( row.id ).startsWith( 'tmp-' ) "
         :is-first=" filtered.findIndex( ( item ) => item.id === row.id ) === 0 " :is-last=" filtered.findIndex( ( item ) => item.id === row.id ) ===
           filtered.length - 1
           " :unit-types=" unitTypes " :recipes=" recipesForIngredient( row.id ) "
         :candidates=" candidatesForIngredient( row.id ) " @patch="patchRow( row.id, $event )" @save="save( row )"
-        @save-next="save( row, { goNext: true } )" @enrich="enrichOne( row )" @autocomplete="autocompleteRow( row )"
-        @restore-original="restoreOriginal( row )" @toggle-selected="toggleSelected( row.id )"
+        @save-next="save( row, { goNext: true } )" @toggle-selected="toggleSelected( row.id )"
         @previous="moveActive( row.id, -1 )" @next="moveActive( row.id, 1 )" @delete="deleteOne( row.id )"
         @apply-candidate=" applyCandidate " @show-candidate-debug=" showCandidateDebug " />
       <div v-if=" filtered.length === 0 " class="rounded-lg border bg-white p-4 text-sm text-gray-500">
@@ -264,6 +188,44 @@
       </div>
       <pre class="max-h-64 overflow-auto rounded bg-white p-2 text-[11px] text-slate-700">{{ JSON.stringify( selectedCandidateDebug.raw_payload || {}, null, 2 ) }}</pre>
     </section>
+
+    <div v-if="showImportCsvModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showImportCsvModal = false">
+      <div class="absolute inset-0 bg-black/50"></div>
+      <div class="relative w-full max-w-3xl rounded-lg bg-white p-4 space-y-3">
+        <h3 class="text-lg font-semibold text-gray-900">Importar CSV</h3>
+        <p class="text-xs text-gray-500">
+          Cabeceras: `name,english_name,normalized_name,default_unit_type,kcal_per_100g,protein_per_100g,carbs_per_100g,fat_per_100g`
+        </p>
+        <textarea v-model="csvInput" class="w-full min-h-[240px] border rounded-lg px-3 py-2 text-sm"
+          placeholder="Pega aquí el CSV completo" />
+        <div class="flex justify-end gap-2">
+          <button class="px-3 py-2 border rounded-lg" @click="showImportCsvModal = false">Cancelar</button>
+          <button class="px-3 py-2 bg-emerald-600 text-white rounded-lg disabled:opacity-50"
+            :disabled="importingCsv || !csvInput.trim()" @click="importCsv">
+            {{ importingCsv ? "Importando..." : "Importar" }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showMergeSelectedModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showMergeSelectedModal = false">
+      <div class="absolute inset-0 bg-black/50"></div>
+      <div class="relative w-full max-w-xl rounded-lg bg-white p-4 space-y-3">
+        <h3 class="text-lg font-semibold text-gray-900">Fusionar ingredientes seleccionados</h3>
+        <p class="text-sm text-gray-600">Seleccionados: {{ selectedIds.length }}. Elige cuál se queda como destino.</p>
+        <select v-model="mergeDestinationId" class="w-full border rounded-lg px-3 py-2">
+          <option value="">Selecciona destino</option>
+          <option v-for="item in mergeSelectedOptions" :key="item.id" :value="item.id">{{ item.name }}</option>
+        </select>
+        <div class="flex justify-end gap-2">
+          <button class="px-3 py-2 border rounded-lg" @click="showMergeSelectedModal = false">Cancelar</button>
+          <button class="px-3 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50"
+            :disabled="mergingSelected || !mergeDestinationId" @click="mergeSelectedIngredients">
+            {{ mergingSelected ? "Fusionando..." : "Confirmar fusión" }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Expansion Modal -->
@@ -380,7 +342,6 @@ import {
   caloricDensityLabel,
   classifyCaloricDensity,
 } from "~/utils/caloric-density";
-import { saveIngredientFromCandidate as persistCandidate } from "~/utils/save-ingredient-from-candidate";
 import type { Ingredient } from "~/types";
 import { useCurrentUser } from "~/composables/useCurrentUser";
 
@@ -393,12 +354,6 @@ type IngredientRow = Ingredient & {
   external_id?: string | null;
   barcode?: string | null;
   nutrition_status?: "complete" | "pending" | "needs_review" | "not_found";
-};
-type EnrichSummary = {
-  processed: number;
-  completed: number;
-  needs_review: number;
-  not_found: number;
 };
 type ReviewCandidate = {
   id: string;
@@ -421,12 +376,12 @@ type SaveState = "idle" | "saving" | "success" | "error";
 type OriginalIngredientSnapshot = Pick<
   IngredientRow,
   | "name"
+  | "english_name"
   | "default_unit_type"
   | "kcal_per_100g"
   | "protein_per_100g"
   | "carbs_per_100g"
   | "fat_per_100g"
-  | "source"
 >;
 
 const supabase = useSupabase();
@@ -435,22 +390,17 @@ const rows = ref<IngredientRow[]>( [] );
 const originalsById = ref<Record<string, OriginalIngredientSnapshot>>( {} );
 const csvInput = ref( "" );
 const importingCsv = ref( false );
-const usdaCandidates = ref<any[]>( [] );
-const searchingUsda = ref( false );
-const searchSource = ref<"usda" | "open_food_facts" | "bedca">(
-  "open_food_facts",
-);
-const enriching = ref( false );
-const enrichSummary = ref<EnrichSummary | null>( null );
-const mergingDuplicates = ref( false );
-const backfillingAliases = ref( false );
 const reviewCandidates = ref<ReviewCandidate[]>( [] );
 const selectedIds = ref<string[]>( [] );
-const enrichingRowIds = ref<string[]>( [] );
 const savingRowStates = ref<Record<string, SaveState>>( {} );
 const activeIngredientId = ref<string | null>( null );
 const filterMode = ref<FilterMode>( "all" );
 const selectedCandidateDebug = ref<ReviewCandidate | null>( null);
+const showImportCsvModal = ref(false);
+const exportingCsv = ref(false);
+const showMergeSelectedModal = ref(false);
+const mergingSelected = ref(false);
+const mergeDestinationId = ref("");
 const showOnlyWithoutRecipes = ref( false );
 const recipeLinksByIngredientId = ref<Record<string, RecipeLink[]>>( {} );
 const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
@@ -462,6 +412,10 @@ const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
   "pack",
   "unidad",
 ];
+
+const mergeSelectedOptions = computed(() =>
+  rows.value.filter((row) => selectedIds.value.includes(row.id)),
+);
 
 const qualityForRow = ( row: IngredientRow ) =>
   validateIngredientNutritionQuality( {
@@ -478,7 +432,10 @@ const filtered = computed( () => {
     const byNormalized = String( item.normalized_name || "" )
       .toLowerCase()
       .includes( q );
-    const matchesSearch = !q || byName || byNormalized;
+    const byEnglish = String( item.english_name || "" )
+      .toLowerCase()
+      .includes( q );
+    const matchesSearch = !q || byName || byNormalized || byEnglish;
     if ( !matchesSearch ) return false;
 
     if ( showOnlyWithoutRecipes.value ) {
@@ -556,19 +513,19 @@ const load = async () => {
     ...row,
     default_unit_type: row.default_unit_type || row.unit_type || "g",
     is_verified: Boolean( row.is_verified ),
-    source: row.source || "manual",
+    source: row.source || "manual_csv",
   } ) );
   originalsById.value = Object.fromEntries(
     rows.value.map( ( row ) => [
       row.id,
       {
         name: row.name,
+        english_name: row.english_name,
         default_unit_type: row.default_unit_type,
         kcal_per_100g: row.kcal_per_100g,
         protein_per_100g: row.protein_per_100g,
         carbs_per_100g: row.carbs_per_100g,
         fat_per_100g: row.fat_per_100g,
-        source: row.source,
       },
     ] ),
   );
@@ -644,12 +601,12 @@ const changedFieldsForRow = ( row: IngredientRow ) => {
   if ( !original ) return [];
   return [
     "name",
+    "english_name",
     "default_unit_type",
     "kcal_per_100g",
     "protein_per_100g",
     "carbs_per_100g",
     "fat_per_100g",
-    "source",
   ].filter( ( field ) => {
     return (
       ( row as any )[ field ] !== ( original as any )[ field ] &&
@@ -667,9 +624,6 @@ const patchRow = ( ingredientId: string, patch: Partial<IngredientRow> ) => {
 
 const savingStatusForRow = ( ingredientId: string ) =>
   savingRowStates.value[ ingredientId ] || "idle";
-
-const isRowEnriching = ( ingredientId: string ) =>
-  enrichingRowIds.value.includes( ingredientId );
 
 const isSelected = ( id: string ) => selectedIds.value.includes( id );
 
@@ -699,141 +653,6 @@ const toggleSelectAllFiltered = () => {
   );
 };
 
-const searchFoods = async () => {
-  if ( !query.value.trim() ) return;
-  searchingUsda.value = true;
-  try {
-    const payload = await $fetch<{
-      success: boolean;
-      candidates?: any[];
-    }>( "/api/ingredient-search", {
-      method: "POST",
-      body: {
-        query: query.value.trim(),
-        source: searchSource.value,
-      },
-    } );
-    usdaCandidates.value = Array.isArray( payload?.candidates )
-      ? payload.candidates
-      : [];
-  } catch ( error ) {
-    await logError( "web", error, { context: "ingredients.searchUsda" } );
-  } finally {
-    searchingUsda.value = false;
-  }
-};
-
-const saveIngredientFromCandidate = async ( candidate: any ) => {
-  try {
-    const result = await persistCandidate( candidate );
-    if ( !result?.success ) {
-      throw new Error( "No se pudo guardar candidato" );
-    }
-    await load();
-  } catch ( error ) {
-    await logError( "web", error, {
-      context: "ingredients.saveIngredientFromCandidate",
-    } );
-  }
-};
-
-const runEnrichment = async () => {
-  enriching.value = true;
-  try {
-    const result = await $fetch<{
-      success: boolean;
-      source: "auto" | "usda" | "open_food_facts" | "bedca";
-      processed: number;
-      completed: number;
-      needs_review: number;
-      not_found: number;
-    }>( "/api/enrich-ingredients", {
-      method: "POST",
-      body: {
-        ingredientIds: selectedIds.value,
-        limit: selectedIds.value.length > 0 ? selectedIds.value.length : 1,
-        query: selectedIds.value.length === 0 ? query.value.trim() : "",
-        source: searchSource.value === "usda" ? "usda" : "open_food_facts",
-      },
-    } );
-
-    enrichSummary.value = {
-      processed: result.processed || 0,
-      completed: result.completed || 0,
-      needs_review: result.needs_review || 0,
-      not_found: result.not_found || 0,
-    };
-    await load();
-  } catch ( error ) {
-    await logError( "web", error, { context: "ingredients.runEnrichment" } );
-  } finally {
-    enriching.value = false;
-  }
-};
-
-const enrichOne = async ( row: IngredientRow ) => {
-  if ( String( row.id ).startsWith( "tmp-" ) || isRowEnriching( row.id ) ) return;
-  enrichingRowIds.value.push( row.id );
-  try {
-    const result = await $fetch<{
-      success: boolean;
-      processed: number;
-      completed: number;
-      needs_review: number;
-      not_found: number;
-    }>( "/api/enrich-ingredients", {
-      method: "POST",
-      body: {
-        ingredientId: row.id,
-        limit: 1,
-        source: "open_food_facts",
-      },
-    } );
-
-    enrichSummary.value = {
-      processed: result.processed || 0,
-      completed: result.completed || 0,
-      needs_review: result.needs_review || 0,
-      not_found: result.not_found || 0,
-    };
-    await load();
-  } catch ( error ) {
-    await logError( "web", error, { context: "ingredients.enrichOne" } );
-  } finally {
-    enrichingRowIds.value = enrichingRowIds.value.filter( ( id ) => id !== row.id );
-  }
-};
-
-const backfillAliases = async () => {
-  backfillingAliases.value = true;
-  try {
-    await $fetch( "/api/ingredient-aliases-backfill", {
-      method: "POST",
-      body: { limit: 1000 },
-    } );
-  } catch ( error ) {
-    await logError( "web", error, { context: "ingredients.backfillAliases" } );
-  } finally {
-    backfillingAliases.value = false;
-  }
-};
-
-const mergeDuplicateIngredients = async () => {
-  mergingDuplicates.value = true;
-  try {
-    await $fetch( "/api/ingredients-merge-duplicates", {
-      method: "POST",
-    } );
-    await load();
-  } catch ( error ) {
-    await logError( "web", error, {
-      context: "ingredients.mergeDuplicateIngredients",
-    } );
-  } finally {
-    mergingDuplicates.value = false;
-  }
-};
-
 const applyCandidate = async ( candidateId: string ) => {
   try {
     await $fetch( "/api/ingredients-apply-candidate", {
@@ -853,32 +672,12 @@ const moveActive = ( ingredientId: string, direction: -1 | 1 ) => {
   if ( next ) activeIngredientId.value = next.id;
 };
 
-const autocompleteRow = async ( row: IngredientRow ) => {
-  const candidate = candidatesForIngredient( row.id )[ 0 ];
-  if ( candidate ) {
-    patchRow( row.id, {
-      kcal_per_100g: candidate.kcal_per_100g,
-      protein_per_100g: candidate.protein_per_100g,
-      carbs_per_100g: candidate.carbs_per_100g,
-      fat_per_100g: candidate.fat_per_100g,
-      source: candidate.source,
-    } as Partial<IngredientRow> );
-    return;
-  }
-  await enrichOne( row );
-};
-
-const restoreOriginal = ( row: IngredientRow ) => {
-  const original = originalsById.value[ row.id ];
-  if ( !original ) return;
-  patchRow( row.id, original as Partial<IngredientRow> );
-};
-
 const addIngredient = () => {
   const id = `tmp-${ Date.now() }` as any;
   const newRow = {
     id,
     name: "",
+    english_name: null,
     normalized_name: "",
     unit_type: "g",
     default_unit_type: "g",
@@ -886,7 +685,7 @@ const addIngredient = () => {
     protein_per_100g: null,
     carbs_per_100g: null,
     fat_per_100g: null,
-    source: "manual",
+    source: "manual_csv",
     external_id: null,
     barcode: null,
     is_verified: false,
@@ -898,12 +697,13 @@ const addIngredient = () => {
     ...originalsById.value,
     [ id ]: {
       name: "",
+      english_name: null,
       default_unit_type: "g",
       kcal_per_100g: null,
       protein_per_100g: null,
       carbs_per_100g: null,
       fat_per_100g: null,
-      source: "manual",
+      source: "manual_csv",
     },
   };
   activeIngredientId.value = id;
@@ -920,6 +720,7 @@ const save = async ( row: IngredientRow, options: { goNext?: boolean } = {} ) =>
   } );
   const payload = {
     name: row.name.trim(),
+    english_name: row.english_name?.trim() || null,
     normalized_name: normalizeIngredientName( row.name ),
     default_unit_type: row.default_unit_type,
     unit_type: row.default_unit_type,
@@ -927,7 +728,7 @@ const save = async ( row: IngredientRow, options: { goNext?: boolean } = {} ) =>
     protein_per_100g: row.protein_per_100g,
     carbs_per_100g: row.carbs_per_100g,
     fat_per_100g: row.fat_per_100g,
-    source: row.source || "manual",
+    source: "manual_csv",
     external_id: row.external_id || null,
     barcode: row.barcode || null,
     is_verified: !!row.is_verified && !nutritionQuality.needsReview,
@@ -1018,11 +819,61 @@ const importCsv = async () => {
       body: { csv: csvInput.value },
     } );
     csvInput.value = "";
+    showImportCsvModal.value = false;
     await load();
   } catch ( error ) {
     await logError( "web", error, { context: "ingredients.importCsv" } );
   } finally {
     importingCsv.value = false;
+  }
+};
+
+const exportCsv = async () => {
+  exportingCsv.value = true;
+  try {
+    const response = await $fetch.raw("/api/ingredients-export-csv", { method: "GET" });
+    const csv = String(response._data || "");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `ingredients-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    await logError("web", error, { context: "ingredients.exportCsv" });
+  } finally {
+    exportingCsv.value = false;
+  }
+};
+
+const openMergeSelectedModal = () => {
+  if (selectedIds.value.length < 2) return;
+  mergeDestinationId.value = selectedIds.value[0] || "";
+  showMergeSelectedModal.value = true;
+};
+
+const mergeSelectedIngredients = async () => {
+  if (!mergeDestinationId.value || selectedIds.value.length < 2) return;
+  mergingSelected.value = true;
+  try {
+    await $fetch("/api/ingredients-merge-selected", {
+      method: "POST",
+      body: {
+        selectedIngredientIds: selectedIds.value,
+        destinationIngredientId: mergeDestinationId.value,
+      },
+    });
+    selectedIds.value = [];
+    mergeDestinationId.value = "";
+    showMergeSelectedModal.value = false;
+    await load();
+  } catch (error) {
+    await logError("web", error, { context: "ingredients.mergeSelectedIngredients" });
+  } finally {
+    mergingSelected.value = false;
   }
 };
 

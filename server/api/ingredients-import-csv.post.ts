@@ -4,6 +4,7 @@ import { classifyCaloricDensity } from "~/utils/caloric-density";
 
 type CsvRow = {
   name: string;
+  english_name?: string;
   normalized_name?: string;
   default_unit_type?: string;
   kcal_per_100g?: string;
@@ -90,6 +91,7 @@ export default defineEventHandler(async (event) => {
           : null;
       return {
         name: row.name.trim(),
+        english_name: row.english_name?.trim() || null,
         normalized_name: normalizedName,
         default_unit_type: row.default_unit_type || "g",
         unit_type: row.default_unit_type || "g",

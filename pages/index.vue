@@ -297,6 +297,7 @@ const supabase = useSupabase();
 const router = useRouter();
 const { loadCurrentUser } = useCurrentUser();
 const appToast = useAppToast();
+const { confirm: confirmDialog } = useConfirmDialog();
 
 const menus = ref<WeeklyMenu[]>( [] );
 const selectedMenuIds = ref<string[]>( [] );
@@ -460,7 +461,13 @@ const toggleSelectAllMenus = () => {
 
 const deleteSelectedMenus = async () => {
   if ( selectedMenuIds.value.length === 0 ) return;
-  if ( !confirm( `¿Eliminar ${ selectedMenuIds.value.length } menús semanales seleccionados?` ) ) return;
+  const confirmed = await confirmDialog( {
+    title: "Eliminar menús",
+    message: `¿Eliminar ${ selectedMenuIds.value.length } menús semanales seleccionados?`,
+    confirmText: "Eliminar",
+    danger: true,
+  } );
+  if ( !confirmed ) return;
 
   const currentUser = await loadCurrentUser();
   if ( !currentUser ) {
@@ -809,7 +816,13 @@ const viewMenu = ( menu: WeeklyMenu ) => {
 };
 
 const confirmDeleteMenu = async ( menu: WeeklyMenu ) => {
-  if ( !confirm( `¿Eliminar el menú "${ menu.name }"?` ) ) return;
+  const confirmed = await confirmDialog( {
+    title: "Eliminar menú",
+    message: `¿Eliminar el menú "${ menu.name }"?`,
+    confirmText: "Eliminar",
+    danger: true,
+  } );
+  if ( !confirmed ) return;
 
   const currentUser = await loadCurrentUser();
   if ( !currentUser ) {

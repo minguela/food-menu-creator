@@ -1200,10 +1200,12 @@ export default defineEventHandler(async (event) => {
             const carbs = Number(portion.final_carbs_g || 0);
             const fat = Number(portion.final_fat_g || 0);
             const hasInvalidKcal = kcal <= 0;
+            const hasNegativeMacro = protein < 0 || carbs < 0 || fat < 0;
             const hasNoMacroMass = protein + carbs + fat <= 0;
             return (
               hasNoIngredients ||
               hasInvalidKcal ||
+              hasNegativeMacro ||
               hasNoMacroMass ||
               Boolean(portion.nutrition_pending)
             );

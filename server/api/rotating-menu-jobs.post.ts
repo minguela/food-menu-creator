@@ -58,6 +58,13 @@ export default defineEventHandler(async (event) => {
         progress: Number(existingRunning.progress || 0),
       },
     });
+    const origin = getRequestURL(event).origin;
+    fetch(`${origin}/api/rotating-menu-jobs-process`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jobId: existingRunning.id }),
+    }).catch(() => {});
+
     return {
       success: true,
       job: existingRunning,

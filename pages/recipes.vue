@@ -16,7 +16,7 @@
             <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
               Biblioteca de recetas
             </h1>
-            <p class="text-slate-500 text-sm mt-1">Curación de platos detectados por OCR</p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Curación de platos detectados por OCR</p>
           </div>
         </div>
         <div class="flex gap-3">
@@ -26,7 +26,7 @@
             Nueva receta
           </button>
           <NuxtLink href="/ingredients"
-            class="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all text-sm font-medium">
+            class="px-4 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:bg-slate-900 hover:border-slate-300 dark:border-slate-600 transition-all text-sm font-medium">
             Ingredientes
           </NuxtLink>
           <button
@@ -42,7 +42,7 @@
       </header>
 
       <!-- Search & Filters -->
-      <section class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-6">
+      <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-5 mb-6">
         <div class="flex flex-wrap items-center gap-4">
           <label class="flex-1 min-w-[240px]">
             <div class="relative">
@@ -53,27 +53,27 @@
                 </svg>
               </div>
               <input v-model.trim=" searchTerm "
-                class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                class="w-full pl-10 pr-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                 placeholder="Buscar receta por nombre..." />
             </div>
           </label>
-          <label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-800">
+          <label class="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 cursor-pointer hover:text-slate-800 dark:text-slate-100">
             <input type="checkbox" :checked=" allFilteredSelected " @change=" toggleSelectAllFiltered "
-              class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500" />
+              class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-purple-600 focus:ring-purple-500" />
             <span class="font-medium">Seleccionar visibles</span>
           </label>
-          <label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-800">
+          <label class="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 cursor-pointer hover:text-slate-800 dark:text-slate-100">
             <input v-model=" showOnlyWithoutIngredients " type="checkbox"
-              class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500" />
+              class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-purple-600 focus:ring-purple-500" />
             <span class="font-medium">Solo sin ingredientes</span>
           </label>
           <button v-for=" item in filterItems " :key=" item.value " class="px-3 py-1.5 rounded-lg border text-sm" :class=" filter === item.value
               ? 'bg-indigo-600 text-white border-indigo-600'
-              : 'text-gray-700'
+              : 'text-gray-700 dark:text-slate-200'
             " @click="filter = item.value">
             {{ item.label }}
           </button>
-          <button class="px-3 py-1.5 rounded-lg border text-sm text-gray-700 disabled:opacity-50"
+          <button class="px-3 py-1.5 rounded-lg border text-sm text-gray-700 dark:text-slate-200 disabled:opacity-50"
             :disabled=" selectedDishIds.length === 0 " @click=" clearSelection ">
             Limpiar selección
           </button>
@@ -95,9 +95,9 @@
           </button>
         </div>
         <div v-if=" showMergePanel " class="mt-3 border rounded-lg p-3 space-y-2">
-          <p class="text-sm font-medium text-gray-900">Fusionar recetas</p>
+          <p class="text-sm font-medium text-gray-900 dark:text-slate-100">Fusionar recetas</p>
           <label class="block">
-            <span class="block text-xs text-gray-600 mb-1">Receta destino</span>
+            <span class="block text-xs text-gray-600 dark:text-slate-300 mb-1">Receta destino</span>
             <select v-model=" mergeTargetId " class="w-full border rounded-lg px-3 py-2">
               <option v-for=" dish in mergeCandidates " :key=" `merge-target-${ dish.id }` " :value=" dish.id ">
                 {{ dish.name }}
@@ -105,7 +105,7 @@
             </select>
           </label>
           <label class="block">
-            <span class="block text-xs text-gray-600 mb-1">
+            <span class="block text-xs text-gray-600 dark:text-slate-300 mb-1">
               Nombre final (opcional)
             </span>
             <input v-model.trim=" mergeFinalName " class="w-full border rounded-lg px-3 py-2"
@@ -124,13 +124,13 @@
       </section>
 
       <section class="space-y-3">
-        <article v-if=" filteredDishes.length === 0 " class="bg-white rounded-lg border p-5 text-sm text-gray-500">
+        <article v-if=" filteredDishes.length === 0 " class="bg-white dark:bg-slate-900 rounded-lg border p-5 text-sm text-gray-500 dark:text-slate-400">
           {{ showOnlyWithoutIngredients
             ? "No se encontraron recetas sin ingredientes con los filtros actuales."
             : "No hay recetas que coincidan con los filtros actuales."
           }}
         </article>
-        <article v-for=" dish in filteredDishes " :key=" dish.id " class="bg-white rounded-lg border p-4">
+        <article v-for=" dish in filteredDishes " :key=" dish.id " class="bg-white dark:bg-slate-900 rounded-lg border p-4">
           <div class="flex flex-wrap justify-between gap-3">
             <div class="flex items-start gap-3">
               <label class="mt-1 inline-flex items-center">
@@ -138,8 +138,8 @@
               </label>
               <div>
                 <div class="flex items-center gap-2">
-                  <h2 class="font-semibold text-gray-900">{{ dish.name }}</h2>
-                  <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+                  <h2 class="font-semibold text-gray-900 dark:text-slate-100">{{ dish.name }}</h2>
+                  <span class="rounded-full bg-gray-100 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-gray-700 dark:text-slate-200">
                     {{ ingredientCount( dish ) }} ingredientes
                   </span>
                   <span v-if=" dish.is_special "
@@ -147,7 +147,7 @@
                     Comida libre · {{ dish.special_kcal_reserved || 700 }} kcal
                   </span>
                 </div>
-                <p class="text-sm text-gray-500">
+                <p class="text-sm text-gray-500 dark:text-slate-400">
                   {{ dish.description || "Sin descripción" }}
                 </p>
                 <p class="text-xs mt-1" :class=" statusMeta( dish ).color ">
@@ -174,24 +174,24 @@
 
           <div v-if=" editingDishId === dish.id " class="mt-4 space-y-3">
             <div class="rounded-lg border p-3 space-y-2">
-              <p class="text-xs font-medium text-gray-700">Datos de receta</p>
+              <p class="text-xs font-medium text-gray-700 dark:text-slate-200">Datos de receta</p>
               <div class="grid gap-2 md:grid-cols-2">
                 <label>
-                  <span class="block text-xs text-gray-600 mb-1">Nombre</span>
+                  <span class="block text-xs text-gray-600 dark:text-slate-300 mb-1">Nombre</span>
                   <input v-model.trim=" recipeForm.name " class="w-full border rounded-lg px-3 py-2" />
                 </label>
                 <label>
-                  <span class="block text-xs text-gray-600 mb-1">Descripción</span>
+                  <span class="block text-xs text-gray-600 dark:text-slate-300 mb-1">Descripción</span>
                   <input v-model.trim=" recipeForm.description " class="w-full border rounded-lg px-3 py-2" />
                 </label>
                 <label class="md:col-span-2">
-                  <span class="inline-flex items-center gap-2 text-xs text-gray-700">
+                  <span class="inline-flex items-center gap-2 text-xs text-gray-700 dark:text-slate-200">
                     <input v-model=" recipeForm.is_special " type="checkbox" />
                     <span>Marcar receta como comida libre/especial</span>
                   </span>
                 </label>
                 <label v-if=" recipeForm.is_special " class="md:col-span-2">
-                  <span class="block text-xs text-gray-600 mb-1">
+                  <span class="block text-xs text-gray-600 dark:text-slate-300 mb-1">
                     kcal reservadas comida libre
                   </span>
                   <input v-model.number=" recipeForm.special_kcal_reserved " type="number" min="0" max="2000" step="10"
@@ -212,7 +212,7 @@
               antes de usar para cálculos.
             </p>
 
-            <h3 class="text-sm font-medium text-gray-900">
+            <h3 class="text-sm font-medium text-gray-900 dark:text-slate-100">
               Sugeridos (sin confirmar)
             </h3>
             <div class="flex justify-end">
@@ -221,7 +221,7 @@
                 {{ savingBatch ? "Confirmando..." : "Confirmar todos" }}
               </button>
             </div>
-            <div v-if=" pendingRows.length === 0 " class="text-sm text-gray-500">
+            <div v-if=" pendingRows.length === 0 " class="text-sm text-gray-500 dark:text-slate-400">
               No hay sugerencias pendientes.
             </div>
             <div v-else class="space-y-2">
@@ -265,7 +265,7 @@
                   <div v-for=" candidate in candidateResults " :key=" `${ candidate.source }-${ candidate.external_id }` "
                     class="text-xs border rounded p-2">
                     <p class="font-medium">{{ candidate.name }}</p>
-                    <p class="text-gray-500">
+                    <p class="text-gray-500 dark:text-slate-400">
                       {{ candidate.nutrients.kcal_per_100g ?? "?" }} kcal · P
                       {{ candidate.nutrients.protein_per_100g ?? "?" }} · H
                       {{ candidate.nutrients.carbs_per_100g ?? "?" }} · G
@@ -279,7 +279,7 @@
               </div>
             </div>
 
-            <h3 class="text-sm font-medium text-gray-900">
+            <h3 class="text-sm font-medium text-gray-900 dark:text-slate-100">
               Confirmados (base receta)
             </h3>
             <div class="flex justify-end">
@@ -288,7 +288,7 @@
                 {{ savingBatch ? "Guardando..." : "Guardar todos" }}
               </button>
             </div>
-            <div class="space-y-2 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+            <div class="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 p-3">
               <div v-for=" row in confirmedRows " :key=" row.id " class="grid grid-cols-[1fr_150px_1fr] gap-2">
                 <input v-model.trim=" row.name " class="border rounded-lg px-3 py-2" />
                 <select v-model=" row.unit_type " class="border rounded-lg px-3 py-2">
@@ -328,7 +328,7 @@
                   <div v-for=" candidate in candidateResults " :key=" `${ candidate.source }-${ candidate.external_id }` "
                     class="text-xs border rounded p-2">
                     <p class="font-medium">{{ candidate.name }}</p>
-                    <p class="text-gray-500">
+                    <p class="text-gray-500 dark:text-slate-400">
                       {{ candidate.nutrients.kcal_per_100g ?? "?" }} kcal · P
                       {{ candidate.nutrients.protein_per_100g ?? "?" }} · H
                       {{ candidate.nutrients.carbs_per_100g ?? "?" }} · G
@@ -343,7 +343,7 @@
             </div>
 
             <button
-              class="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
+              class="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
               @click="addManualConfirmed( dish.id )">
               + Añadir ingrediente manual
             </button>
@@ -358,7 +358,7 @@
                   class="min-w-[260px] flex-1 border rounded-lg px-3 py-2 text-sm"
                   placeholder="Busca: aceite, pollo, arroz..." />
                 <button
-                  class="text-xs px-3 py-2 rounded border border-sky-200 bg-white text-sky-800 hover:bg-sky-100"
+                  class="text-xs px-3 py-2 rounded border border-sky-200 bg-white dark:bg-slate-900 text-sky-800 hover:bg-sky-100"
                   :disabled="!existingIngredientQuery.trim()"
                   @click="addExistingIngredientByQuery( dish.id )">
                   Añadir desde catálogo
@@ -372,7 +372,7 @@
               </p>
               <p
                 v-else-if="existingIngredientQuery.trim().length >= 2 && filteredExistingIngredients.length === 0"
-                class="text-xs text-slate-500">
+                class="text-xs text-slate-500 dark:text-slate-400">
                 No hay coincidencias en catálogo.
               </p>
               <datalist id="existing-ingredients-list">
@@ -383,7 +383,7 @@
               </datalist>
             </div>
             <div class="rounded-lg border p-3 space-y-2">
-              <p class="text-xs font-medium text-gray-700">
+              <p class="text-xs font-medium text-gray-700 dark:text-slate-200">
                 Añadir varios ingredientes (uno por línea)
               </p>
               <textarea v-model=" bulkIngredientInput " class="w-full min-h-[96px] border rounded-lg px-3 py-2 text-sm"
@@ -409,10 +409,10 @@ aceite de oliva" />
       </section>
       <div v-if=" showSplitPanel " class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
         @click.self=" closeSplitPanel ">
-        <div class="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-lg bg-white flex flex-col">
+        <div class="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-lg bg-white dark:bg-slate-900 flex flex-col">
           <div class="p-4 space-y-3 overflow-y-auto">
-          <h3 class="text-lg font-semibold text-gray-900">Dividir receta</h3>
-          <p class="text-sm text-gray-600">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100">Dividir receta</h3>
+          <p class="text-sm text-gray-600 dark:text-slate-300">
             Receta original:
             <span class="font-medium">{{ splitSourceDish?.name }}</span>
           </p>
@@ -420,7 +420,7 @@ aceite de oliva" />
             No detecté separadores claros (`+`, `de segundo`, `primero/segundo`).
           </div>
           <div v-else class="space-y-2">
-            <p class="text-xs text-gray-600">
+            <p class="text-xs text-gray-600 dark:text-slate-300">
               Partes detectadas (editables antes de crear):
             </p>
             <div v-for=" ( part, index ) in splitCandidates " :key=" `split-${ index }` "
@@ -432,7 +432,7 @@ aceite de oliva" />
             </div>
           </div>
           </div>
-          <div class="flex justify-end gap-2 p-4 border-t bg-white shrink-0">
+          <div class="flex justify-end gap-2 p-4 border-t bg-white dark:bg-slate-900 shrink-0">
             <button class="px-3 py-1.5 rounded-lg border" @click=" closeSplitPanel ">
               Cancelar
             </button>
@@ -447,30 +447,30 @@ aceite de oliva" />
       <div v-if=" showCreateRecipeModal " class="fixed inset-0 z-50 flex items-center justify-center p-4"
         @click.self="showCreateRecipeModal = false">
         <div class="absolute inset-0 bg-black/50"></div>
-        <div class="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-lg bg-white flex flex-col">
+        <div class="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-lg bg-white dark:bg-slate-900 flex flex-col">
           <div class="p-4 space-y-3 overflow-y-auto">
-          <h3 class="text-lg font-semibold text-gray-900">Crear receta nueva</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100">Crear receta nueva</h3>
           <label class="block">
-            <span class="block text-xs text-gray-600 mb-1">Nombre</span>
+            <span class="block text-xs text-gray-600 dark:text-slate-300 mb-1">Nombre</span>
             <input v-model.trim=" newRecipeForm.name " class="w-full border rounded-lg px-3 py-2"
               placeholder="Ej: Ensalada templada" />
           </label>
           <label class="block">
-            <span class="block text-xs text-gray-600 mb-1">Descripción</span>
+            <span class="block text-xs text-gray-600 dark:text-slate-300 mb-1">Descripción</span>
             <input v-model.trim=" newRecipeForm.description " class="w-full border rounded-lg px-3 py-2"
               placeholder="Opcional" />
           </label>
           <label class="block">
-            <span class="block text-xs text-gray-600 mb-1">Ingredientes (uno por línea)</span>
+            <span class="block text-xs text-gray-600 dark:text-slate-300 mb-1">Ingredientes (uno por línea)</span>
             <textarea v-model=" newRecipeForm.ingredientsText " class="w-full min-h-[96px] border rounded-lg px-3 py-2 text-sm"
               placeholder="Ej:\ntomate\nmozzarella\naove" />
           </label>
-          <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+          <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
             <input v-model=" newRecipeForm.isSpecial " type="checkbox" />
             Marcar receta como comida libre/especial
           </label>
           </div>
-          <div class="flex justify-end gap-2 p-4 border-t bg-white shrink-0">
+          <div class="flex justify-end gap-2 p-4 border-t bg-white dark:bg-slate-900 shrink-0">
             <button class="px-3 py-1.5 rounded-lg border" @click=" showCreateRecipeModal = false ">
               Cancelar
             </button>
@@ -581,7 +581,7 @@ const statusMeta = ( dish: DishRow ) => {
   if ( status === "complete" )
     return { label: "Completa", color: "text-emerald-700" };
   if ( status === "not_required" )
-    return { label: "No requiere ingredientes", color: "text-gray-500" };
+    return { label: "No requiere ingredientes", color: "text-gray-500 dark:text-slate-400" };
   return { label: "Sugerida", color: "text-amber-700" };
 };
 

@@ -119,6 +119,14 @@ export interface Ingredient {
   barcode?: string | null;
   is_verified?: boolean;
   nutrition_status?: "complete" | "pending" | "needs_review" | "not_found";
+  review_reason?: string | null;
+  caloric_density_level?:
+    | "very_low"
+    | "low"
+    | "normal"
+    | "caloric"
+    | "very_caloric"
+    | null;
   created_at: string;
   updated_at?: string;
 }

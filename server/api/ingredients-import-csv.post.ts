@@ -1,4 +1,6 @@
 import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+import { validateIngredientNutritionQuality } from "~/utils/ingredient-nutrition-quality";
+import { classifyCaloricDensity } from "~/utils/caloric-density";
 
 type CsvRow = {
   name: string;
@@ -27,13 +29,6 @@ const parseNumber = (value?: string) => {
   const normalized = value.replace(",", ".");
   const num = Number(normalized);
   return Number.isFinite(num) ? num : null;
-};
-
-const parseBoolean = (value?: string) => {
-  const input = String(value || "")
-    .toLowerCase()
-    .trim();
-  return input === "1" || input === "true" || input === "si" || input === "sí";
 };
 
 const parseCsv = (csv: string): CsvRow[] => {
@@ -81,9 +76,18 @@ export default defineEventHandler(async (event) => {
       const protein = parseNumber(row.protein_per_100g);
       const carbs = parseNumber(row.carbs_per_100g);
       const fat = parseNumber(row.fat_per_100g);
-      const complete = [kcal, protein, carbs, fat].every(
-        (item) => item !== null,
-      );
+      const quality = validateIngredientNutritionQuality({
+        kcal_per_100g: kcal,
+        protein_per_100g: protein,
+        carbs_per_100g: carbs,
+        fat_per_100g: fat,
+      });
+      const complete = quality.hasCompleteNutrition && !quality.needsReview;
+      const reviewReason = !quality.hasCompleteNutrition
+        ? "missing_required_macros"
+        : quality.needsReview
+          ? quality.warnings.join(" | ") || "nutrition_consistency_check_failed"
+          : null;
       return {
         name: row.name.trim(),
         normalized_name: normalizedName,
@@ -93,11 +97,13 @@ export default defineEventHandler(async (event) => {
         protein_per_100g: protein,
         carbs_per_100g: carbs,
         fat_per_100g: fat,
-        source: row.source || "imported",
+        source: "manual_csv",
         external_id: row.external_id || null,
         barcode: row.barcode || null,
-        is_verified: parseBoolean(row.is_verified),
-        nutrition_status: complete ? "complete" : "pending",
+        is_verified: complete,
+        nutrition_status: complete ? "complete" : "needs_review",
+        review_reason: reviewReason,
+        caloric_density_level: classifyCaloricDensity(kcal),
       };
     });
 
@@ -118,5 +124,8 @@ export default defineEventHandler(async (event) => {
   return {
     success: true,
     imported: upserts.length,
+    completed: upserts.filter((row) => row.nutrition_status === "complete").length,
+    needs_review: upserts.filter((row) => row.nutrition_status === "needs_review")
+      .length,
   };
 });

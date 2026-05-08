@@ -233,6 +233,7 @@
 
       <IngredientCard v-for=" row in filtered " :key=" row.id " :row=" row " :original=" originalForRow( row.id ) "
         :quality=" qualityForRow( row ) " :changed-fields=" changedFieldsForRow( row ) "
+        :caloric-label=" caloricLabelForRow( row ) "
         :selected=" isSelected( row.id ) " :active=" activeIngredientId === row.id "
         :saving=" savingStatusForRow( row.id ) === 'saving' " :save-state=" savingStatusForRow( row.id ) "
         :enriching=" isRowEnriching( row.id ) " :is-temporary=" String( row.id ).startsWith( 'tmp-' ) "
@@ -243,13 +244,25 @@
         @save-next="save( row, { goNext: true } )" @enrich="enrichOne( row )" @autocomplete="autocompleteRow( row )"
         @restore-original="restoreOriginal( row )" @toggle-selected="toggleSelected( row.id )"
         @previous="moveActive( row.id, -1 )" @next="moveActive( row.id, 1 )" @delete="deleteOne( row.id )"
-        @apply-candidate=" applyCandidate " />
+        @apply-candidate=" applyCandidate " @show-candidate-debug=" showCandidateDebug " />
       <div v-if=" filtered.length === 0 " class="rounded-lg border bg-white p-4 text-sm text-gray-500">
         {{ showOnlyWithoutRecipes
           ? "No se encontraron ingredientes sin recetas con los filtros actuales."
           : "No hay ingredientes que coincidan con los filtros actuales."
         }}
       </div>
+    </section>
+
+    <section v-if=" selectedCandidateDebug " class="rounded-lg border border-indigo-100 bg-indigo-50 p-3 space-y-2">
+      <div class="flex items-center justify-between gap-2">
+        <p class="text-xs font-medium text-indigo-800">
+          Debug OFF/USDA: {{ selectedCandidateDebug.name }} · confianza {{ Number( selectedCandidateDebug.confidence || 0 ).toFixed( 2 ) }}
+        </p>
+        <button class="text-xs text-indigo-700" @click=" selectedCandidateDebug = null ">
+          Cerrar
+        </button>
+      </div>
+      <pre class="max-h-64 overflow-auto rounded bg-white p-2 text-[11px] text-slate-700">{{ JSON.stringify( selectedCandidateDebug.raw_payload || {}, null, 2 ) }}</pre>
     </section>
   </div>
 
@@ -363,6 +376,10 @@
 import { logError } from "~/utils/log-error";
 import { normalizeIngredientName } from "~/utils/ingredient-normalize";
 import { validateIngredientNutritionQuality } from "~/utils/ingredient-nutrition-quality";
+import {
+  caloricDensityLabel,
+  classifyCaloricDensity,
+} from "~/utils/caloric-density";
 import { saveIngredientFromCandidate as persistCandidate } from "~/utils/save-ingredient-from-candidate";
 import type { Ingredient } from "~/types";
 import { useCurrentUser } from "~/composables/useCurrentUser";
@@ -393,6 +410,7 @@ type ReviewCandidate = {
   carbs_per_100g: number | null;
   fat_per_100g: number | null;
   confidence: number;
+  raw_payload?: any;
 };
 type RecipeLink = {
   id: string;
@@ -432,6 +450,7 @@ const enrichingRowIds = ref<string[]>( [] );
 const savingRowStates = ref<Record<string, SaveState>>( {} );
 const activeIngredientId = ref<string | null>( null );
 const filterMode = ref<FilterMode>( "all" );
+const selectedCandidateDebug = ref<ReviewCandidate | null>( null);
 const showOnlyWithoutRecipes = ref( false );
 const recipeLinksByIngredientId = ref<Record<string, RecipeLink[]>>( {} );
 const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
@@ -917,6 +936,10 @@ const save = async ( row: IngredientRow, options: { goNext?: boolean } = {} ) =>
       : nutritionQuality.needsReview
         ? "needs_review"
         : "complete",
+    review_reason: nutritionQuality.needsReview
+      ? nutritionQuality.warnings.join( " | " ) || "manual_review_required"
+      : null,
+    caloric_density_level: classifyCaloricDensity( row.kcal_per_100g ),
   };
   savingRowStates.value = { ...savingRowStates.value, [ row.id ]: "saving" };
   try {
@@ -945,6 +968,14 @@ const save = async ( row: IngredientRow, options: { goNext?: boolean } = {} ) =>
     await logError( "web", error, { context: "ingredients.save" } );
   }
 };
+
+const showCandidateDebug = ( candidateId: string ) => {
+  const candidate = reviewCandidates.value.find( ( row ) => row.id === candidateId ) || null;
+  selectedCandidateDebug.value = candidate;
+};
+
+const caloricLabelForRow = ( row: IngredientRow ) =>
+  caloricDensityLabel( row.caloric_density_level || classifyCaloricDensity( row.kcal_per_100g ) );
 
 const deleteOne = async ( id: string ) => {
   if ( String( id ).startsWith( "tmp-" ) ) {

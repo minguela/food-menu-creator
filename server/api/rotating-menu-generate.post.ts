@@ -309,7 +309,7 @@ export default defineEventHandler(async (event) => {
     ? await supabase
         .from("ingredients")
         .select(
-          "id, name, normalized_name, nutrition_status, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
+          "id, name, normalized_name, nutrition_status, caloric_density_level, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
         )
         .in("id", ingredientIds)
     : { data: [] as any[] };
@@ -941,6 +941,25 @@ export default defineEventHandler(async (event) => {
               (targetMealProtein / baseProtein) * 0.35,
           ),
         );
+        const hasVeryCaloricIngredient = ingredientBase.some((ing: any) => {
+          const nutrition = nutritionById.get(ing.ingredient_id);
+          if (!nutrition) return false;
+          if (nutrition.caloric_density_level === "very_caloric") return true;
+          return Number(nutrition.kcal_per_100g || 0) > 400;
+        });
+        const hasCaloricIngredient = ingredientBase.some((ing: any) => {
+          const nutrition = nutritionById.get(ing.ingredient_id);
+          if (!nutrition) return false;
+          if (nutrition.caloric_density_level === "caloric") return true;
+          const kcal = Number(nutrition.kcal_per_100g || 0);
+          return kcal > 200 && kcal <= 400;
+        });
+        const densityCap = hasVeryCaloricIngredient
+          ? 1.35
+          : hasCaloricIngredient
+            ? 1.7
+            : 2.5;
+        const adjustedMultiplier = Math.max(0.55, Math.min(multiplier, densityCap));
         let kcal = 0;
         let protein = 0;
         let carbs = 0;
@@ -957,7 +976,7 @@ export default defineEventHandler(async (event) => {
         }
 
         const ingredients = ingredientBase.map((ing: any) => {
-          const finalQuantity = round(ing.quantity * multiplier);
+          const finalQuantity = round(ing.quantity * adjustedMultiplier);
           const normalized = normalizeToGrams(finalQuantity, ing.unit_type);
           const n = nutritionById.get(ing.ingredient_id);
           let nutritionPending = false;
@@ -997,6 +1016,7 @@ export default defineEventHandler(async (event) => {
           target_meal_carbs_g: round(targetMealCarbs),
           target_meal_fat_g: round(targetMealFat),
           serving_multiplier: round(multiplier, 3),
+          serving_multiplier_density_adjusted: round(adjustedMultiplier, 3),
           final_kcal: Math.round(kcal),
           final_protein_g: round(protein),
           final_carbs_g: round(carbs),

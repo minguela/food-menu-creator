@@ -25,6 +25,15 @@
             Editado
           </span>
           <span class="text-xs text-gray-500">{{ row.source || "manual" }}</span>
+          <span class="rounded-full bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700">
+            {{ caloricLabel }}
+          </span>
+          <span
+            v-if="row.review_reason"
+            class="rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700"
+          >
+            revisión: {{ row.review_reason }}
+          </span>
         </div>
         <input
           :value="row.name"
@@ -74,6 +83,8 @@
           @change="patchSource"
         >
           <option value="manual">manual</option>
+          <option value="manual_csv">manual_csv</option>
+          <option value="manual_ai">manual_ai</option>
           <option value="system">system</option>
           <option value="imported">imported</option>
           <option value="usda">usda</option>
@@ -152,6 +163,12 @@
           >
             Aplicar
           </button>
+          <button
+            class="font-medium text-gray-600"
+            @click="$emit('show-candidate-debug', candidate.id)"
+          >
+            Ver debug
+          </button>
         </div>
       </div>
     </div>
@@ -220,12 +237,14 @@ type IngredientCardRow = IngredientNutritionValues & {
   name: string;
   default_unit_type: UnitType;
   source: string;
+  review_reason?: string | null;
 };
 type RecipeLink = { id: string; name: string };
 type ReviewCandidate = IngredientNutritionValues & {
   id: string;
   name: string;
   confidence: number;
+  raw_payload?: any;
 };
 
 const props = defineProps<{
@@ -244,6 +263,7 @@ const props = defineProps<{
   unitTypes: UnitType[];
   recipes: RecipeLink[];
   candidates: ReviewCandidate[];
+  caloricLabel: string;
 }>();
 
 const emit = defineEmits<{
@@ -258,6 +278,7 @@ const emit = defineEmits<{
   next: [];
   delete: [];
   "apply-candidate": [candidateId: string];
+  "show-candidate-debug": [candidateId: string];
 }>();
 
 const nutrition = computed(() => ({

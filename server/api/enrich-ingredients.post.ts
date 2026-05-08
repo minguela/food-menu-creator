@@ -14,6 +14,7 @@ import {
   shouldTryUsda,
 } from "~/utils/enrich-runtime";
 import { validateIngredientNutritionQuality } from "~/utils/ingredient-nutrition-quality";
+import { classifyCaloricDensity } from "~/utils/caloric-density";
 
 type EnrichBody = {
   ingredientId?: string;
@@ -284,11 +285,12 @@ export default defineEventHandler(async (event) => {
         await supabase
           .from("ingredients")
           .update({
-            nutrition_status: "not_found",
+            nutrition_status: "needs_review",
             is_verified: false,
+            review_reason: "off_low_confidence_or_no_match",
           })
           .eq("id", ingredient.id);
-        notFound += 1;
+        needsReview += 1;
         continue;
       }
 
@@ -307,6 +309,10 @@ export default defineEventHandler(async (event) => {
             barcode: bestCandidate.barcode || null,
             is_verified: true,
             nutrition_status: "complete",
+            review_reason: null,
+            caloric_density_level: classifyCaloricDensity(
+              bestCandidate.kcal_per_100g,
+            ),
           })
           .eq("id", ingredient.id);
         completed += 1;
@@ -355,6 +361,7 @@ export default defineEventHandler(async (event) => {
           .update({
             nutrition_status: "needs_review",
             is_verified: false,
+            review_reason: "candidate_requires_manual_review",
           })
           .eq("id", ingredient.id);
         needsReview += 1;

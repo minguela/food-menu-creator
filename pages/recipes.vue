@@ -226,8 +226,26 @@
                 Ingredientes que bloquean la generación
               </p>
               <ul class="space-y-1 text-xs text-red-700 dark:text-red-300">
-                <li v-for="blocker in recipeBlockers( dish )" :key="`${dish.id}-${blocker.reason}-${blocker.name}`">
-                  - {{ blocker.name }} ({{ blocker.reason }})
+                <li
+                  v-for="blocker in recipeBlockers( dish )"
+                  :key="`${dish.id}-${blocker.reason}-${blocker.name}`"
+                  class="flex flex-wrap items-center gap-2"
+                >
+                  <span>- {{ blocker.name }} ({{ blocker.reason }})</span>
+                  <button
+                    v-if="blocker.reason === 'missing_ingredient_link'"
+                    class="rounded border border-red-300 dark:border-red-700 px-2 py-0.5 text-[11px] font-medium hover:bg-red-100/60 dark:hover:bg-red-900/50"
+                    @click="linkMissingIngredientInRecipe( dish.id, blocker.name )"
+                  >
+                    Vincular ahora
+                  </button>
+                  <button
+                    v-else
+                    class="rounded border border-red-300 dark:border-red-700 px-2 py-0.5 text-[11px] font-medium hover:bg-red-100/60 dark:hover:bg-red-900/50"
+                    @click="goToIngredientsWithSearch( blocker.name )"
+                  >
+                    Abrir en ingredientes
+                  </button>
                 </li>
               </ul>
               <p class="text-[11px] text-red-700/90 dark:text-red-300/90">
@@ -522,6 +540,7 @@ type DishRow = Dish & {
 
 const supabase = useSupabase();
 const route = useRoute();
+const router = useRouter();
 const { loadCurrentUser } = useCurrentUser();
 const appToast = useAppToast();
 const { confirm: confirmDialog } = useConfirmDialog();
@@ -677,6 +696,56 @@ const recipeBlockers = ( dish: DishRow ) => {
 };
 
 const recipeBlockersCount = ( dish: DishRow ) => recipeBlockers( dish ).length;
+
+const goToIngredientsWithSearch = async ( ingredientName: string ) => {
+  const query = String( ingredientName || "" ).trim();
+  if ( !query ) {
+    await router.push( "/ingredients" );
+    return;
+  }
+  await router.push( {
+    path: "/ingredients",
+    query: { q: query },
+  } );
+};
+
+const linkMissingIngredientInRecipe = async ( dishId: string, ingredientName: string ) => {
+  const normalized = normalizeIngredientName( ingredientName || "" );
+  if ( !normalized ) return;
+  try {
+    const ingredientId = await upsertMasterIngredient( ingredientName, "g" );
+    if ( !ingredientId ) {
+      appToast.error( "No se pudo vincular el ingrediente al catálogo." );
+      return;
+    }
+
+    const { error } = await supabase
+      .from( "recipe_ingredients" )
+      .update( {
+        ingredient_id: ingredientId,
+        normalized_name: normalized,
+        is_confirmed: true,
+        is_suggested: false,
+      } )
+      .eq( "recipe_id", dishId )
+      .eq( "normalized_name", normalized );
+    if ( error ) throw error;
+
+    await syncRecipeStatus( dishId );
+    if ( editingDishId.value === dishId ) {
+      await refreshEditingDish( dishId );
+    }
+    await loadRecipes();
+    appToast.success( `Ingrediente "${ ingredientName }" vinculado.` );
+  } catch ( error ) {
+    await logError( "web", error, {
+      context: "recipes.linkMissingIngredientInRecipe",
+      dishId,
+      ingredientName,
+    } );
+    appToast.fromError( "No se pudo vincular el ingrediente.", error );
+  }
+};
 
 const isRecipeSaving = ( dishId: string ) =>
   savingDishIds.value.includes( dishId );

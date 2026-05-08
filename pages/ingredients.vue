@@ -388,6 +388,7 @@ type OriginalIngredientSnapshot = Pick<
 >;
 
 const supabase = useSupabase();
+const route = useRoute();
 const query = ref( "" );
 const rows = ref<IngredientRow[]>( [] );
 const originalsById = ref<Record<string, OriginalIngredientSnapshot>>( {} );
@@ -1038,6 +1039,10 @@ const deleteExpansion = async ( id: string ) => {
 };
 
 onMounted( () => {
+  const queryFromRoute = String( route.query.q || "" ).trim();
+  if ( queryFromRoute ) {
+    query.value = queryFromRoute;
+  }
   load();
   loadExpansions();
 } );

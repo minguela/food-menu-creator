@@ -33,8 +33,8 @@ const simplifyMergeKey = (name: string) =>
     .map(singularizeToken)
     .join(" ");
 
-const exactEquivalentKeys = new Map(
-  [
+const exactEquivalentKeys = new Map<string, string>(
+  ( [
     ["atun", "atun bonito conserva"],
     ["atun lata", "atun bonito conserva"],
     ["atun en lata", "atun bonito conserva"],
@@ -51,7 +51,7 @@ const exactEquivalentKeys = new Map(
     ["canonigos", "escarola canonigos"],
     ["canonigos escarola", "escarola canonigos"],
     ["escarola canonigos", "escarola canonigos"],
-  ].map(([alias, key]) => [simplifyMergeKey(alias), key]),
+  ] as Array<[string, string]> ).map(([alias, key]) => [simplifyMergeKey(alias), key]),
 );
 
 const ingredientMergeKey = (name: string) => {
@@ -115,6 +115,7 @@ export default defineEventHandler(async (event) => {
       (a, b) => ingredientScore(b) - ingredientScore(a),
     );
     const target = sorted[0];
+    if (!target) continue;
     const sources = sorted.slice(1);
     const targetNormalized =
       target.normalized_name || normalizeIngredientName(target.name);

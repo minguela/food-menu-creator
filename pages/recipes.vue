@@ -831,7 +831,7 @@ const mergeCandidates = computed( () =>
 const openMergePanel = () => {
   if ( selectedDishIds.value.length < 2 ) return;
   showMergePanel.value = true;
-  mergeTargetId.value = selectedDishIds.value[ 0 ];
+  mergeTargetId.value = selectedDishIds.value[ 0 ] || "";
   const target = dishes.value.find( ( dish ) => dish.id === mergeTargetId.value );
   mergeFinalName.value = target?.name || "";
 };
@@ -1491,6 +1491,7 @@ const addManualConfirmed = async ( dishId: string ) => {
     is_confirmed: true,
     is_suggested: false,
     needs_review: false,
+    created_at: new Date().toISOString(),
   };
   confirmedRows.value.unshift( draftRow );
   updateOpenDishRows();

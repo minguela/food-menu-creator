@@ -340,6 +340,8 @@ export default defineEventHandler(async (event) => {
       | "missing_ingredient_link"
       | "missing_nutrition"
       | "invalid_recipe_data";
+    blocking_ingredients?: string[];
+    details?: string;
   }> = [];
   const uncuredSet = new Set<string>();
 
@@ -435,6 +437,14 @@ export default defineEventHandler(async (event) => {
 
     const hasMissingLink = confirmedRows.some((row: any) => !row.ingredient_id);
     if (hasMissingLink) {
+      const missingLinkNames = Array.from(
+        new Set(
+          confirmedRows
+            .filter((row: any) => !row.ingredient_id)
+            .map((row: any) => String(row.name || "").trim())
+            .filter(Boolean),
+        ),
+      );
       uncuredSet.add(
         `${dish.id}:missing_ingredient_link:${normalizedName || dish.id}`,
       );
@@ -442,11 +452,13 @@ export default defineEventHandler(async (event) => {
         dish_id: dish.id,
         dish_name: dish.name,
         reason: "missing_ingredient_link",
+        blocking_ingredients: missingLinkNames,
       });
       discardedRecipes.push({
         dish_id: dish.id,
         dish_name: dish.name,
         reason: "missing_ingredient_link",
+        details: `missing_links:${missingLinkNames.join(",")}`,
       });
       continue;
     }
@@ -464,6 +476,24 @@ export default defineEventHandler(async (event) => {
     });
 
     if (hasMissingNutrition) {
+      const missingNutritionNames = Array.from(
+        new Set(
+          confirmedRows
+            .filter((row: any) => {
+              const ingredient = nutritionById.get(row.ingredient_id);
+              return (
+                !ingredient ||
+                ingredient.nutrition_status !== "complete" ||
+                ingredient.kcal_per_100g == null ||
+                ingredient.protein_per_100g == null ||
+                ingredient.carbs_per_100g == null ||
+                ingredient.fat_per_100g == null
+              );
+            })
+            .map((row: any) => String(row.name || "").trim())
+            .filter(Boolean),
+        ),
+      );
       uncuredSet.add(
         `${dish.id}:missing_nutrition:${normalizedName || dish.id}`,
       );
@@ -471,11 +501,13 @@ export default defineEventHandler(async (event) => {
         dish_id: dish.id,
         dish_name: dish.name,
         reason: "missing_nutrition",
+        blocking_ingredients: missingNutritionNames,
       });
       discardedRecipes.push({
         dish_id: dish.id,
         dish_name: dish.name,
         reason: "missing_nutrition",
+        details: `missing_nutrition:${missingNutritionNames.join(",")}`,
       });
       continue;
     }

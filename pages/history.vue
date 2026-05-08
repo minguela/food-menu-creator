@@ -2,8 +2,8 @@
   <div class="space-y-6">
     <header class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Menús rotativos</h1>
-        <p class="text-sm text-gray-500">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100">Menús rotativos</h1>
+        <p class="text-sm text-gray-500 dark:text-slate-400">
           Estado de generación y acceso rápido a menús creados.
         </p>
       </div>
@@ -15,20 +15,20 @@
       </NuxtLink>
     </header>
 
-    <section class="rounded-lg border bg-white p-4">
+    <section class="rounded-lg border bg-white dark:bg-slate-900 p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 class="font-semibold text-gray-900">En creación</h2>
+        <h2 class="font-semibold text-gray-900 dark:text-slate-100">En creación</h2>
         <button
-          class="rounded border px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+          class="rounded border px-3 py-1.5 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
           @click="cleanupFinishedJobs"
         >
           Limpiar completados/errores
         </button>
       </div>
-      <div v-if="loadingJobs" class="text-sm text-gray-500">Cargando jobs...</div>
+      <div v-if="loadingJobs" class="text-sm text-gray-500 dark:text-slate-400">Cargando jobs...</div>
       <div
         v-else-if="activeJobs.length === 0"
-        class="rounded-lg border border-dashed p-4 text-sm text-gray-500"
+        class="rounded-lg border border-dashed p-4 text-sm text-gray-500 dark:text-slate-400"
       >
         No hay menús en proceso ahora mismo.
       </div>
@@ -39,7 +39,7 @@
           class="rounded-lg border p-3"
         >
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <p class="font-medium text-gray-900">
+            <p class="font-medium text-gray-900 dark:text-slate-100">
               {{ job.input_payload?.name || "Menú rotativo" }}
             </p>
             <div class="flex items-center gap-2">
@@ -48,13 +48,13 @@
               </span>
               <button
                 v-if="job.result_menu_id"
-                class="rounded border px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                class="rounded border px-2 py-1 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
                 @click="openRotatingMenu(job.result_menu_id)"
               >
                 Abrir menú
               </button>
               <button
-                class="rounded border px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                class="rounded border px-2 py-1 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
                 @click="toggleJobLogs(job)"
               >
                 {{ expandedJobId === job.id ? "Ocultar logs" : "Ver logs" }}
@@ -67,7 +67,7 @@
               </button>
             </div>
           </div>
-          <p class="mt-1 text-xs text-gray-500">
+          <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">
             {{ formatDateTime(job.created_at) }} · progreso {{ job.progress || 0 }}%
           </p>
           <p v-if="job.error_message" class="mt-1 text-xs text-red-600">
@@ -92,7 +92,7 @@
               <NuxtLink href="/generar" class="underline">Volver a generar</NuxtLink>
             </div>
           </div>
-          <div class="mt-2 h-2 w-full overflow-hidden rounded bg-gray-100">
+          <div class="mt-2 h-2 w-full overflow-hidden rounded bg-gray-100 dark:bg-slate-800">
             <div
               class="h-2 rounded bg-indigo-600 transition-all"
               :style="{ width: `${Math.max(0, Math.min(100, job.progress || 0))}%` }"
@@ -131,12 +131,12 @@
       </div>
     </section>
 
-    <section class="rounded-lg border bg-white p-4">
-      <h2 class="mb-3 font-semibold text-gray-900">Creados</h2>
-      <div v-if="loadingMenus" class="text-sm text-gray-500">Cargando menús...</div>
+    <section class="rounded-lg border bg-white dark:bg-slate-900 p-4">
+      <h2 class="mb-3 font-semibold text-gray-900 dark:text-slate-100">Creados</h2>
+      <div v-if="loadingMenus" class="text-sm text-gray-500 dark:text-slate-400">Cargando menús...</div>
       <div
         v-else-if="rotatingMenus.length === 0"
-        class="rounded-lg border border-dashed p-4 text-sm text-gray-500"
+        class="rounded-lg border border-dashed p-4 text-sm text-gray-500 dark:text-slate-400"
       >
         Todavía no tienes menús rotativos creados.
       </div>
@@ -148,20 +148,20 @@
         >
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p class="font-medium text-gray-900">{{ menu.name }}</p>
-              <p class="text-xs text-gray-500">
+              <p class="font-medium text-gray-900 dark:text-slate-100">{{ menu.name }}</p>
+              <p class="text-xs text-gray-500 dark:text-slate-400">
                 {{ menu.duration_days }} días · {{ formatDateTime(menu.created_at) }}
               </p>
             </div>
             <div class="flex flex-wrap gap-2">
               <button
-                class="rounded border px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                class="rounded border px-3 py-1.5 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
                 @click="openRotatingMenu(menu.id)"
               >
                 Abrir menú
               </button>
               <button
-                class="rounded border px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                class="rounded border px-3 py-1.5 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
                 @click="openShoppingForMenu(menu.id)"
               >
                 Ver compra asociada

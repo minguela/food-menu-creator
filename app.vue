@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen overflow-x-hidden">
+  <div class="dark min-h-screen overflow-x-hidden">
     <header class="sticky top-0 z-40 border-b ui-divider bg-[#0f1623d9] backdrop-blur-xl">
       <div
         class="mx-auto flex h-16 w-full max-w-7xl items-center px-4 sm:px-6 lg:px-8"

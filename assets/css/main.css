@@ -1,4 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@300;400;500&family=Source+Code+Pro:wght@400&display=swap");
+@import "./theme.css";
 
 @tailwind base;
 @tailwind components;
@@ -6,22 +8,22 @@
 
 :root {
   color-scheme: dark;
-  --bg-canvas: #0f131a;
-  --bg-shell: #121925;
-  --surface-1: #171f2c;
-  --surface-2: #1d2735;
-  --surface-3: #243244;
-  --border-soft: #2f3b4e;
-  --border-strong: #41526a;
-  --text-1: #edf2ff;
-  --text-2: #b8c3d9;
-  --text-3: #8e9bb6;
-  --accent: #7fd2ff;
-  --accent-strong: #3ea9e0;
-  --accent-soft: #12283a;
-  --success: #79d7a1;
-  --danger: #f38e8e;
-  --shadow-ambient: 0 20px 50px rgba(4, 9, 18, 0.45);
+  --bg-canvas: #000000;
+  --bg-shell: #020202;
+  --surface-1: #050505;
+  --surface-2: #0b0b0b;
+  --surface-3: #121212;
+  --border-soft: #272727;
+  --border-strong: #4a4a4a;
+  --text-1: #ffffff;
+  --text-2: #e5e5e5;
+  --text-3: #a1a1a1;
+  --accent: #bbdef2;
+  --accent-strong: #d1aad7;
+  --accent-soft: #111111;
+  --success: #72ce7b;
+  --danger: #ff6467;
+  --shadow-ambient: 0 20px 60px rgba(0, 0, 0, 0.55);
 }
 
 @layer base {
@@ -30,11 +32,11 @@
   #__nuxt {
     min-height: 100%;
     background:
-      radial-gradient(circle at 18% -10%, rgba(127, 210, 255, 0.2), transparent 38%),
-      radial-gradient(circle at 90% 8%, rgba(91, 157, 255, 0.14), transparent 33%),
+      radial-gradient(circle at 18% -10%, rgba(209, 170, 215, 0.14), transparent 42%),
+      radial-gradient(circle at 90% 8%, rgba(187, 222, 242, 0.14), transparent 36%),
       linear-gradient(150deg, var(--bg-shell), var(--bg-canvas) 55%);
     color: var(--text-1);
-    font-family: "Manrope", "Segoe UI", sans-serif;
+    font-family: "Inter", "Segoe UI", sans-serif;
   }
 
   body {
@@ -76,8 +78,9 @@
   h2,
   h3,
   h4 {
-    font-family: "Fraunces", Georgia, serif;
-    letter-spacing: 0.01em;
+    font-family: "Montserrat", "Segoe UI", sans-serif;
+    font-weight: 300;
+    letter-spacing: -0.01em;
     color: var(--text-1);
   }
 }
@@ -85,38 +88,38 @@
 @layer components {
   .ui-shell {
     border: 1px solid var(--border-soft);
-    background: linear-gradient(150deg, rgba(23, 31, 44, 0.92), rgba(18, 25, 37, 0.82));
+    background: linear-gradient(150deg, rgba(10, 10, 10, 0.92), rgba(3, 3, 3, 0.88));
     box-shadow: var(--shadow-ambient);
   }
 
   .ui-surface {
     border: 1px solid var(--border-soft);
     border-radius: 1rem;
-    background: linear-gradient(160deg, rgba(29, 39, 53, 0.92), rgba(23, 31, 44, 0.88));
-    box-shadow: 0 8px 30px rgba(6, 13, 24, 0.4);
+    background: linear-gradient(160deg, rgba(13, 13, 13, 0.94), rgba(3, 3, 3, 0.9));
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
   }
 
   .ui-card {
     border: 1px solid var(--border-soft);
     border-radius: 1rem;
-    background: linear-gradient(160deg, rgba(23, 31, 44, 0.96), rgba(16, 24, 36, 0.9));
-    box-shadow: 0 10px 30px rgba(6, 13, 24, 0.36);
+    background: linear-gradient(160deg, rgba(8, 8, 8, 0.96), rgba(1, 1, 1, 0.92));
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   }
 
   .ui-chip {
     border-radius: 9999px;
     border: 1px solid var(--border-strong);
-    background: rgba(127, 210, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
     color: var(--text-1);
     backdrop-filter: blur(4px);
   }
 
   .ui-btn-primary {
-    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-    color: #0b1826;
-    border: 1px solid #8de0ff;
+    background: linear-gradient(135deg, rgba(187, 222, 242, 0.25), rgba(209, 170, 215, 0.22));
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.35);
     border-radius: 1rem;
-    font-weight: 700;
+    font-weight: 500;
   }
 
   .ui-btn-primary:hover {
@@ -127,7 +130,7 @@
   .ui-btn-muted {
     border-radius: 1rem;
     border: 1px solid var(--border-soft);
-    background: linear-gradient(155deg, rgba(35, 48, 66, 0.9), rgba(24, 34, 49, 0.9));
+    background: linear-gradient(155deg, rgba(22, 22, 22, 0.92), rgba(9, 9, 9, 0.9));
     color: var(--text-2);
   }
 
@@ -141,20 +144,21 @@
   .ui-textarea {
     border: 1px solid var(--border-soft);
     border-radius: 0.85rem;
-    background: rgba(15, 21, 31, 0.72);
+    background: rgba(0, 0, 0, 0.72);
     color: var(--text-1);
   }
 
   .ui-input:focus,
   .ui-select:focus,
   .ui-textarea:focus {
-    border-color: var(--accent-strong);
-    box-shadow: 0 0 0 3px rgba(127, 210, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.45);
+    box-shadow: 0 0 0 3px rgba(187, 222, 242, 0.18);
     outline: none;
   }
 
   .ui-title {
-    font-family: "Fraunces", Georgia, serif;
+    font-family: "Montserrat", "Segoe UI", sans-serif;
+    font-weight: 400;
     color: var(--text-1);
   }
 
@@ -163,7 +167,7 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 500;
   }
 
   .ui-divider {

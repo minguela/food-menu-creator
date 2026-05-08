@@ -142,6 +142,12 @@
                   <span class="rounded-full bg-gray-100 dark:bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-gray-700 dark:text-slate-200">
                     {{ ingredientCount( dish ) }} ingredientes
                   </span>
+                  <span
+                    v-if="recipeBlockersCount( dish ) > 0"
+                    class="rounded-full bg-red-100 dark:bg-red-900/40 px-2 py-0.5 text-[11px] font-medium text-red-700 dark:text-red-300"
+                  >
+                    {{ recipeBlockersCount( dish ) }} bloqueos
+                  </span>
                   <span v-if=" dish.is_special "
                     class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">
                     Comida libre · {{ dish.special_kcal_reserved || 700 }} kcal
@@ -211,6 +217,23 @@
               Ingredientes detectados desde el nombre del plato. Revisa y confirma
               antes de usar para cálculos.
             </p>
+
+            <div
+              v-if="recipeBlockers( dish ).length > 0"
+              class="rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 p-3 space-y-2"
+            >
+              <p class="text-xs font-semibold text-red-800 dark:text-red-300">
+                Ingredientes que bloquean la generación
+              </p>
+              <ul class="space-y-1 text-xs text-red-700 dark:text-red-300">
+                <li v-for="blocker in recipeBlockers( dish )" :key="`${dish.id}-${blocker.reason}-${blocker.name}`">
+                  - {{ blocker.name }} ({{ blocker.reason }})
+                </li>
+              </ul>
+              <p class="text-[11px] text-red-700/90 dark:text-red-300/90">
+                Solución: vincula ingrediente de catálogo o completa nutrición en Ingredientes.
+              </p>
+            </div>
 
             <h3 class="text-sm font-medium text-gray-900 dark:text-slate-100">
               Sugeridos (sin confirmar)
@@ -624,6 +647,36 @@ const allFilteredSelected = computed( () => {
 
 const ingredientCount = ( dish: DishRow ) =>
   ( dish.recipe_ingredients || [] ).length;
+
+const hasIncompleteNutrition = ( ingredient?: Ingredient | null ) => {
+  if ( !ingredient ) return true;
+  return (
+    ingredient.nutrition_status !== "complete" ||
+    ingredient.kcal_per_100g == null ||
+    ingredient.protein_per_100g == null ||
+    ingredient.carbs_per_100g == null ||
+    ingredient.fat_per_100g == null
+  );
+};
+
+const recipeBlockers = ( dish: DishRow ) => {
+  const rows = dish.recipe_ingredients || [];
+  const blockers: Array<{ name: string; reason: "missing_ingredient_link" | "missing_nutrition" }> = [];
+  for ( const row of rows ) {
+    if ( !row.is_confirmed ) continue;
+    const rowName = String( row.name || "" ).trim() || "(sin nombre)";
+    if ( !row.ingredient_id ) {
+      blockers.push( { name: rowName, reason: "missing_ingredient_link" } );
+      continue;
+    }
+    if ( hasIncompleteNutrition( row.ingredients || null ) ) {
+      blockers.push( { name: rowName, reason: "missing_nutrition" } );
+    }
+  }
+  return blockers;
+};
+
+const recipeBlockersCount = ( dish: DishRow ) => recipeBlockers( dish ).length;
 
 const isRecipeSaving = ( dishId: string ) =>
   savingDishIds.value.includes( dishId );

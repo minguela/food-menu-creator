@@ -106,6 +106,7 @@ export interface Dish {
 export interface Ingredient {
   id: string;
   name: string;
+  english_name?: string | null;
   normalized_name?: string;
   carrefour_category?: string;
   carrefour_product_id?: string;

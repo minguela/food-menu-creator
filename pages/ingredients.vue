@@ -344,8 +344,10 @@ import {
 } from "~/utils/caloric-density";
 import type { Ingredient } from "~/types";
 import { useCurrentUser } from "~/composables/useCurrentUser";
+import { useAppToast } from "~/composables/use-app-toast";
 
 const { loadCurrentUser } = useCurrentUser();
+const appToast = useAppToast();
 
 type IngredientRow = Ingredient & {
   default_unit_type: "kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad";
@@ -530,7 +532,7 @@ const load = async () => {
     ] ),
   );
   if ( !activeIngredientId.value && rows.value.length > 0 ) {
-    activeIngredientId.value = rows.value[ 0 ].id;
+    activeIngredientId.value = rows.value[ 0 ]?.id || null;
   }
   selectedIds.value = selectedIds.value.filter( ( id ) =>
     rows.value.some( ( row ) => row.id === id ),
@@ -660,8 +662,10 @@ const applyCandidate = async ( candidateId: string ) => {
       body: { candidateId },
     } );
     await load();
+    appToast.success("Candidato aplicado correctamente.");
   } catch ( error ) {
     await logError( "web", error, { context: "ingredients.applyCandidate" } );
+    appToast.fromError("No se pudo aplicar el candidato.", error);
   }
 };
 
@@ -703,7 +707,6 @@ const addIngredient = () => {
       protein_per_100g: null,
       carbs_per_100g: null,
       fat_per_100g: null,
-      source: "manual_csv",
     },
   };
   activeIngredientId.value = id;
@@ -751,13 +754,15 @@ const save = async ( row: IngredientRow, options: { goNext?: boolean } = {} ) =>
         .select( "id" )
         .single();
       if ( error ) throw error;
-      if ( inserted?.id ) activeIngredientId.value = inserted.id;
+    if ( inserted?.id ) activeIngredientId.value = inserted.id;
+      appToast.success("Ingrediente creado correctamente.");
     } else {
       const { error } = await supabase
         .from( "ingredients" )
         .update( payload )
         .eq( "id", row.id );
       if ( error ) throw error;
+      appToast.success("Ingrediente guardado correctamente.");
     }
     savingRowStates.value = { ...savingRowStates.value, [ row.id ]: "success" };
     await load();
@@ -767,6 +772,7 @@ const save = async ( row: IngredientRow, options: { goNext?: boolean } = {} ) =>
   } catch ( error ) {
     savingRowStates.value = { ...savingRowStates.value, [ row.id ]: "error" };
     await logError( "web", error, { context: "ingredients.save" } );
+    appToast.fromError("No se pudo guardar el ingrediente.", error);
   }
 };
 
@@ -789,8 +795,10 @@ const deleteOne = async ( id: string ) => {
     if ( error ) throw error;
     selectedIds.value = selectedIds.value.filter( ( item ) => item !== id );
     await load();
+    appToast.success("Ingrediente eliminado.");
   } catch ( error ) {
     await logError( "web", error, { context: "ingredients.deleteOne" } );
+    appToast.fromError("No se pudo eliminar el ingrediente.", error);
   }
 };
 
@@ -805,8 +813,10 @@ const deleteSelected = async () => {
     if ( error ) throw error;
     selectedIds.value = [];
     await load();
+    appToast.success("Ingredientes eliminados correctamente.");
   } catch ( error ) {
     await logError( "web", error, { context: "ingredients.deleteSelected" } );
+    appToast.fromError("No se pudieron eliminar los ingredientes.", error);
   }
 };
 
@@ -821,8 +831,10 @@ const importCsv = async () => {
     csvInput.value = "";
     showImportCsvModal.value = false;
     await load();
+    appToast.success("CSV importado correctamente.");
   } catch ( error ) {
     await logError( "web", error, { context: "ingredients.importCsv" } );
+    appToast.fromError("No se pudo importar el CSV.", error);
   } finally {
     importingCsv.value = false;
   }
@@ -842,8 +854,10 @@ const exportCsv = async () => {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+    appToast.success("CSV exportado correctamente.");
   } catch (error) {
     await logError("web", error, { context: "ingredients.exportCsv" });
+    appToast.fromError("No se pudo exportar el CSV.", error);
   } finally {
     exportingCsv.value = false;
   }
@@ -870,8 +884,10 @@ const mergeSelectedIngredients = async () => {
     mergeDestinationId.value = "";
     showMergeSelectedModal.value = false;
     await load();
+    appToast.success("Ingredientes fusionados correctamente.");
   } catch (error) {
     await logError("web", error, { context: "ingredients.mergeSelectedIngredients" });
+    appToast.fromError("No se pudieron fusionar los ingredientes.", error);
   } finally {
     mergingSelected.value = false;
   }
@@ -967,8 +983,9 @@ const saveExpansion = async () => {
 
     showExpansionModal.value = false;
     await loadExpansions();
+    appToast.success(editingExpansion.value ? "Expansión actualizada." : "Expansión creada.");
   } catch ( error: any ) {
-    alert( error.message || "Error guardando" );
+    appToast.error( error.message || "Error guardando" );
   }
 };
 
@@ -982,8 +999,10 @@ const deleteExpansion = async ( id: string ) => {
       body: { id, userId: user.id },
     } );
     await loadExpansions();
+    appToast.success("Expansión eliminada.");
   } catch ( error ) {
     console.error( "deleteExpansion error:", error );
+    appToast.fromError("No se pudo eliminar la expansión.", error);
   }
 };
 

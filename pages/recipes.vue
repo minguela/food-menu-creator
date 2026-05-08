@@ -1250,6 +1250,9 @@ const syncRecipeStatus = async ( dishId: string ) => {
     .from( "recipe_ingredients" )
     .select( "*, ingredients(*)" )
     .eq( "recipe_id", dishId );
+  const hasSuggestedRows = ( recipeRows || [] ).some(
+    ( row: any ) => !row.is_confirmed || row.is_suggested,
+  );
   const confirmed = ( recipeRows || [] ).filter( ( row: any ) => row.is_confirmed );
   if ( confirmed.length === 0 ) {
     await supabase
@@ -1259,6 +1262,17 @@ const syncRecipeStatus = async ( dishId: string ) => {
       } )
       .eq( "id", dishId );
     dish.recipe_status = "suggested_ingredients";
+    return;
+  }
+
+  if ( hasSuggestedRows ) {
+    await supabase
+      .from( "dishes" )
+      .update( {
+        recipe_status: "pending_ingredients",
+      } )
+      .eq( "id", dishId );
+    dish.recipe_status = "pending_ingredients";
     return;
   }
 

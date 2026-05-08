@@ -199,8 +199,10 @@
                 </label>
               </div>
               <div class="flex justify-end">
-                <button class="text-xs px-3 py-1.5 rounded border text-indigo-700" @click="saveRecipeMeta( dish.id )">
-                  Guardar receta
+                <button
+                  class="text-xs px-3 py-1.5 rounded border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                  @click="saveRecipeForm( dish.id )">
+                  Guardar formulario
                 </button>
               </div>
             </div>
@@ -286,7 +288,7 @@
                 {{ savingBatch ? "Guardando..." : "Guardar todos" }}
               </button>
             </div>
-            <div class="space-y-2">
+            <div class="space-y-2 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
               <div v-for=" row in confirmedRows " :key=" row.id " class="grid grid-cols-[1fr_150px_1fr] gap-2">
                 <input v-model.trim=" row.name " class="border rounded-lg px-3 py-2" />
                 <select v-model=" row.unit_type " class="border rounded-lg px-3 py-2">
@@ -340,9 +342,35 @@
               </div>
             </div>
 
-            <button class="text-sm text-indigo-700" @click="addManualConfirmed( dish.id )">
+            <button
+              class="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
+              @click="addManualConfirmed( dish.id )">
               + Añadir ingrediente manual
             </button>
+            <div class="rounded-lg border border-sky-100 bg-sky-50/60 p-3 space-y-2">
+              <p class="text-xs font-medium text-sky-800">
+                Añadir ingrediente existente (catálogo)
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <input
+                  v-model.trim="existingIngredientQuery"
+                  list="existing-ingredients-list"
+                  class="min-w-[260px] flex-1 border rounded-lg px-3 py-2 text-sm"
+                  placeholder="Busca: aceite, pollo, arroz..." />
+                <button
+                  class="text-xs px-3 py-2 rounded border border-sky-200 bg-white text-sky-800 hover:bg-sky-100"
+                  :disabled="!existingIngredientQuery.trim()"
+                  @click="addExistingIngredientByQuery( dish.id )">
+                  Añadir desde catálogo
+                </button>
+              </div>
+              <datalist id="existing-ingredients-list">
+                <option
+                  v-for="ingredient in filteredExistingIngredients"
+                  :key="`existing-${ingredient.id}`"
+                  :value="ingredient.name" />
+              </datalist>
+            </div>
             <div class="rounded-lg border p-3 space-y-2">
               <p class="text-xs font-medium text-gray-700">
                 Añadir varios ingredientes (uno por línea)
@@ -510,6 +538,8 @@ const splitCandidates = ref<string[]>( [] );
 const splittingRecipe = ref( false );
 const showCreateRecipeModal = ref( false );
 const creatingRecipe = ref( false );
+const ingredientsCatalog = ref<Ingredient[]>( [] );
+const existingIngredientQuery = ref( "" );
 const newRecipeForm = reactive( {
   name: "",
   description: "",
@@ -521,6 +551,20 @@ const recipeForm = reactive( {
   description: "",
   is_special: false,
   special_kcal_reserved: 700,
+} );
+
+const ingredientById = computed( () =>
+  new Map( ingredientsCatalog.value.map( ( ingredient ) => [ ingredient.id, ingredient ] ) ),
+);
+
+const filteredExistingIngredients = computed( () => {
+  const query = normalizeIngredientName( existingIngredientQuery.value || "" );
+  if ( !query ) return ingredientsCatalog.value.slice( 0, 8 );
+  return ingredientsCatalog.value
+    .filter( ( ingredient ) =>
+      normalizeIngredientName( ingredient.name || "" ).includes( query ),
+    )
+    .slice( 0, 8 );
 } );
 
 const statusMeta = ( dish: DishRow ) => {
@@ -838,7 +882,7 @@ const saveRecipeMeta = async ( dishId: string ) => {
   formError.value = "";
   if ( !recipeForm.name.trim() ) {
     formError.value = "El nombre de la receta no puede estar vacío.";
-    return;
+    return false;
   }
   const { error } = await supabase
     .from( "dishes" )
@@ -856,7 +900,7 @@ const saveRecipeMeta = async ( dishId: string ) => {
   if ( error ) {
     formError.value = error.message;
     await logError( "web", error, { context: "recipes.saveRecipeMeta" } );
-    return;
+    return false;
   }
   const dish = dishes.value.find( ( row ) => row.id === dishId );
   if ( dish ) {
@@ -868,6 +912,72 @@ const saveRecipeMeta = async ( dishId: string ) => {
       Math.min( 2000, Number( recipeForm.special_kcal_reserved ) || 700 ),
     );
   }
+  return true;
+};
+
+const loadIngredientsCatalog = async () => {
+  const { data, error } = await supabase
+    .from( "ingredients" )
+    .select( "id,name,normalized_name,default_unit_type,unit_type" )
+    .order( "name", { ascending: true } )
+    .limit( 1500 );
+  if ( error ) {
+    await logError( "web", error, { context: "recipes.loadIngredientsCatalog" } );
+    return;
+  }
+  ingredientsCatalog.value = ( data || [] ) as Ingredient[];
+};
+
+const addExistingIngredientToRecipe = ( dishId: string, ingredient: Ingredient ) => {
+  const normalized = normalizeIngredientName( ingredient.name || "" );
+  if ( !normalized ) return;
+  const alreadyExists = [ ...pendingRows.value, ...confirmedRows.value ].some(
+    ( row ) => normalizeIngredientName( row.name || "" ) === normalized,
+  );
+  if ( alreadyExists ) {
+    formError.value = `El ingrediente "${ ingredient.name }" ya existe en la receta.`;
+    return;
+  }
+
+  const draftRow: RecipeIngredient = {
+    id: `draft-${ Date.now() }-${ Math.random().toString( 36 ).slice( 2, 8 ) }`,
+    recipe_id: dishId,
+    ingredient_id: ingredient.id,
+    name: ingredient.name,
+    normalized_name: normalized,
+    quantity: 1,
+    unit_type: ingredient.default_unit_type || ingredient.unit_type || "g",
+    is_confirmed: true,
+    is_suggested: false,
+    needs_review: false,
+    created_at: new Date().toISOString(),
+  };
+  confirmedRows.value.unshift( draftRow );
+  existingIngredientQuery.value = "";
+  formError.value = "";
+  updateOpenDishRows();
+};
+
+const addExistingIngredientByQuery = ( dishId: string ) => {
+  const normalizedQuery = normalizeIngredientName( existingIngredientQuery.value || "" );
+  if ( !normalizedQuery ) return;
+  const exact = ingredientsCatalog.value.find(
+    ( ingredient ) =>
+      normalizeIngredientName( ingredient.name || "" ) === normalizedQuery ||
+      String( ingredient.normalized_name || "" ) === normalizedQuery,
+  );
+  if ( !exact ) {
+    formError.value =
+      "No encontré ese ingrediente en catálogo. Selecciónalo desde la lista sugerida.";
+    return;
+  }
+  addExistingIngredientToRecipe( dishId, exact );
+};
+
+const saveRecipeForm = async ( dishId: string ) => {
+  const metaSaved = await saveRecipeMeta( dishId );
+  if ( !metaSaved ) return;
+  await saveAllConfirmedRows( dishId );
 };
 
 const toggleEdit = async ( dishId: string ) => {
@@ -881,6 +991,7 @@ const toggleEdit = async ( dishId: string ) => {
     recipeForm.is_special = false;
     recipeForm.special_kcal_reserved = 700;
     bulkIngredientInput.value = "";
+    existingIngredientQuery.value = "";
     return;
   }
   editingDishId.value = dishId;
@@ -1173,12 +1284,14 @@ const confirmRow = async ( dishId: string, row: RecipeIngredient ) => {
     formError.value = "No se pudo asociar el ingrediente maestro.";
     return;
   }
+  const canonicalName =
+    ( ingredientId && ingredientById.value.get( ingredientId )?.name ) || row.name;
   const { error } = await supabase
     .from( "recipe_ingredients" )
     .update( {
       ingredient_id: ingredientId,
-      name: row.name,
-      normalized_name: normalizeIngredientName( row.name ),
+      name: canonicalName,
+      normalized_name: normalizeIngredientName( canonicalName ),
       quantity: 1,
       unit_type: row.unit_type,
       is_confirmed: true,
@@ -1193,6 +1306,8 @@ const confirmRow = async ( dishId: string, row: RecipeIngredient ) => {
   }
   await syncRecipeStatus( dishId );
   row.ingredient_id = ingredientId;
+  row.name = canonicalName;
+  row.normalized_name = normalizeIngredientName( canonicalName );
   row.is_confirmed = true;
   row.is_suggested = false;
   pendingRows.value = pendingRows.value.filter( ( item ) => item.id !== row.id );
@@ -1213,18 +1328,33 @@ const saveConfirmedRow = async ( dishId: string, row: RecipeIngredient ) => {
     formError.value = "No se pudo asociar el ingrediente maestro.";
     return;
   }
-  const { error } = await supabase
-    .from( "recipe_ingredients" )
-    .update( {
-      ingredient_id: ingredientId,
-      name: row.name,
-      normalized_name: normalizeIngredientName( row.name ),
-      quantity: 1,
-      unit_type: row.unit_type,
-      is_confirmed: true,
-      is_suggested: false,
-    } )
-    .eq( "id", row.id );
+  const canonicalName =
+    ( ingredientId && ingredientById.value.get( ingredientId )?.name ) || row.name;
+  const payload = {
+    recipe_id: dishId,
+    ingredient_id: ingredientId,
+    name: canonicalName,
+    normalized_name: normalizeIngredientName( canonicalName ),
+    quantity: 1,
+    unit_type: row.unit_type,
+    is_confirmed: true,
+    is_suggested: false,
+    needs_review: false,
+    created_at: new Date().toISOString(),
+  };
+  const isDraftRow = String( row.id || "" ).startsWith( "draft-" );
+  const { data, error } = isDraftRow
+    ? await supabase
+      .from( "recipe_ingredients" )
+      .insert( payload )
+      .select( "*" )
+      .single()
+    : await supabase
+      .from( "recipe_ingredients" )
+      .update( payload )
+      .eq( "id", row.id )
+      .select( "*" )
+      .single();
   if ( error ) {
     formError.value = error.message;
     await logError( "web", error, { context: "recipes.saveConfirmedRow" } );
@@ -1233,15 +1363,26 @@ const saveConfirmedRow = async ( dishId: string, row: RecipeIngredient ) => {
   await syncRecipeStatus( dishId );
   const current = confirmedRows.value.find( ( item ) => item.id === row.id );
   if ( current ) {
-    current.name = row.name;
+    current.id = String( data?.id || row.id );
+    current.name = canonicalName;
     current.unit_type = row.unit_type;
     current.ingredient_id = ingredientId;
-    current.normalized_name = normalizeIngredientName( row.name );
+    current.normalized_name = normalizeIngredientName( canonicalName );
+    current.recipe_id = dishId;
+    current.is_confirmed = true;
+    current.is_suggested = false;
+    current.needs_review = false;
   }
   updateOpenDishRows();
 };
 
 const deleteRow = async ( dishId: string, rowId: string ) => {
+  if ( String( rowId ).startsWith( "draft-" ) ) {
+    pendingRows.value = pendingRows.value.filter( ( item ) => item.id !== rowId );
+    confirmedRows.value = confirmedRows.value.filter( ( item ) => item.id !== rowId );
+    updateOpenDishRows();
+    return;
+  }
   await supabase.from( "recipe_ingredients" ).delete().eq( "id", rowId );
   await syncRecipeStatus( dishId );
   pendingRows.value = pendingRows.value.filter( ( item ) => item.id !== rowId );
@@ -1250,28 +1391,33 @@ const deleteRow = async ( dishId: string, rowId: string ) => {
 };
 
 const addManualConfirmed = async ( dishId: string ) => {
-  const { data, error } = await supabase
-    .from( "recipe_ingredients" )
-    .insert( {
-      recipe_id: dishId,
-      ingredient_id: null,
-      name: "nuevo ingrediente",
-      normalized_name: normalizeIngredientName( "nuevo ingrediente" ),
-      quantity: 1,
-      unit_type: "g",
-      is_confirmed: true,
-      is_suggested: false,
-      needs_review: false,
-    } )
-    .select( "*" )
-    .single();
-  if ( error ) {
-    await logError( "web", error, { context: "recipes.addManualConfirmed" } );
-    formError.value = "No se pudo añadir el ingrediente.";
-    return;
+  const baseName = "nuevo ingrediente";
+  const existingNormalized = new Set(
+    [ ...pendingRows.value, ...confirmedRows.value ]
+      .map( ( row ) => normalizeIngredientName( row.name || "" ) )
+      .filter( Boolean ),
+  );
+
+  let suffix = 1;
+  let nameCandidate = baseName;
+  while ( existingNormalized.has( normalizeIngredientName( nameCandidate ) ) ) {
+    suffix += 1;
+    nameCandidate = `${ baseName } ${ suffix }`;
   }
-  await syncRecipeStatus( dishId );
-  confirmedRows.value.unshift( data as RecipeIngredient );
+
+  const draftRow: RecipeIngredient = {
+    id: `draft-${ Date.now() }-${ Math.random().toString( 36 ).slice( 2, 8 ) }`,
+    recipe_id: dishId,
+    ingredient_id: null,
+    name: nameCandidate,
+    normalized_name: normalizeIngredientName( nameCandidate ),
+    quantity: 1,
+    unit_type: "g",
+    is_confirmed: true,
+    is_suggested: false,
+    needs_review: false,
+  };
+  confirmedRows.value.unshift( draftRow );
   updateOpenDishRows();
 };
 
@@ -1621,6 +1767,7 @@ const addBulkIngredients = async ( dishId: string ) => {
 };
 
 onMounted( async () => {
+  await loadIngredientsCatalog();
   await loadRecipes();
   await openRecipeFromRoute();
 } );

@@ -435,6 +435,7 @@ const router = useRouter();
 const runtimeConfig = useRuntimeConfig();
 const { loadCurrentUser } = useCurrentUser();
 const appToast = useAppToast();
+const { confirm: confirmDialog } = useConfirmDialog();
 
 const displayMealTypes: MealType[] = [ "comida", "cena" ];
 const unitTypes: WeeklyMealIngredient[ "unit_type" ][] = [
@@ -1076,7 +1077,13 @@ const deleteCurrentMeal = async () => {
 };
 
 const deleteMeal = async ( mealId: string ) => {
-  if ( !confirm( "¿Eliminar esta comida/cena?" ) ) return;
+  const confirmed = await confirmDialog( {
+    title: "Eliminar comida",
+    message: "¿Eliminar esta comida/cena?",
+    confirmText: "Eliminar",
+    danger: true,
+  } );
+  if ( !confirmed ) return;
 
   const { error } = await supabase
     .from( "weekly_meals" )
@@ -1095,7 +1102,13 @@ const deleteMeal = async ( mealId: string ) => {
 const deleteMenu = async () => {
   if ( !menu.value ) return;
 
-  if ( !confirm( `¿Eliminar el menú "${ menu.value.name }" y todo su contenido?` ) ) {
+  const confirmed = await confirmDialog( {
+    title: "Eliminar menú",
+    message: `¿Eliminar el menú "${ menu.value.name }" y todo su contenido?`,
+    confirmText: "Eliminar",
+    danger: true,
+  } );
+  if ( !confirmed ) {
     return;
   }
 
@@ -1502,7 +1515,13 @@ const deleteCompoundDay = async ( id: string ) => {
   const user = await loadCurrentUser();
   if ( !user ) return;
 
-  if ( !confirm( "¿Estás seguro de que quieres eliminar este día compuesto?" ) ) return;
+  const confirmed = await confirmDialog( {
+    title: "Eliminar día compuesto",
+    message: "¿Estás seguro de que quieres eliminar este día compuesto?",
+    confirmText: "Eliminar",
+    danger: true,
+  } );
+  if ( !confirmed ) return;
 
   try {
     await useFetch( "/api/compound-day-meals", {

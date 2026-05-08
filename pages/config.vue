@@ -166,6 +166,7 @@ import type { PersonProfile } from "~/types";
 
 const supabase = useSupabase();
 const { user, loadCurrentUser } = useCurrentUser();
+const { confirm: confirmDialog } = useConfirmDialog();
 
 const config = ref( {
   daily_kcal_target: 1900,
@@ -350,7 +351,13 @@ const editProfile = ( profile: PersonProfile ) => {
 };
 
 const deleteProfile = async ( profileId: string ) => {
-  if ( !confirm( "¿Eliminar este perfil?" ) ) return;
+  const confirmed = await confirmDialog( {
+    title: "Eliminar perfil",
+    message: "¿Eliminar este perfil?",
+    confirmText: "Eliminar",
+    danger: true,
+  } );
+  if ( !confirmed ) return;
 
   const { error } = await supabase
     .from( "person_profiles" )

@@ -2,8 +2,8 @@
   <div class="space-y-6">
     <header class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Ingredientes maestros</h1>
-        <p class="text-sm text-gray-500">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100">Ingredientes maestros</h1>
+        <p class="text-sm text-gray-500 dark:text-slate-400">
           Base nutricional por 100g para cálculos del menú rotativo.
         </p>
       </div>
@@ -12,7 +12,7 @@
       </button>
     </header>
 
-    <section class="bg-white rounded-lg border p-4">
+    <section class="bg-white dark:bg-slate-900 rounded-lg border p-4">
       <div class="flex flex-wrap items-center gap-2">
         <button class="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
           :disabled=" selectedIds.length === 0 " @click=" deleteSelected ">
@@ -30,7 +30,7 @@
           :disabled="selectedIds.length < 2" @click="openMergeSelectedModal">
           Fusionar seleccionados
         </button>
-        <span class="text-xs text-gray-500">
+        <span class="text-xs text-gray-500 dark:text-slate-400">
           Valores nutricionales expresados por 100 g.
         </span>
       </div>
@@ -81,7 +81,7 @@
 
       <div v-else class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div v-for=" ( m, index ) in expansionMappings " :key=" m.id "
-          class="group bg-white rounded-xl border border-emerald-100 p-4 hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-100/50 transition-all duration-300 cursor-pointer"
+          class="group bg-white dark:bg-slate-900 rounded-xl border border-emerald-100 p-4 hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-100/50 transition-all duration-300 cursor-pointer"
           :style=" { animationDelay: `${ index * 50 }ms` } ">
           <div class="flex items-start justify-between">
             <div class="flex-1 min-w-0">
@@ -126,7 +126,7 @@
       </div>
     </section>
 
-    <section class="bg-white rounded-lg border p-4">
+    <section class="bg-white dark:bg-slate-900 rounded-lg border p-4">
       <div class="grid gap-2 md:grid-cols-1">
         <input v-model.trim=" query " class="w-full border rounded-lg px-3 py-2" placeholder="Buscar ingrediente..." />
       </div>
@@ -134,11 +134,11 @@
         <button v-for=" option in filterOptions " :key=" option.value "
           class="rounded-full border px-3 py-1.5 text-xs font-medium" :class=" filterMode === option.value
             ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+            : 'border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:bg-slate-900'
             " @click="filterMode = option.value">
           {{ option.label }} {{ option.count }}
         </button>
-        <label class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600">
+        <label class="inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-slate-300">
           <input v-model=" showOnlyWithoutRecipes " type="checkbox" class="h-3.5 w-3.5" />
           Solo sin recetas
         </label>
@@ -146,12 +146,12 @@
     </section>
 
     <section class="space-y-3">
-      <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white p-4">
-        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+      <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white dark:bg-slate-900 p-4">
+        <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
           <input type="checkbox" :checked=" allFilteredSelected " @change=" toggleSelectAllFiltered " />
           Seleccionar visibles
         </label>
-        <div class="text-xs text-gray-500">
+        <div class="text-xs text-gray-500 dark:text-slate-400">
           Mostrando {{ filtered.length }} de {{ rows.length }} ingredientes
         </div>
       </div>
@@ -169,7 +169,7 @@
         @save-next="save( row, { goNext: true } )" @toggle-selected="toggleSelected( row.id )"
         @previous="moveActive( row.id, -1 )" @next="moveActive( row.id, 1 )" @delete="deleteOne( row.id )"
         @apply-candidate=" applyCandidate " @show-candidate-debug=" showCandidateDebug " />
-      <div v-if=" filtered.length === 0 " class="rounded-lg border bg-white p-4 text-sm text-gray-500">
+      <div v-if=" filtered.length === 0 " class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-sm text-gray-500 dark:text-slate-400">
         {{ showOnlyWithoutRecipes
           ? "No se encontraron ingredientes sin recetas con los filtros actuales."
           : "No hay ingredientes que coincidan con los filtros actuales."
@@ -186,14 +186,14 @@
           Cerrar
         </button>
       </div>
-      <pre class="max-h-64 overflow-auto rounded bg-white p-2 text-[11px] text-slate-700">{{ JSON.stringify( selectedCandidateDebug.raw_payload || {}, null, 2 ) }}</pre>
+      <pre class="max-h-64 overflow-auto rounded bg-white dark:bg-slate-900 p-2 text-[11px] text-slate-700 dark:text-slate-200">{{ JSON.stringify( selectedCandidateDebug.raw_payload || {}, null, 2 ) }}</pre>
     </section>
 
     <div v-if="showImportCsvModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showImportCsvModal = false">
       <div class="absolute inset-0 bg-black/50"></div>
-      <div class="relative w-full max-w-3xl rounded-lg bg-white p-4 space-y-3">
-        <h3 class="text-lg font-semibold text-gray-900">Importar CSV</h3>
-        <p class="text-xs text-gray-500">
+      <div class="relative w-full max-w-3xl rounded-lg bg-white dark:bg-slate-900 p-4 space-y-3">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100">Importar CSV</h3>
+        <p class="text-xs text-gray-500 dark:text-slate-400">
           Cabeceras: `name,english_name,normalized_name,default_unit_type,kcal_per_100g,protein_per_100g,carbs_per_100g,fat_per_100g`
         </p>
         <textarea v-model="csvInput" class="w-full min-h-[240px] border rounded-lg px-3 py-2 text-sm"
@@ -210,9 +210,9 @@
 
     <div v-if="showMergeSelectedModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showMergeSelectedModal = false">
       <div class="absolute inset-0 bg-black/50"></div>
-      <div class="relative w-full max-w-xl rounded-lg bg-white p-4 space-y-3">
-        <h3 class="text-lg font-semibold text-gray-900">Fusionar ingredientes seleccionados</h3>
-        <p class="text-sm text-gray-600">Seleccionados: {{ selectedIds.length }}. Elige cuál se queda como destino.</p>
+      <div class="relative w-full max-w-xl rounded-lg bg-white dark:bg-slate-900 p-4 space-y-3">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100">Fusionar ingredientes seleccionados</h3>
+        <p class="text-sm text-gray-600 dark:text-slate-300">Seleccionados: {{ selectedIds.length }}. Elige cuál se queda como destino.</p>
         <select v-model="mergeDestinationId" class="w-full border rounded-lg px-3 py-2">
           <option value="">Selecciona destino</option>
           <option v-for="item in mergeSelectedOptions" :key="item.id" :value="item.id">{{ item.name }}</option>
@@ -234,13 +234,13 @@
     <div class="absolute inset-0 bg-emerald-950/30 backdrop-blur-sm transition-opacity"
       @click="showExpansionModal = false"></div>
     <div
-      class="relative bg-white rounded-2xl shadow-2xl shadow-emerald-900/20 w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-95 duration-200">
+      class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl shadow-emerald-900/20 w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-95 duration-200">
       <div class="bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-4">
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-bold text-white">
             {{ editingExpansion ? 'Editar' : 'Nueva' }} expansión
           </h2>
-          <button class="text-white/70 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+          <button class="text-white/70 hover:text-white p-1 rounded-lg hover:bg-white dark:bg-slate-900/10 transition-colors"
             @click="showExpansionModal = false">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -255,7 +255,7 @@
 
       <div class="p-6 space-y-5 overflow-y-auto">
         <div class="space-y-2">
-          <label class="block text-sm font-semibold text-gray-700">Nombre del plato</label>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-slate-200">Nombre del plato</label>
           <div class="relative">
             <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -264,13 +264,13 @@
               </svg>
             </div>
             <input v-model=" expansionForm.dishName "
-              class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-gray-400"
+              class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-gray-400"
               placeholder="ej: tortilla, ensalada, paella" />
           </div>
         </div>
 
         <div class="space-y-2">
-          <label class="block text-sm font-semibold text-gray-700">
+          <label class="block text-sm font-semibold text-gray-700 dark:text-slate-200">
             Alias
             <span class="font-normal text-gray-400">(opcional)</span>
           </label>
@@ -282,13 +282,13 @@
               </svg>
             </div>
             <input v-model=" expansionForm.aliases "
-              class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-gray-400"
+              class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-gray-400"
               placeholder="ej: tortilla española, tortilla de patatas (separados por coma)" />
           </div>
         </div>
 
         <div class="space-y-2">
-          <label class="block text-sm font-semibold text-gray-700">
+          <label class="block text-sm font-semibold text-gray-700 dark:text-slate-200">
             Ingredientes
             <span class="font-normal text-gray-400">(formato JSON)</span>
           </label>
@@ -300,27 +300,27 @@
               </svg>
             </div>
             <textarea v-model=" expansionForm.ingredients "
-              class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono text-sm resize-none placeholder:text-gray-400"
+              class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono text-sm resize-none placeholder:text-gray-400"
               rows="5" placeholder='[{"name": "huevos", "quantity": 3, "unit_type": "ud"}]'></textarea>
           </div>
-          <p class="text-xs text-gray-500">
-            Formato: <code class="bg-gray-100 px-1 rounded">{"name": "x", "quantity": y, "unit_type": "z"}</code>
+          <p class="text-xs text-gray-500 dark:text-slate-400">
+            Formato: <code class="bg-gray-100 dark:bg-slate-800 px-1 rounded">{"name": "x", "quantity": y, "unit_type": "z"}</code>
           </p>
         </div>
 
         <div class="flex items-center gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
           <input v-model=" expansionForm.isGlobal " type="checkbox" id="isGlobalCheckbox"
-            class="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-2" />
+            class="w-5 h-5 rounded border-gray-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-2" />
           <label for="isGlobalCheckbox" class="flex-1 cursor-pointer">
-            <span class="font-semibold text-gray-700">Regla global</span>
-            <p class="text-sm text-gray-500">Visible para todos los usuarios</p>
+            <span class="font-semibold text-gray-700 dark:text-slate-200">Regla global</span>
+            <p class="text-sm text-gray-500 dark:text-slate-400">Visible para todos los usuarios</p>
           </label>
         </div>
       </div>
 
-      <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3 shrink-0 border-t border-gray-100">
+      <div class="px-6 py-4 bg-gray-50 dark:bg-slate-900 flex justify-end gap-3 shrink-0 border-t border-gray-100 dark:border-slate-800">
         <button
-          class="px-5 py-2.5 border border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-100 transition-colors"
+          class="px-5 py-2.5 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 rounded-xl font-medium hover:bg-gray-100 dark:bg-slate-800 transition-colors"
           @click="showExpansionModal = false">
           Cancelar
         </button>

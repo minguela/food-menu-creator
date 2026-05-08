@@ -16,7 +16,7 @@
             <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
               Lista de la Compra
             </h1>
-            <p class="text-slate-500 text-sm mt-1">Cantidades normalizadas a gramos</p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Cantidades normalizadas a gramos</p>
           </div>
         </div>
         <button @click=" loadShoppingList " :disabled=" loading "
@@ -31,7 +31,7 @@
       </div>
 
       <!-- Generate from menu section -->
-      <section class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 mb-6">
+      <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6 mb-6">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
             <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,16 +40,16 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-lg font-bold text-slate-900">Generar desde menú rotativo</h2>
-            <p class="text-xs text-slate-500">Selecciona un menú para generar la lista</p>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Generar desde menú rotativo</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Selecciona un menú para generar la lista</p>
           </div>
         </div>
 
         <div class="flex flex-wrap gap-4 items-end">
           <label class="flex-1 min-w-[280px]">
-            <span class="block text-sm font-semibold text-slate-700 mb-2">Menú rotativo</span>
+            <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Menú rotativo</span>
             <select v-model=" selectedRotatingMenuId "
-              class="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-white">
+              class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-white dark:bg-slate-900">
               <option value="">Selecciona un menú...</option>
               <option v-for=" menu in rotatingMenus " :key=" menu.id " :value=" menu.id ">
                 {{ menu.name }} ({{ menu.duration_days }} días)
@@ -72,42 +72,42 @@
 
       <div v-if=" loading " class="text-center py-12">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-        <p class="mt-4 text-gray-600">Cargando lista...</p>
+        <p class="mt-4 text-gray-600 dark:text-slate-300">Cargando lista...</p>
       </div>
 
-      <div v-else-if=" items.length === 0 " class="text-center py-12 bg-white rounded-lg border">
-        <p class="text-gray-600 mb-4">No hay lista de la compra generada</p>
+      <div v-else-if=" items.length === 0 " class="text-center py-12 bg-white dark:bg-slate-900 rounded-lg border">
+        <p class="text-gray-600 dark:text-slate-300 mb-4">No hay lista de la compra generada</p>
         <NuxtLink href="/generar" class="text-indigo-600 hover:underline">Generar un menú primero</NuxtLink>
       </div>
 
       <div v-else class="space-y-6">
         <section class="grid gap-4 md:grid-cols-4">
-          <div class="bg-white rounded-lg shadow-sm border p-4">
-            <p class="text-sm text-gray-600">Total estimado</p>
-            <p class="text-2xl font-bold text-gray-900">
+          <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-4">
+            <p class="text-sm text-gray-600 dark:text-slate-300">Total estimado</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-slate-100">
               {{ totalPrice.toFixed( 2 ) }}€
             </p>
           </div>
-          <div class="bg-white rounded-lg shadow-sm border p-4">
-            <p class="text-sm text-gray-600">Artículos</p>
-            <p class="text-2xl font-bold text-gray-900">{{ items.length }}</p>
+          <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-4">
+            <p class="text-sm text-gray-600 dark:text-slate-300">Artículos</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-slate-100">{{ items.length }}</p>
           </div>
-          <div class="bg-white rounded-lg shadow-sm border p-4">
-            <p class="text-sm text-gray-600">Ambiguos</p>
-            <p class="text-2xl font-bold" :class=" ambiguousCount ? 'text-amber-700' : 'text-gray-900' ">
+          <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-4">
+            <p class="text-sm text-gray-600 dark:text-slate-300">Ambiguos</p>
+            <p class="text-2xl font-bold" :class=" ambiguousCount ? 'text-amber-700' : 'text-gray-900 dark:text-slate-100' ">
               {{ ambiguousCount }}
             </p>
           </div>
-          <div class="bg-white rounded-lg shadow-sm border p-4">
-            <p class="text-sm text-gray-600">Estado móvil</p>
-            <p class="text-lg font-semibold text-gray-900">
+          <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-4">
+            <p class="text-sm text-gray-600 dark:text-slate-300">Estado móvil</p>
+            <p class="text-lg font-semibold text-gray-900 dark:text-slate-100">
               {{ sendStatusLabel }}
             </p>
           </div>
         </section>
 
-        <section class="bg-white rounded-lg shadow-sm border p-4">
-          <h2 class="font-semibold text-gray-900 mb-3">Añadir artículo propio</h2>
+        <section class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-4">
+          <h2 class="font-semibold text-gray-900 dark:text-slate-100 mb-3">Añadir artículo propio</h2>
           <form class="grid gap-2 md:grid-cols-[1fr_130px_auto]" @submit.prevent=" addExtraItem ">
             <input v-model.trim=" extraName " class="border rounded-lg px-3 py-2" placeholder="Ej. papel higiénico"
               required />
@@ -119,15 +119,15 @@
           </form>
         </section>
 
-        <section class="bg-white rounded-lg shadow-sm border p-4">
+        <section class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-4">
           <div class="flex flex-wrap items-end gap-3">
             <label class="flex-1 min-w-[220px]">
-              <span class="block text-sm font-medium text-gray-700 mb-1">Número de teléfono</span>
+              <span class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Número de teléfono</span>
               <input v-model.trim=" phoneNumber " class="w-full border rounded-lg px-3 py-2"
                 placeholder="+34600111222" />
             </label>
             <label>
-              <span class="block text-sm font-medium text-gray-700 mb-1">Canal</span>
+              <span class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Canal</span>
               <select v-model=" mobileChannel " class="border rounded-lg px-3 py-2">
                 <option value="sms">SMS</option>
                 <option value="whatsapp">WhatsApp</option>
@@ -144,19 +144,19 @@
         </section>
 
         <section v-for=" ( categoryItems, category ) in itemsByCategory " :key=" category "
-          class="bg-white rounded-lg shadow-sm border overflow-hidden">
-          <div class="bg-gray-50 px-4 py-3 border-b">
-            <h2 class="font-semibold text-gray-900">{{ category }}</h2>
+          class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border overflow-hidden">
+          <div class="bg-gray-50 dark:bg-slate-900 px-4 py-3 border-b">
+            <h2 class="font-semibold text-gray-900 dark:text-slate-100">{{ category }}</h2>
           </div>
           <div class="divide-y">
             <div v-for=" item in categoryItems " :key=" item.id "
-              class="grid gap-3 p-4 hover:bg-gray-50 transition-colors md:grid-cols-[1fr_170px_110px]">
+              class="grid gap-3 p-4 hover:bg-gray-50 dark:bg-slate-900 transition-colors md:grid-cols-[1fr_170px_110px]">
               <div class="flex items-start gap-3">
                 <input type="checkbox" :checked=" item.purchased " @change="togglePurchased( item )"
                   class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 mt-1" />
                 <div :class=" { 'line-through text-gray-400': item.purchased } ">
                   <div class="flex flex-wrap items-center gap-2">
-                    <p class="font-medium text-gray-900">
+                    <p class="font-medium text-gray-900 dark:text-slate-100">
                       {{ item.item_name || item.ingredients?.name || "Artículo" }}
                     </p>
                     <span v-if=" item.conversion_status === 'ambiguous' "
@@ -168,7 +168,7 @@
                       Manual
                     </span>
                   </div>
-                  <p class="text-sm text-gray-500">
+                  <p class="text-sm text-gray-500 dark:text-slate-400">
                     {{ item.conversion_note || originalQuantity( item ) }}
                   </p>
                 </div>
@@ -182,10 +182,10 @@
                   @change="updateGrams( item, $event )" />
               </label>
               <div class="text-right">
-                <p class="font-medium text-gray-900">
+                <p class="font-medium text-gray-900 dark:text-slate-100">
                   {{ item.estimated_price?.toFixed( 2 ) || "0.00" }}€
                 </p>
-                <p class="text-sm text-gray-500">
+                <p class="text-sm text-gray-500 dark:text-slate-400">
                   {{
                     Math.round(
                       Number( item.quantity_grams || item.quantity_needed || 0 ),
@@ -199,7 +199,7 @@
         </section>
 
         <div class="flex flex-wrap justify-end gap-2 pt-4">
-          <button @click=" markAllAsPurchased " class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+          <button @click=" markAllAsPurchased " class="px-4 py-2 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:bg-slate-800 rounded-lg">
             Marcar todo como comprado
           </button>
           <button @click=" exportAsText " :disabled=" exportLoading "
@@ -585,7 +585,7 @@ onMounted( async () => {
     display: none !important;
   }
 
-  .bg-white {
+  .bg-white dark:bg-slate-900 {
     break-inside: avoid;
   }
 }

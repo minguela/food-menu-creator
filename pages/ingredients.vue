@@ -348,6 +348,7 @@ import { useAppToast } from "~/composables/use-app-toast";
 
 const { loadCurrentUser } = useCurrentUser();
 const appToast = useAppToast();
+const { confirm: confirmDialog } = useConfirmDialog();
 
 type IngredientRow = Ingredient & {
   default_unit_type: "kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad";
@@ -789,7 +790,13 @@ const deleteOne = async ( id: string ) => {
     rows.value = rows.value.filter( ( row ) => row.id !== id );
     return;
   }
-  if ( !confirm( "¿Eliminar este ingrediente?" ) ) return;
+  const confirmed = await confirmDialog( {
+    title: "Eliminar ingrediente",
+    message: "¿Eliminar este ingrediente?",
+    confirmText: "Eliminar",
+    danger: true,
+  } );
+  if ( !confirmed ) return;
   try {
     const { error } = await supabase.from( "ingredients" ).delete().eq( "id", id );
     if ( error ) throw error;
@@ -804,7 +811,13 @@ const deleteOne = async ( id: string ) => {
 
 const deleteSelected = async () => {
   if ( selectedIds.value.length === 0 ) return;
-  if ( !confirm( `¿Eliminar ${ selectedIds.value.length } ingredientes?` ) ) return;
+  const confirmed = await confirmDialog( {
+    title: "Eliminar ingredientes",
+    message: `¿Eliminar ${ selectedIds.value.length } ingredientes?`,
+    confirmText: "Eliminar",
+    danger: true,
+  } );
+  if ( !confirmed ) return;
   try {
     const { error } = await supabase
       .from( "ingredients" )
@@ -1002,7 +1015,13 @@ const saveExpansion = async () => {
 };
 
 const deleteExpansion = async ( id: string ) => {
-  if ( !confirm( "¿Eliminar esta expansión?" ) ) return;
+  const confirmed = await confirmDialog( {
+    title: "Eliminar expansión",
+    message: "¿Eliminar esta expansión?",
+    confirmText: "Eliminar",
+    danger: true,
+  } );
+  if ( !confirmed ) return;
   const user = await loadCurrentUser();
   if ( !user ) return;
   try {

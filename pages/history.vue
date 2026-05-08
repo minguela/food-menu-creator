@@ -209,6 +209,7 @@ type MenuGenerationLog = {
 const supabase = useSupabase();
 const { loadCurrentUser } = useCurrentUser();
 const appToast = useAppToast();
+const { confirm: confirmDialog } = useConfirmDialog();
 const router = useRouter();
 
 const loadingJobs = ref(true);
@@ -357,7 +358,12 @@ const toggleJobLogs = async (job: MenuGenerationJob) => {
 };
 
 const deleteJob = async (job: MenuGenerationJob) => {
-  const confirmed = confirm("¿Eliminar este job?");
+  const confirmed = await confirmDialog({
+    title: "Eliminar job",
+    message: "¿Eliminar este job?",
+    confirmText: "Eliminar",
+    danger: true,
+  });
   if (!confirmed) return;
   try {
     const currentUser = await loadCurrentUser();
@@ -374,9 +380,12 @@ const deleteJob = async (job: MenuGenerationJob) => {
 };
 
 const cleanupFinishedJobs = async () => {
-  const confirmed = confirm(
-    "¿Eliminar jobs completados y con error del panel de seguimiento?",
-  );
+  const confirmed = await confirmDialog({
+    title: "Limpiar panel",
+    message: "¿Eliminar jobs completados y con error del panel de seguimiento?",
+    confirmText: "Limpiar",
+    danger: true,
+  });
   if (!confirmed) return;
   try {
     const currentUser = await loadCurrentUser();
@@ -393,9 +402,12 @@ const cleanupFinishedJobs = async () => {
 };
 
 const deleteRotatingMenu = async (menu: RotatingMenu) => {
-  const confirmed = confirm(
-    `¿Eliminar el menú rotativo "${menu.name}" y sus datos asociados?`,
-  );
+  const confirmed = await confirmDialog({
+    title: "Eliminar menú rotativo",
+    message: `¿Eliminar el menú rotativo "${menu.name}" y sus datos asociados?`,
+    confirmText: "Eliminar",
+    danger: true,
+  });
   if (!confirmed) return;
   try {
     const currentUser = await loadCurrentUser();

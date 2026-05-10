@@ -1414,6 +1414,7 @@ export default defineEventHandler(async (event) => {
     generatedDays.push({
       day_number: day,
       day_date: date.toISOString().split("T")[0],
+      source_weekly_menu_id: plannedDayBlock?.source_weekly_menu_id || null,
       meals: dayMeals,
       profile_totals: dailyProfileTotals,
     });
@@ -1667,6 +1668,7 @@ export default defineEventHandler(async (event) => {
       rotating_menu_id: rotatingMenu.id,
       day_number: day.day_number,
       day_date: day.day_date,
+      source_weekly_menu_id: day.source_weekly_menu_id || null,
       total_kcal: Math.round(totals.kcal),
       total_protein_g: round(totals.protein),
       total_carbs_g: round(totals.carbs),

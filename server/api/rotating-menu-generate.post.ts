@@ -1,6 +1,11 @@
 import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
 import { buildShoppingListFromRotatingMenu } from "~/server/utils/shopping-from-rotating";
 import { createMenuGenerationLogger } from "~/server/utils/menu-generation-logger";
+import {
+  normalizeMealSlot,
+  rotatingMealKey,
+  validatePlannedDayCompleteness,
+} from "~/utils/rotating-menu-completeness.js";
 import { buildRotatingWeeklyMenuBlocks } from "~/utils/rotating-weekly-menu-blocks.js";
 
 type MealType = "desayuno" | "comida" | "cena";
@@ -1759,131 +1764,6 @@ function normalizeToGrams(quantity: number, unitType: string): number | null {
   if (unitType === "ml") return quantity;
   if (unitType === "l") return quantity * 1000;
   return null;
-}
-
-function validatePlannedDayCompleteness({
-  plannedDayBlocks,
-  sourceMeals,
-  discardedMealOptions,
-}: {
-  plannedDayBlocks: any[];
-  sourceMeals: any[];
-  discardedMealOptions: Array<{
-    weekly_menu_id: string | null;
-    day_number: number | null;
-    meal_type: MealType;
-    meal_slot: number;
-    dish_name: string;
-    reason: string;
-  }>;
-}) {
-  const sourceMealsByMenuDay = new Map<string, any[]>();
-  for (const meal of sourceMeals || []) {
-    const weeklyMenuId = String(meal?.weekly_menu_id || "").trim();
-    const dayNumber = Number(meal?.day_number || 0);
-    if (!weeklyMenuId || dayNumber <= 0) continue;
-    const key = sourceMenuDayKey(weeklyMenuId, dayNumber);
-    if (!sourceMealsByMenuDay.has(key)) sourceMealsByMenuDay.set(key, []);
-    sourceMealsByMenuDay.get(key)?.push(meal);
-  }
-
-  const discardReasonBySourceMealKey = new Map(
-    (discardedMealOptions || []).map((item) => [
-      sourceMealKey({
-        weekly_menu_id: item.weekly_menu_id,
-        day_number: item.day_number,
-        meal_type: item.meal_type,
-        meal_slot: item.meal_slot,
-        dish_name: item.dish_name,
-      }),
-      item.reason,
-    ]),
-  );
-
-  const diagnostics: Array<{
-    rotating_day_number: number;
-    source_weekly_menu_id: string | null;
-    source_day_number: number | null;
-    meal_type: string | null;
-    meal_slot: number | null;
-    dish_name: string | null;
-    reason: string;
-  }> = [];
-
-  for (const block of plannedDayBlocks || []) {
-    const weeklyMenuId = String(block?.source_weekly_menu_id || "").trim();
-    const sourceDayNumber = Number(block?.source_day_number || 0);
-    if (!weeklyMenuId || sourceDayNumber <= 0) {
-      diagnostics.push({
-        rotating_day_number: Number(block?.day_number || 0),
-        source_weekly_menu_id: weeklyMenuId || null,
-        source_day_number: sourceDayNumber || null,
-        meal_type: null,
-        meal_slot: null,
-        dish_name: null,
-        reason: "missing_source_day_mapping",
-      });
-      continue;
-    }
-
-    const expectedMeals =
-      sourceMealsByMenuDay.get(sourceMenuDayKey(weeklyMenuId, sourceDayNumber)) ||
-      [];
-    const plannedKeys = new Set(
-      (block.meals || []).map((meal: any) =>
-        sourceMealKey({
-          weekly_menu_id: meal.weekly_menu_id,
-          day_number: meal.day_number,
-          meal_type: meal.meal_type,
-          meal_slot: meal.meal_slot,
-          dish_name: meal.dish_name,
-        }),
-      ),
-    );
-
-    for (const expectedMeal of expectedMeals) {
-      const expectedKey = sourceMealKey(expectedMeal);
-      if (plannedKeys.has(expectedKey)) continue;
-      diagnostics.push({
-        rotating_day_number: Number(block.day_number || 0),
-        source_weekly_menu_id: weeklyMenuId,
-        source_day_number: sourceDayNumber,
-        meal_type: String(expectedMeal.meal_type || "") || null,
-        meal_slot: normalizeMealSlot(expectedMeal.meal_slot),
-        dish_name: String(expectedMeal.dish_name || "") || null,
-        reason:
-          discardReasonBySourceMealKey.get(expectedKey) ||
-          "source_meal_missing_after_planning",
-      });
-    }
-  }
-
-  return diagnostics;
-}
-
-function sourceMenuDayKey(weeklyMenuId: unknown, dayNumber: unknown) {
-  return `${String(weeklyMenuId || "").trim()}:${Number(dayNumber) || 0}`;
-}
-
-function sourceMealKey(meal: any) {
-  return [
-    String(meal?.weekly_menu_id || "").trim(),
-    Number(meal?.day_number || 0),
-    String(meal?.meal_type || "").trim().toLowerCase(),
-    normalizeMealSlot(meal?.meal_slot),
-    normalizeDishName(meal?.dish_name),
-  ].join(":");
-}
-
-function rotatingMealKey(dayId: unknown, mealType: unknown, mealSlot: unknown) {
-  return `${String(dayId || "")}:${String(mealType || "")}:${normalizeMealSlot(
-    mealSlot,
-  )}`;
-}
-
-function normalizeMealSlot(value: unknown) {
-  const slot = Number(value || 1);
-  return Number.isFinite(slot) && slot > 0 ? Math.round(slot) : 1;
 }
 
 function normalizeDishName(value: unknown) {

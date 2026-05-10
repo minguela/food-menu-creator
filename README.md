@@ -29,7 +29,16 @@ npm run build
 
 ```bash
 npm test
+npm run test:rotating
 ```
+
+El contraste live de menús rotativos es opcional y solo lectura:
+
+```bash
+SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... ROTATING_TEST_WEEKLY_MENU_IDS=id1,id2 npm run test:rotating:live
+```
+
+Variables opcionales: `ROTATING_TEST_INITIAL_WEEKLY_MENU_ID` y `ROTATING_TEST_DURATION_DAYS`.
 
 ### Comprobación de salud
 

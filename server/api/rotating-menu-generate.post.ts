@@ -796,6 +796,44 @@ export default defineEventHandler(async (event) => {
         }
       }
 
+      if (!linkedDish && String(sourceMeal.dish_name || "").includes("+")) {
+        const parts = String(sourceMeal.dish_name || "")
+          .split(/\s*\+\s*/)
+          .map((p) => p.trim())
+          .filter(Boolean);
+        const matchedParts = parts
+          .map((part) => dishByNormalizedName.get(normalizeDishName(part)) || null)
+          .filter(Boolean);
+        if (matchedParts.length === parts.length && matchedParts.length >= 2) {
+          const firstDish = matchedParts[0];
+          const secondDish = matchedParts[1];
+          const combinedName = `${firstDish.name} + ${secondDish.name}`;
+          const allComplete = matchedParts.every((d) => d.recipe_status === "complete");
+          const allNotRequired = matchedParts.every((d) => d.recipe_status === "not_required");
+          linkedDish = {
+            id: `compound:split:${normalizeDishName(sourceMeal.dish_name)}`,
+            name: combinedName,
+            normalized_name: normalizeDishName(combinedName),
+            recipe_status: allComplete
+              ? "complete"
+              : allNotRequired
+                ? "not_required"
+                : matchedParts[0].recipe_status,
+            is_special: matchedParts.some((d) => d.is_special),
+            special_kcal_reserved: Math.max(
+              ...matchedParts.map((d) => d.special_kcal_reserved || 0),
+            ),
+            _compound: true,
+            _firstDishId: firstDish.id,
+            _secondDishId: secondDish.id,
+          };
+          dishByNormalizedName.set(
+            normalizeDishName(sourceMeal.dish_name),
+            linkedDish,
+          );
+        }
+      }
+
       const isSpecial = isSpecialMealCandidate(sourceMeal, linkedDish);
       if (isSpecial) {
         mealOptionsByType[mealType].push({

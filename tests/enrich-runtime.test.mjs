@@ -40,13 +40,13 @@ test("resolves USDA key from runtime or env fallbacks", () => {
 test("resolves supabase key with service-role priority and anon fallback", () => {
   assert.equal(
     resolveSupabaseServerKey({
-      runtimeServiceKey: "runtime",
-      envServiceRole: "env",
-      envNuxtServiceKey: "nuxt",
-      envSupabaseKey: "supabase",
-      publicAnonKey: "anon",
+      runtimeServiceKey: "runtime.header.payload",
+      envServiceRole: "env.header.payload",
+      envNuxtServiceKey: "nuxt.header.payload",
+      envSupabaseKey: "supabase.header.payload",
+      publicAnonKey: "anon.header.payload",
     }),
-    "runtime",
+    "runtime.header.payload",
   );
   assert.equal(
     resolveSupabaseServerKey({
@@ -54,9 +54,9 @@ test("resolves supabase key with service-role priority and anon fallback", () =>
       envServiceRole: "",
       envNuxtServiceKey: "",
       envSupabaseKey: "",
-      publicAnonKey: "anon",
+      publicAnonKey: "anon.header.payload",
     }),
-    "anon",
+    "anon.header.payload",
   );
 });
 

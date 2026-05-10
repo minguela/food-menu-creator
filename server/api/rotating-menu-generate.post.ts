@@ -1419,7 +1419,53 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const dayRows = generatedDays.map((day) => {
+  const deduplicationDiagnostics: Array<{
+    day_number: number;
+    meal_type: string;
+    dropped_dish_name: string;
+  }> = [];
+
+  const persistedDays = generatedDays.map((day) => {
+    const seenMealTypes = new Set<string>();
+    const dedupedMeals: any[] = [];
+
+    for (const meal of day.meals || []) {
+      const key = String(meal.meal_type || "").trim().toLowerCase();
+      if (!key) continue;
+      if (seenMealTypes.has(key)) {
+        deduplicationDiagnostics.push({
+          day_number: Number(day.day_number || 0),
+          meal_type: key,
+          dropped_dish_name: String(meal.dish_name || ""),
+        });
+        continue;
+      }
+      seenMealTypes.add(key);
+      dedupedMeals.push(meal);
+    }
+
+    return {
+      ...day,
+      meals: dedupedMeals,
+    };
+  });
+
+  if (deduplicationDiagnostics.length > 0) {
+    await logger.log({
+      level: "warning",
+      step: "save_supabase",
+      status: "running",
+      message:
+        "Detected duplicate meal_type per day; dropped duplicates before save.",
+      metadata: {
+        duplicates_count: deduplicationDiagnostics.length,
+        duplicates: deduplicationDiagnostics.slice(0, 50),
+      },
+      progress: { currentStep: "save_supabase" },
+    });
+  }
+
+  const dayRows = persistedDays.map((day) => {
     const totals = day.meals.reduce(
       (acc: any, meal: any) => {
         for (const portion of meal.profile_portions) {
@@ -1464,7 +1510,7 @@ export default defineEventHandler(async (event) => {
     savedDays.map((row: any) => [row.day_number, row.id]),
   );
 
-  const mealRows = generatedDays.flatMap((day) =>
+  const mealRows = persistedDays.flatMap((day) =>
     day.meals.map((meal: any) => ({
       rotating_menu_day_id: dayIdByNumber.get(day.day_number),
       meal_type: meal.meal_type,
@@ -1507,7 +1553,7 @@ export default defineEventHandler(async (event) => {
     ]),
   );
 
-  const portionsRows = generatedDays.flatMap((day) =>
+  const portionsRows = persistedDays.flatMap((day) =>
     day.meals.flatMap((meal: any) => {
       const dayId = dayIdByNumber.get(day.day_number);
       const mealId = mealIdByKey.get(`${dayId}:${meal.meal_type}`);
@@ -1557,7 +1603,7 @@ export default defineEventHandler(async (event) => {
     ]),
   );
 
-  const ingredientsRows = generatedDays.flatMap((day) =>
+  const ingredientsRows = persistedDays.flatMap((day) =>
     day.meals.flatMap((meal: any) => {
       if (meal.is_special) return [];
       const dayId = dayIdByNumber.get(day.day_number);
@@ -1682,7 +1728,7 @@ export default defineEventHandler(async (event) => {
   return {
     success: true,
     rotating_menu_id: rotatingMenu.id,
-    generated_days: generatedDays,
+    generated_days: persistedDays,
     profiles: profileTargets,
     shopping_list_items: shoppingBuild.inserted,
   };

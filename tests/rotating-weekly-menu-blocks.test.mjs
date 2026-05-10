@@ -68,6 +68,29 @@ test("starts from selected weekly menu and does not backfill partial source days
   ]);
 });
 
+test("preserves multiple meal slots within the same source day", () => {
+  const days = buildRotatingWeeklyMenuBlocks({
+    meals: [
+      meal("week-a", 1, "comida", 2),
+      meal("week-a", 1, "cena"),
+      meal("week-a", 1, "comida", 1),
+    ],
+    sourceWeeklyMenuIds: ["week-a"],
+    durationDays: 1,
+    initialWeeklyMenuId: "week-a",
+  });
+
+  assert.deepEqual(
+    days[0].meals.map((item) => `${item.meal_type}:${item.meal_slot || 1}`),
+    ["comida:1", "comida:2", "cena:1"],
+  );
+  assert.deepEqual(dayDishNames(days[0]), [
+    "week-a dia 1 comida",
+    "week-a dia 1 comida slot 2",
+    "week-a dia 1 cena",
+  ]);
+});
+
 test("pins selected initial menu and shuffles remaining menus before repeating", () => {
   const days = buildRotatingWeeklyMenuBlocks({
     meals: weeklyMeals(["week-a", "week-b", "week-c", "week-d"]),
@@ -111,13 +134,14 @@ test("ignores invalid initial menu and falls back to random valid menu", () => {
   assert.equal(days[0].source_weekly_menu_id, "week-b");
 });
 
-function meal(weeklyMenuId, dayNumber, mealType) {
+function meal(weeklyMenuId, dayNumber, mealType, mealSlot = 1) {
   return {
-    id: `${weeklyMenuId}-${dayNumber}-${mealType}`,
+    id: `${weeklyMenuId}-${dayNumber}-${mealType}-${mealSlot}`,
     weekly_menu_id: weeklyMenuId,
     day_number: dayNumber,
     meal_type: mealType,
-    dish_name: `${weeklyMenuId} dia ${dayNumber} ${mealType}`,
+    meal_slot: mealSlot,
+    dish_name: `${weeklyMenuId} dia ${dayNumber} ${mealType} slot ${mealSlot}`,
   };
 }
 
@@ -145,5 +169,7 @@ function sequenceRng(values) {
 }
 
 function dayDishNames(day) {
-  return day.meals.map((meal) => meal.dish_name);
+  return day.meals.map((meal) =>
+    String(meal.dish_name).replace(" slot 1", ""),
+  );
 }

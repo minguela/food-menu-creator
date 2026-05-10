@@ -310,7 +310,7 @@
           </h3>
 
           <div class="space-y-3">
-            <div v-for=" meal in day.meals " :key=" `${ day.day_number }-${ meal.meal_type }` "
+            <div v-for=" meal in day.meals " :key=" `${ day.day_number }-${ meal.meal_type }-${ meal.meal_slot || 1 }-${ meal.dish_name }` "
               class="rounded-lg border p-3">
               <p class="font-medium text-gray-900 dark:text-slate-100">
                 {{ mealLabel( meal.meal_type ) }}: {{ meal.dish_name }}
@@ -343,7 +343,7 @@
                   </thead>
                   <tbody>
                     <tr v-for=" portion in meal.profile_portions "
-                      :key=" `${ meal.meal_type }-${ portion.profile_key }` " class="border-t">
+                      :key=" `${ meal.meal_type }-${ meal.meal_slot || 1 }-${ portion.profile_key }` " class="border-t">
                       <td class="px-2 py-1 font-medium">{{ portion.profile_name }}</td>
                       <td class="px-2 py-1">{{ portion.serving_multiplier.toFixed( 2 ) }}</td>
                       <td class="px-2 py-1">{{ Math.round( portion.final_kcal ) }}</td>
@@ -456,6 +456,9 @@ type ProfilePortion = {
 
 type RotatingMeal = {
   meal_type: "desayuno" | "comida" | "cena";
+  meal_slot?: number;
+  source_weekly_menu_id?: string | null;
+  source_day_number?: number | null;
   dish_name: string;
   is_special?: boolean;
   special_kcal_reserved?: number;

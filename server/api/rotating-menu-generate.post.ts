@@ -268,7 +268,17 @@ export default defineEventHandler(async (event) => {
   const uniqueDishNames = Array.from(
     new Set(
       (weeklyMeals || [])
-        .map((meal: any) => String(meal.dish_name || "").trim())
+        .flatMap((meal: any) => {
+          const name = String(meal.dish_name || "").trim();
+          if (!name) return [];
+          if (name.includes("+")) {
+            return [
+              name,
+              ...name.split(/\s*\+\s*/).map((p) => p.trim()).filter(Boolean),
+            ];
+          }
+          return [name];
+        })
         .filter(Boolean),
     ),
   );

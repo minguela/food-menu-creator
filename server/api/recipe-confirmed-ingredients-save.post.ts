@@ -70,12 +70,34 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: existingIngredientsError.message });
   }
 
-  const ingredientByNormalized = new Map(
-    (existingIngredients || []).map((row: any) => [String(row.normalized_name), row]),
-  );
+  const names = dedupedRows.map((row) => row.name);
+  const { data: existingByName, error: existingByNameError } = await supabase
+    .from("ingredients")
+    .select("id,name,normalized_name")
+    .in("name", names);
+  if (existingByNameError) {
+    throw createError({ statusCode: 500, statusMessage: existingByNameError.message });
+  }
+
+  const ingredientByNormalized = new Map<string, any>();
+  const ingredientByNameLower = new Map<string, any>();
+
+  for (const row of existingIngredients || []) {
+    ingredientByNormalized.set(String(row.normalized_name), row);
+    ingredientByNameLower.set(String(row.name).toLowerCase(), row);
+  }
+  for (const row of existingByName || []) {
+    const normalized = normalizeIngredientName(row.name);
+    ingredientByNormalized.set(normalized, row);
+    ingredientByNameLower.set(String(row.name).toLowerCase(), row);
+  }
 
   const missingIngredients = dedupedRows
-    .filter((row) => !ingredientByNormalized.has(row.normalized_name))
+    .filter((row) => {
+      const byNormalized = ingredientByNormalized.get(row.normalized_name);
+      const byName = ingredientByNameLower.get(row.name.toLowerCase());
+      return !byNormalized && !byName;
+    })
     .map((row) => ({
       name: row.name,
       normalized_name: row.normalized_name,
@@ -140,7 +162,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const payloads = dedupedRows.map((row) => {
-    const ingredient = ingredientByNormalized.get(row.normalized_name);
+    const ingredient = ingredientByNormalized.get(row.normalized_name)
+      || ingredientByNameLower.get(row.name.toLowerCase());
     return {
       recipe_id: dishId,
       ingredient_id: ingredient?.id || null,

@@ -130,6 +130,21 @@
                 <span>{{ menu.name }}</span>
               </label>
             </div>
+            <label class="mt-4 block space-y-2">
+              <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                Menú inicial
+              </span>
+              <select v-model=" initialWeeklyMenuId "
+                class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                <option value="">Aleatorio</option>
+                <option v-for=" menu in selectedInitialMenuOptions " :key=" menu.id " :value=" menu.id ">
+                  {{ menu.name }}
+                </option>
+              </select>
+              <span class="block text-xs text-slate-500 dark:text-slate-400">
+                Si eliges uno, ocupará los primeros 7 días. El resto se baraja sin repetir hasta usar todos.
+              </span>
+            </label>
           </div>
 
           <p v-if=" error " class="mt-3 text-sm text-red-600">{{ error }}</p>
@@ -490,6 +505,7 @@ const startDate = ref( new Date().toISOString().split( "T" )[ 0 ] );
 const menus = ref<WeeklyMenu[]>( [] );
 const profiles = ref<PersonProfile[]>( [] );
 const selectedMenuIds = ref<string[]>( [] );
+const initialWeeklyMenuId = ref( "" );
 const selectedProfileIds = ref<string[]>( [] );
 const generatedDays = ref<RotatingDay[]>( [] );
 const profilesSummary = ref<RotatingProfileTarget[]>( [] );
@@ -510,6 +526,10 @@ const error = ref( "" );
 const notificationMessage = ref( "" );
 const notificationLevel = ref<"success" | "error">( "success" );
 
+const selectedInitialMenuOptions = computed( () =>
+  menus.value.filter( ( menu ) => selectedMenuIds.value.includes( menu.id ) ),
+);
+
 const mealLabel = ( type: string ) =>
   type === "desayuno" ? "Desayuno" : type === "comida" ? "Comida" : "Cena";
 
@@ -524,6 +544,15 @@ const deltaClass = ( value: number ) => {
   if ( abs <= 90 ) return "text-amber-700";
   return "text-red-700";
 };
+
+watch( selectedMenuIds, () => {
+  if (
+    initialWeeklyMenuId.value &&
+    !selectedMenuIds.value.includes( initialWeeklyMenuId.value )
+  ) {
+    initialWeeklyMenuId.value = "";
+  }
+} );
 
 const hasLogMetadata = ( log: MenuGenerationLog ) => {
   const metadata = log.metadata || {};
@@ -626,6 +655,18 @@ const generateRotatingMenu = async () => {
       throw new Error( "Selecciona al menos un perfil" );
     }
 
+    const initialMenuId = initialWeeklyMenuId.value.trim();
+    const requestBody = {
+      userId: currentUser.id,
+      name: name.value.trim() || "Menú rotativo",
+      durationDays: Math.min( 90, Math.max( 1, Number( days.value ) || 7 ) ),
+      startDate: startDate.value,
+      sourceWeeklyMenuIds: selectedMenuIds.value,
+      profileIds: selectedProfileIds.value,
+      specialMealKcal: Math.max( 0, Math.min( 2000, Number( specialMealKcal.value ) || 700 ) ),
+      ...( initialMenuId ? { initialWeeklyMenuId: initialMenuId } : {} ),
+    };
+
     const response = await $fetch<{
       success: boolean;
       job: {
@@ -637,15 +678,7 @@ const generateRotatingMenu = async () => {
       deduplicated: boolean;
     }>( "/api/rotating-menu-jobs", {
       method: "POST",
-      body: {
-        userId: currentUser.id,
-        name: name.value.trim() || "Menú rotativo",
-        durationDays: Math.min( 90, Math.max( 1, Number( days.value ) || 7 ) ),
-        startDate: startDate.value,
-        sourceWeeklyMenuIds: selectedMenuIds.value,
-        profileIds: selectedProfileIds.value,
-        specialMealKcal: Math.max( 0, Math.min( 2000, Number( specialMealKcal.value ) || 700 ) ),
-      },
+      body: requestBody,
     } );
 
     if ( !response.success ) {

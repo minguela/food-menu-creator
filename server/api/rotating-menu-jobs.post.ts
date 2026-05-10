@@ -8,6 +8,7 @@ type CreateJobPayload = {
   startDate: string;
   sourceWeeklyMenuIds: string[];
   profileIds: string[];
+  initialWeeklyMenuId?: string | null;
   specialMealKcal?: number;
 };
 
@@ -79,6 +80,7 @@ export default defineEventHandler(async (event) => {
     startDate: String(body?.startDate || "").trim(),
     sourceWeeklyMenuIds: body.sourceWeeklyMenuIds || [],
     profileIds: Array.isArray(body?.profileIds) ? body.profileIds : [],
+    initialWeeklyMenuId: String(body?.initialWeeklyMenuId || "").trim() || null,
     specialMealKcal: Math.max(
       0,
       Math.min(2000, Number(body?.specialMealKcal) || 700),
@@ -119,6 +121,7 @@ export default defineEventHandler(async (event) => {
       duration_days: inputPayload.durationDays,
       profiles_count: inputPayload.profileIds.length,
       source_menus_count: inputPayload.sourceWeeklyMenuIds.length,
+      initial_weekly_menu_id: inputPayload.initialWeeklyMenuId,
       start_date: inputPayload.startDate,
     },
     progress: { currentStep: "job_created", progress: 0, status: "pending" },

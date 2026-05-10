@@ -94,7 +94,7 @@ export default defineEventHandler(async (event) => {
       supabase
         .from("weekly_meals")
         .select(
-          "id, weekly_menu_id, day_number, meal_type, meal_slot, dish_name, dish_description, is_special, special_kcal_reserved",
+          "id, weekly_menu_id, day_number, meal_type, meal_slot, dish_name, dish_description, is_special, special_kcal_reserved, compound_day_id",
         )
         .in("weekly_menu_id", body.sourceWeeklyMenuIds),
     ]);
@@ -289,6 +289,26 @@ export default defineEventHandler(async (event) => {
       normalizeDishName(row.normalized_name || row.name),
       row,
     ]),
+  );
+  const dishById = new Map(
+    (dishRows || []).map((row: any) => [String(row.id), row]),
+  );
+
+  const compoundDayIds = Array.from(
+    new Set(
+      (weeklyMeals || [])
+        .map((meal: any) => meal.compound_day_id)
+        .filter(Boolean),
+    ),
+  );
+  const { data: compoundDayRows } = compoundDayIds.length
+    ? await supabase
+        .from("compound_day_meals")
+        .select("id, name, first_dish_id, second_dish_id")
+        .in("id", compoundDayIds)
+    : { data: [] as any[] };
+  const compoundDayById = new Map(
+    (compoundDayRows || []).map((row: any) => [String(row.id), row]),
   );
 
   const recipeIds = (dishRows || []).map((row: any) => row.id);
@@ -588,6 +608,42 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  for (const [, dish] of dishByNormalizedName) {
+    if (!dish._compound) continue;
+    const firstValid = validRecipeById.get(dish._firstDishId);
+    const secondValid = validRecipeById.get(dish._secondDishId);
+    if (!firstValid || !secondValid) {
+      discardedRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "recipe_not_validated",
+        details: `compound_missing_valid_recipe:${dish._firstDishId}:${dish._secondDishId}`,
+      });
+      continue;
+    }
+    const ingredientMap = new Map<string, any>();
+    for (const ing of firstValid.ingredient_base) {
+      ingredientMap.set(ing.normalized_name, { ...ing });
+    }
+    for (const ing of secondValid.ingredient_base) {
+      const existing = ingredientMap.get(ing.normalized_name);
+      if (existing) {
+        existing.quantity += ing.quantity;
+      } else {
+        ingredientMap.set(ing.normalized_name, { ...ing });
+      }
+    }
+    const combinedIngredientBase = Array.from(ingredientMap.values());
+    validRecipeById.set(dish.id, {
+      dish_id: dish.id,
+      dish_name: dish.name,
+      normalized_name: dish.normalized_name,
+      ingredient_base: combinedIngredientBase,
+      base_kcal: firstValid.base_kcal + secondValid.base_kcal,
+      base_protein: firstValid.base_protein + secondValid.base_protein,
+    });
+  }
+
   await logger.log({
     level: "info",
     step: "recipe_validation",
@@ -698,8 +754,48 @@ export default defineEventHandler(async (event) => {
   for (const mealType of ["desayuno", "comida", "cena"] as MealType[]) {
     const sourceMeals = mealLibrary[mealType] || [];
     for (const sourceMeal of sourceMeals) {
-      const linkedDish =
+      let linkedDish =
         dishByNormalizedName.get(normalizeDishName(sourceMeal.dish_name)) || null;
+
+      if (!linkedDish && sourceMeal.compound_day_id) {
+        const compoundDay = compoundDayById.get(String(sourceMeal.compound_day_id));
+        if (compoundDay) {
+          const firstDish = dishById.get(String(compoundDay.first_dish_id)) || null;
+          const secondDish = dishById.get(String(compoundDay.second_dish_id)) || null;
+          if (firstDish && secondDish) {
+            const combinedName = `${firstDish.name} + ${secondDish.name}`;
+            linkedDish = {
+              id: `compound:${compoundDay.id}`,
+              name: combinedName,
+              normalized_name: normalizeDishName(combinedName),
+              recipe_status:
+                firstDish.recipe_status === "complete" &&
+                secondDish.recipe_status === "complete"
+                  ? "complete"
+                  : firstDish.recipe_status === "not_required" &&
+                      secondDish.recipe_status === "not_required"
+                    ? "not_required"
+                    : firstDish.recipe_status === "complete" ||
+                        firstDish.recipe_status === "not_required"
+                      ? secondDish.recipe_status
+                      : firstDish.recipe_status,
+              is_special: firstDish.is_special || secondDish.is_special,
+              special_kcal_reserved: Math.max(
+                firstDish.special_kcal_reserved || 0,
+                secondDish.special_kcal_reserved || 0,
+              ),
+              _compound: true,
+              _firstDishId: firstDish.id,
+              _secondDishId: secondDish.id,
+            };
+            dishByNormalizedName.set(
+              normalizeDishName(sourceMeal.dish_name),
+              linkedDish,
+            );
+          }
+        }
+      }
+
       const isSpecial = isSpecialMealCandidate(sourceMeal, linkedDish);
       if (isSpecial) {
         mealOptionsByType[mealType].push({

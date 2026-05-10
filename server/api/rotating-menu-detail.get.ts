@@ -82,6 +82,26 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  const sourceWeeklyMenuIds = Array.from(
+    new Set(
+      (days || [])
+        .map((day: any) => day.source_weekly_menu_id)
+        .filter(Boolean),
+    ),
+  );
+  const { data: sourceMenus, error: sourceMenusError } = sourceWeeklyMenuIds.length
+    ? await supabase
+        .from("weekly_menus")
+        .select("id, name")
+        .in("id", sourceWeeklyMenuIds)
+    : { data: [] as any[], error: null };
+  if (sourceMenusError) {
+    console.warn("Error cargando nombres de menús semanales:", sourceMenusError.message);
+  }
+  const weeklyMenuNameById = new Map(
+    (sourceMenus || []).map((menu: any) => [String(menu.id), menu.name || "Menú semanal"]),
+  );
+
   const dayIds = (days || []).map((day: any) => day.id);
   const { data: meals, error: mealsError } = dayIds.length
     ? await supabase
@@ -234,6 +254,7 @@ export default defineEventHandler(async (event) => {
       });
     return {
       ...day,
+      source_weekly_menu_name: weeklyMenuNameById.get(String(day.source_weekly_menu_id || "")) || null,
       meals: dayMeals,
       profile_totals: buildProfileTotals(dayMeals, effectiveMenuProfiles, profileById),
     };
@@ -275,6 +296,7 @@ export default defineEventHandler(async (event) => {
       profile_name: profileById.get(profile.profile_id)?.name || "Perfil",
     })),
     days: assembledDays,
+    source_weekly_menu_names: Object.fromEntries(weeklyMenuNameById),
     shopping_items: shoppingItems || [],
     debug: detailDebug,
   };

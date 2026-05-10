@@ -89,6 +89,7 @@ export default defineEventHandler(async (event) => {
         .select("*")
         .in("rotating_menu_day_id", dayIds)
         .order("meal_type", { ascending: true })
+        .order("meal_slot", { ascending: true })
     : { data: [] as any[], error: null };
 
   if (mealsError) {
@@ -211,7 +212,11 @@ export default defineEventHandler(async (event) => {
 
   const assembledDays = (days || []).map((day: any) => {
     const dayMeals = (mealsByDay.get(day.id) || [])
-      .sort((a: any, b: any) => mealOrder(a.meal_type) - mealOrder(b.meal_type))
+      .sort(
+        (a: any, b: any) =>
+          mealOrder(a.meal_type) - mealOrder(b.meal_type) ||
+          normalizeMealSlot(a.meal_slot) - normalizeMealSlot(b.meal_slot),
+      )
       .map((meal: any) => {
         const profilePortions = (portionsByMeal.get(meal.id) || []).map(
           (portion: any) => ({
@@ -290,6 +295,11 @@ function mealOrder(type: string) {
   if (type === "comida") return 2;
   if (type === "cena") return 3;
   return 4;
+}
+
+function normalizeMealSlot(value: unknown) {
+  const slot = Number(value || 1);
+  return Number.isFinite(slot) && slot > 0 ? Math.round(slot) : 1;
 }
 
 function buildProfileTotals(

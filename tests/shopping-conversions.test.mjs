@@ -50,13 +50,31 @@ test("exports shopping list as plain text and csv", () => {
       conversion_status: "manual",
     },
     {
-      ingredients: { name: "arroz" },
+      ingredients: { name: "arroz", carrefour_category: "Despensa" },
       quantity_grams: 1000,
       purchased: true,
       conversion_status: "exact",
     },
   ];
 
-  assert.match(buildShoppingListText(items), /papel higiénico: 500 g/);
-  assert.match(buildShoppingCsv(items), /papel higiénico,500,no,manual/);
+  assert.match(buildShoppingListText(items), /500 g papel higiénico/);
+  assert.match(buildShoppingCsv(items), /ingredient,quantity,unit,category/);
+  assert.match(buildShoppingCsv(items), /arroz,1000,g,Despensa/);
+});
+
+test("escapes shopping csv values with commas and quotes", () => {
+  const csv = buildShoppingCsv([
+    {
+      item_name: 'tomate, pera "premium"',
+      quantity_grams: 250,
+      ingredients: { carrefour_category: "Frutas, verduras" },
+    },
+  ]);
+
+  assert.match(csv, /"tomate, pera ""premium""",250,g,"Frutas, verduras"/);
+});
+
+test("exports empty shopping list message", () => {
+  assert.equal(buildShoppingListText([]), "Shopping list is empty");
+  assert.equal(buildShoppingCsv([]), "ingredient,quantity,unit,category");
 });

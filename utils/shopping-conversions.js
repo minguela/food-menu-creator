@@ -110,23 +110,26 @@ export function formatGrams(value) {
 }
 
 export function buildShoppingListText(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return "Shopping list is empty";
+  }
+
   return items
     .map((item) => {
-      const mark = item.purchased ? "x" : " ";
       const name = item.item_name || item.ingredients?.name || "Artículo";
-      return `- [${mark}] ${name}: ${formatGrams(item.quantity_grams ?? item.quantity_needed)}`;
+      return `${formatGrams(item.quantity_grams ?? item.quantity_needed)} ${name}`;
     })
     .join("\n");
 }
 
 export function buildShoppingCsv(items) {
-  const rows = [["nombre", "gramos", "comprado", "conversion"]];
-  for (const item of items) {
+  const rows = [["ingredient", "quantity", "unit", "category"]];
+  for (const item of Array.isArray(items) ? items : []) {
     rows.push([
       item.item_name || item.ingredients?.name || "Artículo",
       Math.round(Number(item.quantity_grams ?? item.quantity_needed) || 0),
-      item.purchased ? "si" : "no",
-      item.conversion_status || "exact",
+      "g",
+      item.ingredients?.carrefour_category || item.category || "Otros",
     ]);
   }
   return rows.map((row) => row.map(csvEscape).join(",")).join("\n");

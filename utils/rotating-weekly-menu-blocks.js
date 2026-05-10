@@ -8,7 +8,7 @@ export function buildRotatingWeeklyMenuBlocks({
   meals,
   sourceWeeklyMenuIds,
   durationDays,
-  initialWeeklyMenuId = null,
+  initialWeeklyMenuId,
   rng = Math.random,
 }) {
   const sourceIds = uniqueStrings(sourceWeeklyMenuIds);
@@ -113,5 +113,11 @@ function menuDayKey(weeklyMenuId, dayNumber) {
 function compareMealsByType(a, b) {
   const aOrder = MEAL_TYPE_ORDER.get(String(a.meal_type)) ?? 99;
   const bOrder = MEAL_TYPE_ORDER.get(String(b.meal_type)) ?? 99;
-  return aOrder - bOrder;
+  if (aOrder !== bOrder) return aOrder - bOrder;
+  return mealSlot(a) - mealSlot(b);
+}
+
+function mealSlot(meal) {
+  const value = Number(meal?.meal_slot || 1);
+  return Number.isFinite(value) && value > 0 ? value : 1;
 }

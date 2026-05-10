@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
 import { buildShoppingListFromRotatingMenu } from "~/server/utils/shopping-from-rotating";
 import { createMenuGenerationLogger } from "~/server/utils/menu-generation-logger";
+import { buildRotatingWeeklyMenuBlocks } from "~/utils/rotating-weekly-menu-blocks.js";
 
 type MealType = "desayuno" | "comida" | "cena";
 
@@ -14,6 +15,7 @@ type GeneratePayload = {
   startDate: string;
   sourceWeeklyMenuIds: string[];
   profileIds: string[];
+  initialWeeklyMenuId?: string | null;
   specialMealKcal?: number;
   jobId?: string;
 };
@@ -58,6 +60,7 @@ export default defineEventHandler(async (event) => {
       duration_days: targetDays,
       start_date: body.startDate,
       source_menu_ids_count: body.sourceWeeklyMenuIds.length,
+      initial_weekly_menu_id: body.initialWeeklyMenuId || null,
       profile_ids_count: body.profileIds.length,
       special_meal_kcal: body.specialMealKcal,
     },
@@ -86,7 +89,7 @@ export default defineEventHandler(async (event) => {
       supabase
         .from("weekly_meals")
         .select(
-          "id, day_number, meal_type, dish_name, dish_description, is_special, special_kcal_reserved",
+          "id, weekly_menu_id, day_number, meal_type, dish_name, dish_description, is_special, special_kcal_reserved",
         )
         .in("weekly_menu_id", body.sourceWeeklyMenuIds),
     ]);
@@ -663,7 +666,6 @@ export default defineEventHandler(async (event) => {
   );
 
   const generatedDays: any[] = [];
-  const lastByType: Record<string, string> = {};
 
   await logger.log({
     level: "info",
@@ -781,17 +783,47 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const rotationOffsets: Record<MealType, number> = {
-    desayuno: randomInt(mealOptionsByType.desayuno.length),
-    comida: randomInt(mealOptionsByType.comida.length),
-    cena: randomInt(mealOptionsByType.cena.length),
-  };
+  const weeklyMenuMealOptions = (["desayuno", "comida", "cena"] as MealType[])
+    .flatMap((mealType) => mealOptionsByType[mealType])
+    .filter((meal) => meal.weekly_menu_id);
+  const weeklyMenuIdsWithOptions = new Set(
+    weeklyMenuMealOptions.map((meal) => String(meal.weekly_menu_id)),
+  );
+  const rotationSourceWeeklyMenuIds = Array.from(
+    new Set(
+      body.sourceWeeklyMenuIds
+        .map((id) => String(id || "").trim())
+        .filter((id) => id && weeklyMenuIdsWithOptions.has(id)),
+    ),
+  );
+  const plannedDayBlocks = buildRotatingWeeklyMenuBlocks({
+    meals: weeklyMenuMealOptions,
+    sourceWeeklyMenuIds: rotationSourceWeeklyMenuIds,
+    durationDays: targetDays,
+    initialWeeklyMenuId: body.initialWeeklyMenuId || null,
+  });
+  const plannedWeeklyMenuOrder = plannedDayBlocks
+    .filter((day) => day.source_day_number === 1)
+    .map((day) => day.source_weekly_menu_id);
+
   await logger.log({
     level: "info",
     step: "recipe_selection",
     status: "completed",
-    message: "Offset aleatorio de rotación aplicado.",
-    metadata: { rotation_offsets: rotationOffsets },
+    message: "Rotación por bloques semanales aplicada.",
+    metadata: {
+      requested_initial_weekly_menu_id: body.initialWeeklyMenuId || null,
+      rotation_source_weekly_menu_ids: rotationSourceWeeklyMenuIds,
+      planned_weekly_menu_order: plannedWeeklyMenuOrder,
+      planned_blocks: plannedDayBlocks
+        .filter((day) => day.day_number === 1 || (day.day_number - 1) % 7 === 0)
+        .slice(0, 20)
+        .map((day) => ({
+          day_number: day.day_number,
+          source_weekly_menu_id: day.source_weekly_menu_id,
+          source_day_number: day.source_day_number,
+        })),
+    },
     progress: { progress: 45, currentStep: "recipe_selection" },
   });
 
@@ -799,21 +831,11 @@ export default defineEventHandler(async (event) => {
     const date = new Date(body.startDate);
     date.setDate(date.getDate() + day - 1);
     const dayMeals: any[] = [];
-
     const dayPlannedMeals: any[] = [];
+    const plannedDayBlock = plannedDayBlocks[day - 1];
 
-    for (const mealType of ["desayuno", "comida", "cena"] as MealType[]) {
-      const options = mealOptionsByType[mealType] || [];
-      if (options.length === 0) continue;
-      let pickIndex = (rotationOffsets[mealType] + day - 1) % options.length;
-      if (
-        options.length > 1 &&
-        options[pickIndex].dish_name === lastByType[mealType]
-      ) {
-        pickIndex = (pickIndex + 1) % options.length;
-      }
-      const picked = options[pickIndex];
-      lastByType[mealType] = picked.dish_name;
+    for (const picked of plannedDayBlock?.meals || []) {
+      const mealType = picked.meal_type as MealType;
 
       const linkedDish = picked._linkedDish || null;
       const isSpecial = Boolean(picked._isSpecial);
@@ -1726,11 +1748,6 @@ function resolveSpecialMealKcal({
     0,
     Math.min(2000, Number(reservedKcal ?? SPECIAL_MEAL_RESERVED_KCAL)),
   );
-}
-
-function randomInt(maxExclusive: number) {
-  if (!Number.isFinite(maxExclusive) || maxExclusive <= 1) return 0;
-  return Math.floor(Math.random() * maxExclusive);
 }
 
 function round(value: number, digits = 2) {

@@ -71,6 +71,7 @@ export default defineEventHandler(async (event) => {
         profile_ids_count: job.input_payload?.profileIds?.length || 0,
         source_menu_ids_count:
           job.input_payload?.sourceWeeklyMenuIds?.length || 0,
+        initial_weekly_menu_id: job.input_payload?.initialWeeklyMenuId || null,
         start_date: job.input_payload?.startDate,
       },
     },

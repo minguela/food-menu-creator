@@ -82,13 +82,16 @@
           </button>
         </div>
         <div class="mt-3 flex gap-2 overflow-x-auto pb-1">
-          <button v-for=" day in detail.days " :key=" `nav-${ day.id }` " class="min-w-16 rounded border px-3 py-2 text-xs"
-            :class=" selectedDayNumber === day.day_number
-                ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                : 'text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900'
-              " @click="selectDay( day.day_number )">
-            Día {{ day.day_number }}
-          </button>
+          <template v-for="week in weeks" :key="`nav-week-${week.weekNumber}`">
+            <span class="self-center text-xs text-gray-400 dark:text-slate-500 font-medium px-1">S{{ week.weekNumber }}</span>
+            <button v-for=" day in week.days " :key=" `nav-${ day.id }` " class="min-w-16 rounded border px-3 py-2 text-xs"
+              :class=" selectedDayNumber === day.day_number
+                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                  : 'text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900'
+                " @click="selectDay( day.day_number )">
+              Día {{ day.day_number }}
+            </button>
+          </template>
         </div>
       </section>
 
@@ -98,127 +101,143 @@
           class="max-h-96 overflow-auto rounded border border-zinc-800 p-3">{{ JSON.stringify( detail.debug, null, 2 ) }}</pre>
       </section>
 
-      <section class="space-y-4">
-        <article v-for=" day in visibleDays " :id=" `day-${ day.day_number }` " :key=" day.id "
-          class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-gray-900 dark:text-slate-100">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-slate-100">
-                Día {{ day.day_number }} · {{ formatDate( day.day_date ) }}
-              </h2>
-              <p class="text-xs text-gray-500 dark:text-slate-400">
-                {{ day.meals.length }} comidas · {{ day.profile_totals.length }} perfiles
-              </p>
-            </div>
-            <button class="rounded border px-3 py-1.5 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
-              @click="toggleDay( day.day_number )">
-              {{ collapsedDays.has( day.day_number ) ? "Expandir" : "Colapsar" }}
-            </button>
+      <section class="space-y-6">
+        <section v-for="week in weeks" :key="`week-${week.weekNumber}`">
+          <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 class="text-base font-semibold text-gray-900 dark:text-slate-100">
+              Semana {{ week.weekNumber }}
+              <span class="font-normal text-gray-500 dark:text-slate-400">
+                · Días {{ week.startDay }}-{{ week.endDay }}
+              </span>
+            </h2>
+            <span v-if="week.sourceMenuName" class="rounded-full bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 text-xs text-indigo-700 dark:text-indigo-300">
+              {{ week.sourceMenuName }}
+            </span>
           </div>
 
-          <div v-if=" !collapsedDays.has( day.day_number ) " class="mt-4 space-y-3">
-            <article v-for=" meal in day.meals " :key=" meal.id " class="rounded-lg border p-3"
-              :class=" meal.is_special ? 'border-amber-200 bg-amber-50' : 'bg-white dark:bg-slate-900' ">
-              <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="space-y-4">
+            <article v-for=" day in week.days " :id=" `day-${ day.day_number }` " :key=" day.id "
+              class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-gray-900 dark:text-slate-100">
+              <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p class="text-xs font-semibold uppercase text-gray-500 dark:text-slate-400">
-                    {{ mealLabel( meal.meal_type ) }}
-                    <span v-if=" Number( meal.meal_slot || 1 ) > 1 ">
-                      · Plato {{ meal.meal_slot }}
-                    </span>
-                  </p>
-                  <h3 class="font-semibold text-gray-900 dark:text-slate-100">{{ meal.dish_name }}</h3>
-                  <p v-if=" meal.dish_description " class="text-xs text-gray-500 dark:text-slate-400">
-                    {{ meal.dish_description }}
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100">
+                    Día {{ day.day_number }} · {{ formatDate( day.day_date ) }}
+                  </h3>
+                  <p class="text-xs text-gray-500 dark:text-slate-400">
+                    {{ day.meals.length }} comidas · {{ day.profile_totals.length }} perfiles
                   </p>
                 </div>
-                <span v-if=" meal.is_special " class="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-800">
-                  Comida libre · {{ meal.special_kcal_reserved ?? 700 }} kcal reservadas
-                </span>
+                <button class="rounded border px-3 py-1.5 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
+                  @click="toggleDay( day.day_number )">
+                  {{ collapsedDays.has( day.day_number ) ? "Expandir" : "Colapsar" }}
+                </button>
               </div>
 
-              <div v-if=" meal.is_special "
-                class="mt-3 rounded border border-amber-200 bg-white dark:bg-slate-900/70 p-3 text-xs text-amber-800">
-                Esta comida no tiene ingredientes calculados, no fuerza macros y
-                no se incluye en la lista de la compra.
-              </div>
-
-              <div v-else class="mt-3 overflow-x-auto">
-                <table class="min-w-[900px] w-full text-xs">
-                  <thead class="text-left text-gray-600 dark:text-slate-300">
-                    <tr>
-                      <th class="px-2 py-2">Perfil</th>
-                      <th class="px-2 py-2">x ración</th>
-                      <th class="px-2 py-2">kcal</th>
-                      <th class="px-2 py-2">Proteína</th>
-                      <th class="px-2 py-2">Hidratos</th>
-                      <th class="px-2 py-2">Grasas</th>
-                      <th class="px-2 py-2">Ingredientes/cantidades</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for=" portion in meal.profile_portions " :key=" portion.id " class="border-t">
-                      <td class="px-2 py-2 font-medium">{{ portion.profile_name }}</td>
-                      <td class="px-2 py-2">x{{ Number( portion.serving_multiplier || 1 ).toFixed( 2 ) }}</td>
-                      <td class="px-2 py-2">{{ Math.round( Number( portion.final_kcal || 0 ) ) }}</td>
-                      <td class="px-2 py-2">{{ fixed( portion.final_protein_g ) }}g</td>
-                      <td class="px-2 py-2">{{ fixed( portion.final_carbs_g ) }}g</td>
-                      <td class="px-2 py-2">{{ fixed( portion.final_fat_g ) }}g</td>
-                      <td class="px-2 py-2">
-                        <div v-if=" portion.ingredients.length > 0 " class="flex flex-wrap gap-1">
-                          <span v-for=" ingredient in portion.ingredients " :key=" ingredient.id "
-                            class="rounded bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5">
-                            {{ ingredient.name }}:
-                            {{ fixed( ingredient.final_quantity ) }}
-                            {{ ingredient.unit_type }}
-                          </span>
-                        </div>
-                        <span v-else class="text-amber-700">
-                          Sin ingredientes calculados
+              <div v-if=" !collapsedDays.has( day.day_number ) " class="mt-4 space-y-3">
+                <article v-for=" meal in day.meals " :key=" meal.id " class="rounded-lg border p-3 bg-white dark:bg-slate-900"
+                  :class="meal.is_special ? '' : ''">
+                  <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p class="text-xs font-semibold uppercase text-gray-500 dark:text-slate-400">
+                        {{ mealLabel( meal.meal_type ) }}
+                        <span v-if=" Number( meal.meal_slot || 1 ) > 1 ">
+                          · Plato {{ meal.meal_slot }}
                         </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                      </p>
+                      <h4 class="font-semibold text-gray-900 dark:text-slate-100">{{ meal.dish_name }}</h4>
+                      <p v-if=" meal.dish_description " class="text-xs text-gray-500 dark:text-slate-400">
+                        {{ meal.dish_description }}
+                      </p>
+                    </div>
+                    <span v-if=" meal.is_special " class="rounded-full bg-gray-100 dark:bg-slate-800 px-2 py-1 text-xs text-gray-600 dark:text-slate-300">
+                      Comida libre · {{ meal.special_kcal_reserved ?? 700 }} kcal reservadas
+                    </span>
+                  </div>
+
+                  <div v-if=" meal.is_special "
+                    class="mt-3 rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 p-3 text-xs text-gray-500 dark:text-slate-400">
+                    Esta comida no tiene ingredientes calculados, no fuerza macros y
+                    no se incluye en la lista de la compra.
+                  </div>
+
+                  <div v-else class="mt-3 overflow-x-auto">
+                    <table class="min-w-[900px] w-full text-xs">
+                      <thead class="text-left text-gray-600 dark:text-slate-300">
+                        <tr>
+                          <th class="px-2 py-2">Perfil</th>
+                          <th class="px-2 py-2">x ración</th>
+                          <th class="px-2 py-2">kcal</th>
+                          <th class="px-2 py-2">Proteína</th>
+                          <th class="px-2 py-2">Hidratos</th>
+                          <th class="px-2 py-2">Grasas</th>
+                          <th class="px-2 py-2">Ingredientes/cantidades</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for=" portion in meal.profile_portions " :key=" portion.id " class="border-t">
+                          <td class="px-2 py-2 font-medium">{{ portion.profile_name }}</td>
+                          <td class="px-2 py-2">x{{ Number( portion.serving_multiplier || 1 ).toFixed( 2 ) }}</td>
+                          <td class="px-2 py-2">{{ Math.round( Number( portion.final_kcal || 0 ) ) }}</td>
+                          <td class="px-2 py-2">{{ fixed( portion.final_protein_g ) }}g</td>
+                          <td class="px-2 py-2">{{ fixed( portion.final_carbs_g ) }}g</td>
+                          <td class="px-2 py-2">{{ fixed( portion.final_fat_g ) }}g</td>
+                          <td class="px-2 py-2">
+                            <div v-if=" portion.ingredients.length > 0 " class="flex flex-wrap gap-1">
+                              <span v-for=" ingredient in portion.ingredients " :key=" ingredient.id "
+                                class="rounded bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5">
+                                {{ ingredient.name }}:
+                                {{ fixed( ingredient.final_quantity ) }}
+                                {{ ingredient.unit_type }}
+                              </span>
+                            </div>
+                            <span v-else class="text-gray-400 dark:text-slate-500">
+                              Sin ingredientes calculados
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </article>
+
+                <div class="overflow-x-auto rounded-lg border bg-white dark:bg-slate-900">
+                  <table class="min-w-[820px] w-full text-sm text-gray-900 dark:text-slate-100">
+                    <thead class="text-left text-gray-600 dark:text-slate-300">
+                      <tr>
+                        <th class="px-3 py-2">Perfil</th>
+                        <th class="px-3 py-2">kcal total</th>
+                        <th class="px-3 py-2">kcal libres</th>
+                        <th class="px-3 py-2">kcal calculadas</th>
+                        <th class="px-3 py-2">P/H/G</th>
+                        <th class="px-3 py-2">Δ kcal</th>
+                        <th class="px-3 py-2">Δ proteína</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for=" total in day.profile_totals " :key=" `${ day.id }-${ total.profile_id }` " class="border-t">
+                        <td class="px-3 py-2 font-medium">{{ total.profile_name }}</td>
+                        <td class="px-3 py-2">{{ total.total_kcal }} / {{ total.target_kcal }}</td>
+                        <td class="px-3 py-2">{{ total.special_kcal_reserved }}</td>
+                        <td class="px-3 py-2">{{ total.regular_kcal }}</td>
+                        <td class="px-3 py-2">
+                          {{ fixed( total.total_protein_g ) }} /
+                          {{ fixed( total.total_carbs_g ) }} /
+                          {{ fixed( total.total_fat_g ) }}
+                        </td>
+                        <td class="px-3 py-2" :class=" deltaClass( total.kcal_delta ) ">
+                          {{ signed( total.kcal_delta ) }}
+                        </td>
+                        <td class="px-3 py-2" :class=" deltaClass( total.protein_delta_g ) ">
+                          {{ signed( total.protein_delta_g ) }}g
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </article>
-
-            <div class="overflow-x-auto rounded-lg border bg-white dark:bg-slate-900">
-              <table class="min-w-[820px] w-full text-sm text-gray-900 dark:text-slate-100">
-                <thead class="text-left text-gray-600 dark:text-slate-300">
-                  <tr>
-                    <th class="px-3 py-2">Perfil</th>
-                    <th class="px-3 py-2">kcal total</th>
-                    <th class="px-3 py-2">kcal libres</th>
-                    <th class="px-3 py-2">kcal calculadas</th>
-                    <th class="px-3 py-2">P/H/G</th>
-                    <th class="px-3 py-2">Δ kcal</th>
-                    <th class="px-3 py-2">Δ proteína</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for=" total in day.profile_totals " :key=" `${ day.id }-${ total.profile_id }` " class="border-t">
-                    <td class="px-3 py-2 font-medium">{{ total.profile_name }}</td>
-                    <td class="px-3 py-2">{{ total.total_kcal }} / {{ total.target_kcal }}</td>
-                    <td class="px-3 py-2">{{ total.special_kcal_reserved }}</td>
-                    <td class="px-3 py-2">{{ total.regular_kcal }}</td>
-                    <td class="px-3 py-2">
-                      {{ fixed( total.total_protein_g ) }} /
-                      {{ fixed( total.total_carbs_g ) }} /
-                      {{ fixed( total.total_fat_g ) }}
-                    </td>
-                    <td class="px-3 py-2" :class=" deltaClass( total.kcal_delta ) ">
-                      {{ signed( total.kcal_delta ) }}
-                    </td>
-                    <td class="px-3 py-2" :class=" deltaClass( total.protein_delta_g ) ">
-                      {{ signed( total.protein_delta_g ) }}g
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
           </div>
-        </article>
+        </section>
       </section>
 
       <section class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-gray-900 dark:text-slate-100">
@@ -253,6 +272,7 @@ type DetailResponse = {
   job: any | null;
   profiles: any[];
   days: Array<any>;
+  source_weekly_menu_names: Record<string, string>;
   shopping_items: any[];
   debug: Record<string, any>;
 };
@@ -276,6 +296,34 @@ const mealsCount = computed( () =>
 );
 
 const allExpanded = computed( () => collapsedDays.value.size === 0 );
+
+const weeks = computed( () => {
+  const days = detail.value?.days || [];
+  const grouped: Array<{
+    weekNumber: number;
+    startDay: number;
+    endDay: number;
+    sourceMenuName: string | null;
+    days: any[];
+  }> = [];
+  let currentWeek: typeof grouped[0] | null = null;
+  for (const day of days) {
+    const weekNum = Math.ceil(day.day_number / 7);
+    if (!currentWeek || currentWeek.weekNumber !== weekNum) {
+      currentWeek = {
+        weekNumber: weekNum,
+        startDay: (weekNum - 1) * 7 + 1,
+        endDay: Math.min(weekNum * 7, days.length),
+        sourceMenuName: day.source_weekly_menu_name || null,
+        days: [],
+      };
+      grouped.push(currentWeek);
+    }
+    currentWeek.days.push(day);
+  }
+  return grouped;
+});
+
 const visibleDays = computed( () => detail.value?.days || [] );
 
 const loadDetail = async () => {

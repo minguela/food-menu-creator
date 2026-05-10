@@ -89,7 +89,7 @@ export default defineEventHandler(async (event) => {
       supabase
         .from("weekly_meals")
         .select(
-          "id, weekly_menu_id, day_number, meal_type, dish_name, dish_description, is_special, special_kcal_reserved",
+          "id, weekly_menu_id, day_number, meal_type, meal_slot, dish_name, dish_description, is_special, special_kcal_reserved",
         )
         .in("weekly_menu_id", body.sourceWeeklyMenuIds),
     ]);
@@ -682,8 +682,10 @@ export default defineEventHandler(async (event) => {
     cena: [],
   };
   const discardedMealOptions: Array<{
+    weekly_menu_id: string | null;
     day_number: number | null;
     meal_type: MealType;
+    meal_slot: number;
     dish_name: string;
     reason: string;
   }> = [];
@@ -705,8 +707,12 @@ export default defineEventHandler(async (event) => {
 
       if (!linkedDish) {
         discardedMealOptions.push({
+          weekly_menu_id: sourceMeal.weekly_menu_id
+            ? String(sourceMeal.weekly_menu_id)
+            : null,
           day_number: Number(sourceMeal.day_number) || null,
           meal_type: mealType,
+          meal_slot: normalizeMealSlot(sourceMeal.meal_slot),
           dish_name: String(sourceMeal.dish_name || ""),
           reason: "recipe_name_not_found",
         });
@@ -715,8 +721,12 @@ export default defineEventHandler(async (event) => {
 
       if (!validRecipeById.has(linkedDish.id)) {
         discardedMealOptions.push({
+          weekly_menu_id: sourceMeal.weekly_menu_id
+            ? String(sourceMeal.weekly_menu_id)
+            : null,
           day_number: Number(sourceMeal.day_number) || null,
           meal_type: mealType,
+          meal_slot: normalizeMealSlot(sourceMeal.meal_slot),
           dish_name: String(sourceMeal.dish_name || ""),
           reason: "recipe_not_validated",
         });
@@ -827,6 +837,42 @@ export default defineEventHandler(async (event) => {
     progress: { progress: 45, currentStep: "recipe_selection" },
   });
 
+  const completenessDiagnostics = validatePlannedDayCompleteness({
+    plannedDayBlocks,
+    sourceMeals: weeklyMeals || [],
+    discardedMealOptions,
+  });
+
+  if (completenessDiagnostics.length > 0) {
+    const message =
+      "No se puede generar: la rotación dejaría días incompletos respecto a los menús semanales fuente.";
+    await logger.log({
+      level: "error",
+      step: "recipe_selection",
+      status: "failed",
+      message,
+      metadata: {
+        missing_source_meals_count: completenessDiagnostics.length,
+        missing_source_meals: completenessDiagnostics.slice(0, 120),
+      },
+      progress: {
+        progress: 100,
+        currentStep: "recipe_selection",
+        status: "failed",
+        errorMessage: message,
+        completedAt: new Date().toISOString(),
+        resultPayload: {
+          error_data: { missing_source_meals: completenessDiagnostics },
+        },
+      },
+    });
+    throw createError({
+      statusCode: 422,
+      statusMessage: message,
+      data: { missing_source_meals: completenessDiagnostics },
+    });
+  }
+
   for (let day = 1; day <= targetDays; day++) {
     const date = new Date(body.startDate);
     date.setDate(date.getDate() + day - 1);
@@ -887,6 +933,9 @@ export default defineEventHandler(async (event) => {
 
       dayPlannedMeals.push({
         meal_type: mealType,
+        meal_slot: normalizeMealSlot(picked.meal_slot),
+        source_weekly_menu_id: picked.weekly_menu_id || null,
+        source_day_number: Number(picked.day_number) || null,
         source_weekly_meal_id: picked.id,
         dish_name: picked.dish_name,
         dish_description: picked.dish_description || null,
@@ -1090,6 +1139,9 @@ export default defineEventHandler(async (event) => {
 
       dayMeals.push({
         meal_type: mealType,
+        meal_slot: normalizeMealSlot(plannedMeal.meal_slot),
+        source_weekly_menu_id: plannedMeal.source_weekly_menu_id || null,
+        source_day_number: Number(plannedMeal.source_day_number) || null,
         source_weekly_meal_id: plannedMeal.source_weekly_meal_id,
         dish_name: plannedMeal.dish_name,
         dish_description: plannedMeal.dish_description || null,
@@ -1235,6 +1287,7 @@ export default defineEventHandler(async (event) => {
           .map((portion: any) => ({
             day_number: day.day_number,
             meal_type: meal.meal_type,
+            meal_slot: normalizeMealSlot(meal.meal_slot),
             dish_name: meal.dish_name,
             profile_id: portion.profile_id,
             profile_name: portion.profile_name,
@@ -1419,51 +1472,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const deduplicationDiagnostics: Array<{
-    day_number: number;
-    meal_type: string;
-    dropped_dish_name: string;
-  }> = [];
-
-  const persistedDays = generatedDays.map((day) => {
-    const seenMealTypes = new Set<string>();
-    const dedupedMeals: any[] = [];
-
-    for (const meal of day.meals || []) {
-      const key = String(meal.meal_type || "").trim().toLowerCase();
-      if (!key) continue;
-      if (seenMealTypes.has(key)) {
-        deduplicationDiagnostics.push({
-          day_number: Number(day.day_number || 0),
-          meal_type: key,
-          dropped_dish_name: String(meal.dish_name || ""),
-        });
-        continue;
-      }
-      seenMealTypes.add(key);
-      dedupedMeals.push(meal);
-    }
-
-    return {
-      ...day,
-      meals: dedupedMeals,
-    };
-  });
-
-  if (deduplicationDiagnostics.length > 0) {
-    await logger.log({
-      level: "warning",
-      step: "save_supabase",
-      status: "running",
-      message:
-        "Detected duplicate meal_type per day; dropped duplicates before save.",
-      metadata: {
-        duplicates_count: deduplicationDiagnostics.length,
-        duplicates: deduplicationDiagnostics.slice(0, 50),
-      },
-      progress: { currentStep: "save_supabase" },
-    });
-  }
+  const persistedDays = generatedDays;
 
   const dayRows = persistedDays.map((day) => {
     const totals = day.meals.reduce(
@@ -1514,6 +1523,7 @@ export default defineEventHandler(async (event) => {
     day.meals.map((meal: any) => ({
       rotating_menu_day_id: dayIdByNumber.get(day.day_number),
       meal_type: meal.meal_type,
+      meal_slot: normalizeMealSlot(meal.meal_slot),
       source_weekly_meal_id: meal.source_weekly_meal_id,
       dish_name: meal.dish_name,
       dish_description: meal.dish_description || null,
@@ -1530,7 +1540,7 @@ export default defineEventHandler(async (event) => {
   const { data: savedMeals, error: mealsError } = await supabase
     .from("rotating_menu_meals")
     .insert(mealRows)
-    .select("id, rotating_menu_day_id, meal_type");
+    .select("id, rotating_menu_day_id, meal_type, meal_slot");
   if (mealsError || !savedMeals) {
     await logger.log({
       level: "error",
@@ -1548,7 +1558,11 @@ export default defineEventHandler(async (event) => {
   }
   const mealIdByKey = new Map(
     savedMeals.map((meal: any) => [
-      `${meal.rotating_menu_day_id}:${meal.meal_type}`,
+      rotatingMealKey(
+        meal.rotating_menu_day_id,
+        meal.meal_type,
+        meal.meal_slot,
+      ),
       meal.id,
     ]),
   );
@@ -1556,7 +1570,9 @@ export default defineEventHandler(async (event) => {
   const portionsRows = persistedDays.flatMap((day) =>
     day.meals.flatMap((meal: any) => {
       const dayId = dayIdByNumber.get(day.day_number);
-      const mealId = mealIdByKey.get(`${dayId}:${meal.meal_type}`);
+      const mealId = mealIdByKey.get(
+        rotatingMealKey(dayId, meal.meal_type, meal.meal_slot),
+      );
       return meal.profile_portions
         .filter((p: any) => p.profile_id)
         .map((portion: any) => ({
@@ -1607,7 +1623,9 @@ export default defineEventHandler(async (event) => {
     day.meals.flatMap((meal: any) => {
       if (meal.is_special) return [];
       const dayId = dayIdByNumber.get(day.day_number);
-      const mealId = mealIdByKey.get(`${dayId}:${meal.meal_type}`);
+      const mealId = mealIdByKey.get(
+        rotatingMealKey(dayId, meal.meal_type, meal.meal_slot),
+      );
       return meal.profile_portions
         .filter((p: any) => p.profile_id)
         .flatMap((portion: any) => {
@@ -1741,6 +1759,131 @@ function normalizeToGrams(quantity: number, unitType: string): number | null {
   if (unitType === "ml") return quantity;
   if (unitType === "l") return quantity * 1000;
   return null;
+}
+
+function validatePlannedDayCompleteness({
+  plannedDayBlocks,
+  sourceMeals,
+  discardedMealOptions,
+}: {
+  plannedDayBlocks: any[];
+  sourceMeals: any[];
+  discardedMealOptions: Array<{
+    weekly_menu_id: string | null;
+    day_number: number | null;
+    meal_type: MealType;
+    meal_slot: number;
+    dish_name: string;
+    reason: string;
+  }>;
+}) {
+  const sourceMealsByMenuDay = new Map<string, any[]>();
+  for (const meal of sourceMeals || []) {
+    const weeklyMenuId = String(meal?.weekly_menu_id || "").trim();
+    const dayNumber = Number(meal?.day_number || 0);
+    if (!weeklyMenuId || dayNumber <= 0) continue;
+    const key = sourceMenuDayKey(weeklyMenuId, dayNumber);
+    if (!sourceMealsByMenuDay.has(key)) sourceMealsByMenuDay.set(key, []);
+    sourceMealsByMenuDay.get(key)?.push(meal);
+  }
+
+  const discardReasonBySourceMealKey = new Map(
+    (discardedMealOptions || []).map((item) => [
+      sourceMealKey({
+        weekly_menu_id: item.weekly_menu_id,
+        day_number: item.day_number,
+        meal_type: item.meal_type,
+        meal_slot: item.meal_slot,
+        dish_name: item.dish_name,
+      }),
+      item.reason,
+    ]),
+  );
+
+  const diagnostics: Array<{
+    rotating_day_number: number;
+    source_weekly_menu_id: string | null;
+    source_day_number: number | null;
+    meal_type: string | null;
+    meal_slot: number | null;
+    dish_name: string | null;
+    reason: string;
+  }> = [];
+
+  for (const block of plannedDayBlocks || []) {
+    const weeklyMenuId = String(block?.source_weekly_menu_id || "").trim();
+    const sourceDayNumber = Number(block?.source_day_number || 0);
+    if (!weeklyMenuId || sourceDayNumber <= 0) {
+      diagnostics.push({
+        rotating_day_number: Number(block?.day_number || 0),
+        source_weekly_menu_id: weeklyMenuId || null,
+        source_day_number: sourceDayNumber || null,
+        meal_type: null,
+        meal_slot: null,
+        dish_name: null,
+        reason: "missing_source_day_mapping",
+      });
+      continue;
+    }
+
+    const expectedMeals =
+      sourceMealsByMenuDay.get(sourceMenuDayKey(weeklyMenuId, sourceDayNumber)) ||
+      [];
+    const plannedKeys = new Set(
+      (block.meals || []).map((meal: any) =>
+        sourceMealKey({
+          weekly_menu_id: meal.weekly_menu_id,
+          day_number: meal.day_number,
+          meal_type: meal.meal_type,
+          meal_slot: meal.meal_slot,
+          dish_name: meal.dish_name,
+        }),
+      ),
+    );
+
+    for (const expectedMeal of expectedMeals) {
+      const expectedKey = sourceMealKey(expectedMeal);
+      if (plannedKeys.has(expectedKey)) continue;
+      diagnostics.push({
+        rotating_day_number: Number(block.day_number || 0),
+        source_weekly_menu_id: weeklyMenuId,
+        source_day_number: sourceDayNumber,
+        meal_type: String(expectedMeal.meal_type || "") || null,
+        meal_slot: normalizeMealSlot(expectedMeal.meal_slot),
+        dish_name: String(expectedMeal.dish_name || "") || null,
+        reason:
+          discardReasonBySourceMealKey.get(expectedKey) ||
+          "source_meal_missing_after_planning",
+      });
+    }
+  }
+
+  return diagnostics;
+}
+
+function sourceMenuDayKey(weeklyMenuId: unknown, dayNumber: unknown) {
+  return `${String(weeklyMenuId || "").trim()}:${Number(dayNumber) || 0}`;
+}
+
+function sourceMealKey(meal: any) {
+  return [
+    String(meal?.weekly_menu_id || "").trim(),
+    Number(meal?.day_number || 0),
+    String(meal?.meal_type || "").trim().toLowerCase(),
+    normalizeMealSlot(meal?.meal_slot),
+    normalizeDishName(meal?.dish_name),
+  ].join(":");
+}
+
+function rotatingMealKey(dayId: unknown, mealType: unknown, mealSlot: unknown) {
+  return `${String(dayId || "")}:${String(mealType || "")}:${normalizeMealSlot(
+    mealSlot,
+  )}`;
+}
+
+function normalizeMealSlot(value: unknown) {
+  const slot = Number(value || 1);
+  return Number.isFinite(slot) && slot > 0 ? Math.round(slot) : 1;
 }
 
 function normalizeDishName(value: unknown) {

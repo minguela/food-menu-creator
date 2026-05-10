@@ -123,6 +123,9 @@
                 <div>
                   <p class="text-xs font-semibold uppercase text-gray-500 dark:text-slate-400">
                     {{ mealLabel( meal.meal_type ) }}
+                    <span v-if=" Number( meal.meal_slot || 1 ) > 1 ">
+                      · Plato {{ meal.meal_slot }}
+                    </span>
                   </p>
                   <h3 class="font-semibold text-gray-900 dark:text-slate-100">{{ meal.dish_name }}</h3>
                   <p v-if=" meal.dish_description " class="text-xs text-gray-500 dark:text-slate-400">

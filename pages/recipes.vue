@@ -740,8 +740,7 @@ const linkMissingIngredientInRecipe = async ( dishId: string, ingredientName: st
   } catch ( error ) {
     await logError( "web", error, {
       context: "recipes.linkMissingIngredientInRecipe",
-      dishId,
-      ingredientName,
+      extra: { dishId, ingredientName },
     } );
     appToast.fromError( "No se pudo vincular el ingrediente.", error );
   }

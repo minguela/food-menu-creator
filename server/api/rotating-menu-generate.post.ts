@@ -845,7 +845,7 @@ export default defineEventHandler(async (event) => {
   const completenessDiagnostics = validatePlannedDayCompleteness({
     plannedDayBlocks,
     sourceMeals: weeklyMeals || [],
-    discardedMealOptions,
+    discardedMealOptions: discardedMealOptions as any,
   });
 
   if (completenessDiagnostics.length > 0) {

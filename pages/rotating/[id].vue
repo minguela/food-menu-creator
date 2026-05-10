@@ -72,26 +72,22 @@
       <section class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-gray-900 dark:text-slate-100">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 class="font-semibold text-gray-900 dark:text-slate-100">Navegación por días</h2>
+            <h2 class="font-semibold text-gray-900 dark:text-slate-100">Semanas</h2>
             <p class="text-xs text-gray-500 dark:text-slate-400">
-              Salta entre días y colapsa los que no estés revisando.
+              Selecciona una semana para ver sus 7 días.
             </p>
           </div>
-          <button class="rounded border px-3 py-1.5 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900" @click=" toggleAllDays ">
-            {{ allExpanded ? "Colapsar días" : "Expandir días" }}
-          </button>
         </div>
         <div class="mt-3 flex gap-2 overflow-x-auto pb-1">
-          <template v-for="week in weeks" :key="`nav-week-${week.weekNumber}`">
-            <span class="self-center text-xs text-gray-400 dark:text-slate-500 font-medium px-1">S{{ week.weekNumber }}</span>
-            <button v-for=" day in week.days " :key=" `nav-${ day.id }` " class="min-w-16 rounded border px-3 py-2 text-xs"
-              :class=" selectedDayNumber === day.day_number
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                  : 'text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900'
-                " @click="selectDay( day.day_number )">
-              Día {{ day.day_number }}
-            </button>
-          </template>
+          <button v-for=" week in weeks " :key=" `nav-week-${ week.weekNumber }` "
+            class="min-w-28 rounded-lg border px-4 py-2.5 text-sm"
+            :class=" selectedWeekNumber === week.weekNumber
+                ? 'border-indigo-500 bg-indigo-600 text-white'
+                : 'text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800'
+              " @click=" selectedWeekNumber = week.weekNumber">
+            <div class="font-semibold">Semana {{ week.weekNumber }}</div>
+            <div class="text-xs opacity-70">Días {{ week.startDay }}-{{ week.endDay }}</div>
+          </button>
         </div>
       </section>
 
@@ -102,18 +98,19 @@
       </section>
 
       <section class="space-y-6">
-        <section v-for="week in weeks" :key="`week-${week.weekNumber}`">
-          <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h2 class="text-base font-semibold text-gray-900 dark:text-slate-100">
-              Semana {{ week.weekNumber }}
-              <span class="font-normal text-gray-500 dark:text-slate-400">
-                · Días {{ week.startDay }}-{{ week.endDay }}
+        <template v-for="week in weeks" :key="`week-${week.weekNumber}`">
+          <section v-if=" selectedWeekNumber === week.weekNumber ">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 class="text-base font-semibold text-gray-900 dark:text-slate-100">
+                Semana {{ week.weekNumber }}
+                <span class="font-normal text-gray-500 dark:text-slate-400">
+                  · Días {{ week.startDay }}-{{ week.endDay }}
+                </span>
+              </h2>
+              <span v-if="week.sourceMenuName" class="rounded-full bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 text-xs text-indigo-700 dark:text-indigo-300">
+                {{ week.sourceMenuName }}
               </span>
-            </h2>
-            <span v-if="week.sourceMenuName" class="rounded-full bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 text-xs text-indigo-700 dark:text-indigo-300">
-              {{ week.sourceMenuName }}
-            </span>
-          </div>
+            </div>
 
           <div class="space-y-4">
             <article v-for=" day in week.days " :id=" `day-${ day.day_number }` " :key=" day.id "
@@ -127,13 +124,9 @@
                     {{ day.meals.length }} comidas · {{ day.profile_totals.length }} perfiles
                   </p>
                 </div>
-                <button class="rounded border px-3 py-1.5 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
-                  @click="toggleDay( day.day_number )">
-                  {{ collapsedDays.has( day.day_number ) ? "Expandir" : "Colapsar" }}
-                </button>
               </div>
 
-              <div v-if=" !collapsedDays.has( day.day_number ) " class="mt-4 space-y-3">
+              <div class="mt-4 space-y-3">
                 <article v-for=" meal in day.meals " :key=" meal.id " class="rounded-lg border p-3 bg-white dark:bg-slate-900"
                   :class="meal.is_special ? '' : ''">
                   <div class="flex flex-wrap items-start justify-between gap-3">
@@ -237,7 +230,8 @@
               </div>
             </article>
           </div>
-        </section>
+          </section>
+        </template>
       </section>
 
       <section class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-gray-900 dark:text-slate-100">
@@ -285,8 +279,7 @@ const error = ref( "" );
 const debug = ref<Record<string, any> | null>( null );
 const detail = ref<DetailResponse | null>( null );
 const showDebug = ref( false );
-const collapsedDays = ref<Set<number>>( new Set() );
-const selectedDayNumber = ref<number | null>( null );
+const selectedWeekNumber = ref( 1 );
 
 const mealsCount = computed( () =>
   ( detail.value?.days || [] ).reduce(
@@ -294,8 +287,6 @@ const mealsCount = computed( () =>
     0,
   ),
 );
-
-const allExpanded = computed( () => collapsedDays.value.size === 0 );
 
 const weeks = computed( () => {
   const days = detail.value?.days || [];
@@ -324,8 +315,6 @@ const weeks = computed( () => {
   return grouped;
 });
 
-const visibleDays = computed( () => detail.value?.days || [] );
-
 const loadDetail = async () => {
   loading.value = true;
   error.value = "";
@@ -343,7 +332,7 @@ const loadDetail = async () => {
 
     detail.value = data;
     debug.value = data.debug;
-    selectedDayNumber.value = data.days?.[ 0 ]?.day_number || null;
+    selectedWeekNumber.value = 1;
 
     console.log( "rotating menu detail loaded", data.debug );
 
@@ -361,35 +350,6 @@ const loadDetail = async () => {
     } );
   } finally {
     loading.value = false;
-  }
-};
-
-const selectDay = async ( dayNumber: number ) => {
-  selectedDayNumber.value = dayNumber;
-  collapsedDays.value.delete( dayNumber );
-  await nextTick();
-  document.getElementById( `day-${ dayNumber }` )?.scrollIntoView( {
-    behavior: "smooth",
-    block: "start",
-  } );
-};
-
-const toggleDay = ( dayNumber: number ) => {
-  if ( collapsedDays.value.has( dayNumber ) ) {
-    collapsedDays.value.delete( dayNumber );
-  } else {
-    collapsedDays.value.add( dayNumber );
-  }
-};
-
-const toggleAllDays = () => {
-  if ( !detail.value ) return;
-  if ( collapsedDays.value.size === 0 ) {
-    collapsedDays.value = new Set(
-      detail.value.days.map( ( day: any ) => day.day_number ),
-    );
-  } else {
-    collapsedDays.value.clear();
   }
 };
 

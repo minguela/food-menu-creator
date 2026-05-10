@@ -556,11 +556,12 @@ const unitTypes: Array<"kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad"> = [
 ];
 
 const dishes = ref<DishRow[]>( [] );
-const filter = ref<"all" | "suggested" | "complete" | "not_required">( "all" );
+const filter = ref<"all" | "suggested" | "complete" | "not_required" | "incomplete_nutrition">( "all" );
 const filterItems = [
   { value: "all", label: "Todas" },
   { value: "suggested", label: "Sugeridas" },
   { value: "complete", label: "Completas" },
+  { value: "incomplete_nutrition", label: "Nutrición incompleta" },
   { value: "not_required", label: "No requiere" },
 ] as const;
 
@@ -625,6 +626,8 @@ const statusMeta = ( dish: DishRow ) => {
     return { label: "Completa", color: "text-emerald-700" };
   if ( status === "not_required" )
     return { label: "No requiere ingredientes", color: "text-gray-500 dark:text-slate-400" };
+  if ( status === "incomplete_nutrition" )
+    return { label: "Nutrición incompleta", color: "text-orange-600" };
   return { label: "Sugerida", color: "text-amber-700" };
 };
 
@@ -648,10 +651,10 @@ const filteredDishes = computed( () =>
     if ( filter.value === "suggested" )
       return (
         dish.recipe_status === "suggested_ingredients" ||
-        dish.recipe_status === "pending_ingredients" ||
-        dish.recipe_status === "incomplete_nutrition"
+        dish.recipe_status === "pending_ingredients"
       );
     if ( filter.value === "complete" ) return dish.recipe_status === "complete";
+    if ( filter.value === "incomplete_nutrition" ) return dish.recipe_status === "incomplete_nutrition";
     if ( filter.value === "not_required" ) return dish.recipe_status === "not_required";
     return true;
   } ),

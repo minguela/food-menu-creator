@@ -844,6 +844,33 @@ export default defineEventHandler(async (event) => {
         }
       }
 
+      if (linkedDish && linkedDish._compound) {
+        const firstValid = validRecipeById.get(linkedDish._firstDishId);
+        const secondValid = validRecipeById.get(linkedDish._secondDishId);
+        if (firstValid && secondValid) {
+          const ingredientMap = new Map<string, any>();
+          for (const ing of firstValid.ingredient_base) {
+            ingredientMap.set(ing.normalized_name, { ...ing });
+          }
+          for (const ing of secondValid.ingredient_base) {
+            const existing = ingredientMap.get(ing.normalized_name);
+            if (existing) {
+              existing.quantity += ing.quantity;
+            } else {
+              ingredientMap.set(ing.normalized_name, { ...ing });
+            }
+          }
+          validRecipeById.set(linkedDish.id, {
+            dish_id: linkedDish.id,
+            dish_name: linkedDish.name,
+            normalized_name: linkedDish.normalized_name,
+            ingredient_base: Array.from(ingredientMap.values()),
+            base_kcal: firstValid.base_kcal + secondValid.base_kcal,
+            base_protein: firstValid.base_protein + secondValid.base_protein,
+          });
+        }
+      }
+
       const isSpecial = isSpecialMealCandidate(sourceMeal, linkedDish);
       if (isSpecial) {
         mealOptionsByType[mealType].push({

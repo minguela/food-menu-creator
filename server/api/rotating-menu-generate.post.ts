@@ -1559,11 +1559,11 @@ export default defineEventHandler(async (event) => {
 
   if (dayNutritionGuardrailViolations.length > 0) {
     await logger.log({
-      level: "error",
+      level: "warn",
       step: "macro_validation",
-      status: "failed",
+      status: "completed",
       message:
-        "Se detectaron días fuera de tolerancia nutricional (kcal/proteína) antes de persistir.",
+        "Se detectaron días fuera de tolerancia nutricional (kcal/proteína); se guarda el menú con warnings para revisión.",
       metadata: {
         violations_count: dayNutritionGuardrailViolations.length,
         violations: dayNutritionGuardrailViolations.slice(0, 40),
@@ -1571,20 +1571,8 @@ export default defineEventHandler(async (event) => {
         min_protein_ratio: MIN_PROTEIN_TARGET_RATIO,
       },
       progress: {
-        progress: 100,
+        progress: 72,
         currentStep: "macro_validation",
-        status: "failed",
-        errorMessage:
-          "No se puede completar: los totales diarios no alcanzan la tolerancia mínima de kcal/proteína.",
-        completedAt: new Date().toISOString(),
-      },
-    });
-    throw createError({
-      statusCode: 422,
-      statusMessage:
-        "No se puede completar: los totales diarios no alcanzan la tolerancia mínima de kcal/proteína.",
-      data: {
-        day_nutrition_violations: dayNutritionGuardrailViolations,
       },
     });
   }
@@ -2077,6 +2065,9 @@ export default defineEventHandler(async (event) => {
     generated_days: persistedDays,
     profiles: profileTargets,
     shopping_list_items: shoppingBuild.inserted,
+    warnings: {
+      day_nutrition_violations: dayNutritionGuardrailViolations,
+    },
   };
 });
 

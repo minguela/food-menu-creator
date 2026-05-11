@@ -39,7 +39,7 @@ test.describe("rotating menu scaling guardrails", () => {
     expect(decision.capReason).toBe("none");
   });
 
-  test("collapsed 54 kcal days remain blocked before persistence", async () => {
+  test("collapsed 54 kcal days are reported as warning diagnostics", async () => {
     const violations = validateDayNutritionTotals({
       dayTotals: [
         {

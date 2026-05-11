@@ -1,0 +1,21 @@
+{
+  "plugins": [
+    "@warp-dot-dev/opencode-warp",
+    "@jshsakura/opencode-telegram-bot-plugin"
+  ],
+  "notifications": {
+    "enabled": true,
+    "provider": "windows"
+  },
+  "agents": {
+    "enabled": true,
+    "directory": ".opencode/agents"
+  },
+  "context": {
+    "projectFile": "PROJECT_CONTEXT.md",
+    "architectureFile": "architecture.md"
+  },
+  "skills": {
+    "directory": ".agents/skills"
+  }
+}

@@ -7,11 +7,22 @@ import {
   validatePlannedDayCompleteness,
 } from "~/utils/rotating-menu-completeness.js";
 import { buildRotatingWeeklyMenuBlocks } from "~/utils/rotating-weekly-menu-blocks.js";
+import {
+  isCountBasedUnit,
+  validateRecipeBase,
+  computeAppliedMultiplier,
+  validateDayNutritionTotals,
+} from "~/utils/rotating-portion-scaling.js";
 
 type MealType = "desayuno" | "comida" | "cena";
 
 const SPECIAL_MEAL_RESERVED_KCAL = 700;
 const MIN_REGULAR_DAY_KCAL_BUDGET = 300;
+const MIN_RECIPE_INGREDIENT_GRAMS = 5;
+const MIN_NORMAL_RECIPE_BASE_KCAL = 50;
+const MAX_SERVING_MULTIPLIER = 8;
+const MIN_KCAL_TARGET_RATIO = 0.8;
+const MIN_PROTEIN_TARGET_RATIO = 0.75;
 
 type GeneratePayload = {
   userId: string;
@@ -583,6 +594,10 @@ export default defineEventHandler(async (event) => {
 
     let baseKcal = 0;
     let baseProtein = 0;
+    const normalizedIngredientBase = ingredientBase.map((ing) => ({
+      ...ing,
+      grams: normalizeToGrams(ing.quantity, ing.unit_type),
+    }));
     for (const ing of ingredientBase) {
       const nutrition = nutritionById.get(ing.ingredient_id);
       const grams = normalizeToGrams(ing.quantity, ing.unit_type);
@@ -604,6 +619,45 @@ export default defineEventHandler(async (event) => {
         dish_name: dish.name,
         reason: "invalid_recipe_data",
         details: "base_macros_not_calculable",
+      });
+      continue;
+    }
+
+    const recipeBaseValidation = validateRecipeBase({
+      ingredientBase: normalizedIngredientBase,
+      baseKcal,
+      minIngredientGrams: MIN_RECIPE_INGREDIENT_GRAMS,
+      minBaseKcal: MIN_NORMAL_RECIPE_BASE_KCAL,
+      isSpecial: Boolean(dish.is_special),
+      isCountBasedUnit,
+    });
+
+    if (!recipeBaseValidation.valid) {
+      const detail = recipeBaseValidation.issues
+        .map((issue) =>
+          [
+            issue.code,
+            issue.ingredient_name || "",
+            Number.isFinite(issue.quantity) ? `q=${issue.quantity}` : "",
+            issue.unit_type ? `u=${issue.unit_type}` : "",
+            Number.isFinite(issue.grams) ? `g=${issue.grams}` : "",
+            issue.message,
+          ]
+            .filter(Boolean)
+            .join("|"),
+        )
+        .join(";");
+      uncuredSet.add(`${dish.id}:invalid_recipe_data:${normalizedName || dish.id}`);
+      uncuredRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "invalid_recipe_data",
+      });
+      discardedRecipes.push({
+        dish_id: dish.id,
+        dish_name: dish.name,
+        reason: "invalid_recipe_data",
+        details: detail || "implausible_recipe_base",
       });
       continue;
     }
@@ -737,6 +791,7 @@ export default defineEventHandler(async (event) => {
   );
 
   const generatedDays: any[] = [];
+  const dayNutritionGuardrailViolations: any[] = [];
 
   await logger.log({
     level: "info",
@@ -1212,13 +1267,10 @@ export default defineEventHandler(async (event) => {
         const targetMealCarbs = remainingCarbsBudget * mealKcalShare;
         const targetMealFat = remainingFatBudget * mealKcalShare;
 
-        const multiplier = Math.max(
-          0.55,
-          Math.min(
-            2.5,
-            (targetMealKcal / baseKcal) * 0.65 +
-              (targetMealProtein / baseProtein) * 0.35,
-          ),
+        const desiredMultiplier = Math.max(
+          1,
+          (targetMealKcal / baseKcal) * 0.65 +
+            (targetMealProtein / baseProtein) * 0.35,
         );
         const hasVeryCaloricIngredient = ingredientBase.some((ing: any) => {
           const nutrition = nutritionById.get(ing.ingredient_id);
@@ -1234,11 +1286,17 @@ export default defineEventHandler(async (event) => {
           return kcal > 200 && kcal <= 400;
         });
         const densityCap = hasVeryCaloricIngredient
-          ? 1.35
+          ? 1.7
           : hasCaloricIngredient
-            ? 1.7
-            : 2.5;
-        const adjustedMultiplier = Math.max(0.55, Math.min(multiplier, densityCap));
+            ? 2.5
+            : MAX_SERVING_MULTIPLIER;
+        const multiplierDecision = computeAppliedMultiplier({
+          desiredMultiplier,
+          minMultiplier: 1,
+          densityCap,
+          maxMultiplier: MAX_SERVING_MULTIPLIER,
+        });
+        const appliedMultiplier = multiplierDecision.appliedMultiplier;
         let kcal = 0;
         let protein = 0;
         let carbs = 0;
@@ -1255,7 +1313,9 @@ export default defineEventHandler(async (event) => {
         }
 
         const ingredients = ingredientBase.map((ing: any) => {
-          const finalQuantity = round(ing.quantity * adjustedMultiplier);
+          const finalQuantity = round(
+            Math.max(ing.quantity, ing.quantity * appliedMultiplier),
+          );
           const normalized = normalizeToGrams(finalQuantity, ing.unit_type);
           const n = nutritionById.get(ing.ingredient_id);
           let nutritionPending = false;
@@ -1294,8 +1354,10 @@ export default defineEventHandler(async (event) => {
           target_meal_protein_g: round(targetMealProtein),
           target_meal_carbs_g: round(targetMealCarbs),
           target_meal_fat_g: round(targetMealFat),
-          serving_multiplier: round(multiplier, 3),
-          serving_multiplier_density_adjusted: round(adjustedMultiplier, 3),
+          serving_multiplier: round(appliedMultiplier, 3),
+          serving_multiplier_density_adjusted: round(appliedMultiplier, 3),
+          serving_multiplier_desired: round(desiredMultiplier, 3),
+          serving_multiplier_cap_reason: multiplierDecision.capReason,
           final_kcal: Math.round(kcal),
           final_protein_g: round(protein),
           final_carbs_g: round(carbs),
@@ -1390,6 +1452,32 @@ export default defineEventHandler(async (event) => {
     const dayWarnings = dailyProfileTotals.filter(
       (total) => total.low_regular_budget_warning,
     );
+
+    const guardrailViolations = validateDayNutritionTotals({
+      dayTotals: dailyProfileTotals,
+      minKcalRatio: MIN_KCAL_TARGET_RATIO,
+      minProteinRatio: MIN_PROTEIN_TARGET_RATIO,
+    }).map((violation: any) => ({
+      day_number: day,
+      ...violation,
+      meals: dayMeals.map((meal: any) => ({
+        meal_type: meal.meal_type,
+        meal_slot: normalizeMealSlot(meal.meal_slot),
+        dish_name: meal.dish_name,
+        portions: (meal.profile_portions || []).map((portion: any) => ({
+          profile_key: portion.profile_key,
+          serving_multiplier: portion.serving_multiplier,
+          serving_multiplier_desired: portion.serving_multiplier_desired,
+          serving_multiplier_cap_reason: portion.serving_multiplier_cap_reason,
+          target_meal_kcal: portion.target_meal_kcal,
+          final_kcal: portion.final_kcal,
+          target_meal_protein_g: portion.target_meal_protein_g,
+          final_protein_g: portion.final_protein_g,
+          ingredients: portion.ingredients,
+        })),
+      })),
+    }));
+    dayNutritionGuardrailViolations.push(...guardrailViolations);
     if (dayWarnings.length > 0) {
       await logger.log({
         level: "warn",
@@ -1437,6 +1525,38 @@ export default defineEventHandler(async (event) => {
         },
       });
     }
+  }
+
+  if (dayNutritionGuardrailViolations.length > 0) {
+    await logger.log({
+      level: "error",
+      step: "macro_validation",
+      status: "failed",
+      message:
+        "Se detectaron días fuera de tolerancia nutricional (kcal/proteína) antes de persistir.",
+      metadata: {
+        violations_count: dayNutritionGuardrailViolations.length,
+        violations: dayNutritionGuardrailViolations.slice(0, 40),
+        min_kcal_ratio: MIN_KCAL_TARGET_RATIO,
+        min_protein_ratio: MIN_PROTEIN_TARGET_RATIO,
+      },
+      progress: {
+        progress: 100,
+        currentStep: "macro_validation",
+        status: "failed",
+        errorMessage:
+          "No se puede completar: los totales diarios no alcanzan la tolerancia mínima de kcal/proteína.",
+        completedAt: new Date().toISOString(),
+      },
+    });
+    throw createError({
+      statusCode: 422,
+      statusMessage:
+        "No se puede completar: los totales diarios no alcanzan la tolerancia mínima de kcal/proteína.",
+      data: {
+        day_nutrition_violations: dayNutritionGuardrailViolations,
+      },
+    });
   }
 
   const invalidNormalMeals = generatedDays.flatMap((day: any) =>

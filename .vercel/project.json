@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_AIUQr4YPMtsAqnjGFQA5a6oKtn3N",
+  "orgId": "team_UyTLeXDUubLrtvdqifZ7QT2I",
+  "projectName": "food-menu-creator",
+  "settings": {
+    "createdAt": 1776250390776,
+    "framework": "nuxtjs",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": ".vercel/output/static",
+    "rootDirectory": "menu-web",
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}

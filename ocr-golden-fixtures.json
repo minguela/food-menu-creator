@@ -1,0 +1,38 @@
+{
+  "07-05-2026 Lydia tercera.png": {
+    "1": {"comida": ["Gazpacho SUAVE", "Pollo asado con mix de patata y boniato"], "cena": ["Ensalada verde con piña", "Lomitos de bacalao con salsa de tomate y guarnición de arroz"]},
+    "2": {"comida": ["Ensalada mixta (sin cebolla)", "Arroz con sepia"], "cena": ["Gazpacho SUAVE", "Dos huevos a la plancha"]},
+    "3": {"comida": ["Ensalada campera"], "cena": ["Pollo con guarnición de quinoa y verduras", "Kéfir con frutos rojos"]},
+    "4": {"comida": ["Noodles de arroz con salteado de carne picada, verduras, cacahuetes y salsa de soja"], "cena": ["Ensalada de pepino con mozzarella", "Pulpo a feira o pescado a elegir"]},
+    "5": {"comida": ["Crema de calabaza", "Sardinas al horno"], "cena": ["Pimiento italiano", "Tortilla de patata"]},
+    "6": {"comida": ["Comida picoteo: salmorejo, embutido/jamón y cecina, ensalada especial, pan"], "cena": ["Pizza de brócoli"]},
+    "7": {"comida": ["Libre"], "cena": ["Ensalada completa"]}
+  },
+  "12-12-2025 Lydia fodmap 2025.png": {
+    "1": {"comida": ["Ensalada de tomate CHERRY con mozzarella", "Solomillo de cerdo con guarnición de arroz"], "cena": ["Ensalada de canónigos con granada", "Huevos a la plancha con pimientos de Padrón"]},
+    "2": {"comida": ["Ensalada de canónigos con granada", "Patatas con calamares"], "cena": ["Caldo de pollo o de verduras", "Minipizzas de calabacín"]},
+    "3": {"comida": ["Lentejas con arroz y muchas verduras"], "cena": ["Ensalada de tomate CHERRY con mozzarella", "Huevos revueltos con champis"]},
+    "4": {"comida": ["Crema de calabacín", "Pescado a elegir"], "cena": ["Salteado de verduras con atún", "Tostada Rustik con aguacate"]},
+    "5": {"comida": ["Judías verdes con jamón, huevo escalfado y patatas dado", "Pescado blanco"], "cena": ["Caldo de pollo o de verduras", "Pechugas de pollo a la plancha con champis"]},
+    "6": {"comida": ["Ensalada mixta", "Arroz con pollo"], "cena": ["Libre"]},
+    "7": {"comida": ["Libre"], "cena": ["Ensalada completa (3 fuentes de prote)"]}
+  },
+  "07-01-2026 Lydia primera fodmap 2026.png": {
+    "1": {"comida": ["Sopa de verduras", "Pollo asado con patatas"], "cena": ["Endibias con mozzarella y anchoas", "Tortilla francesa con jamón cocido"]},
+    "2": {"comida": ["Ensalada de escarola con granada", "Arroz gratinado"], "cena": ["Sopa de verduras", "Tostada Rustik"]},
+    "3": {"comida": ["Guisantes con dos huevos escalfados/cocidos/revueltos y patatas dado", "Kéfir"], "cena": ["Endibias con mozzarella y anchoas", "Salmón a la naranja"]},
+    "4": {"comida": ["Crema de calabaza", "Tortilla de patata"], "cena": ["Escalivada (verduras al horno) con boniato", "Kéfir"]},
+    "5": {"comida": ["Corazones de alcachofa con jamón y vino blanco", "Pescado blanco"], "cena": ["Sopa de verduras", "Filetes de lomo a la plancha con champis"]},
+    "6": {"comida": ["Ensalada de escarola con granada", "Pasta a la boloñesa"], "cena": ["Libre"]},
+    "7": {"comida": ["Libre"], "cena": ["Ensalada completa (3 fuentes de prote)"]}
+  },
+  "16-02-2026 Lydia segunda semi-fodmap 2026.png": {
+    "1": {"comida": ["Puré de zanahoria y calabacín", "Pollo asado con guarnición de patata"], "cena": ["Ensalada de canónigos con cherrys y nueces (5 uds)", "Tortilla francesa con queso parmesano"]},
+    "2": {"comida": ["Ensalada de canónigos con cherrys y nueces (5 uds)", "Pasta sin gluten o noodles de arroz con sobras de pollo"], "cena": ["Puré de zanahoria y calabacín", "Pescado azul (libre)"]},
+    "3": {"comida": ["Puré de lentejas (180 g cocidas) con verduras", "Pescado blanco a elegir + ensalada de hoja verde"], "cena": ["Espinacas salteadas con pasas y cacahuetes", "Huevos a la plancha"]},
+    "4": {"comida": ["Ensalada de tomate cherry con pepino", "Albóndigas o filetes rusos con salsa de zanahoria y patatas dado"], "cena": ["Edamames", "Pescado blanco (libre)", "Kéfir"]},
+    "5": {"comida": ["Ensalada a elegir", "Arroz a la cubana (2 huevos)"], "cena": ["Hamburguesa CASERA completa"]},
+    "6": {"comida": ["Sopa de arroz", "Tortilla de bacalao con pimientos"], "cena": ["Libre"]},
+    "7": {"comida": ["Libre"], "cena": ["Ensalada completa"]}
+  }
+}

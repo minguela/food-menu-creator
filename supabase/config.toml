@@ -1,0 +1,8 @@
+[functions.telegram-webhook]
+verify_jwt = false
+
+[functions.ocr-processor]
+verify_jwt = false
+
+[functions.generate-monthly-menu]
+verify_jwt = false

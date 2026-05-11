@@ -1,0 +1,64 @@
+schema: spec-driven
+
+# Project context - shown to AI when creating artifacts
+context: |
+  # MenuPlanner Project - Telegram Bot + Web App for Weekly Menu Planning
+
+  ## Tech Stack
+  - Frontend: Nuxt 3 + Vue 3 + TailwindCSS
+  - Backend: Supabase (PostgreSQL + Edge Functions)
+  - Deploy: Vercel (menu-web/)
+  - Bot: Telegram Bot API + webhook in Supabase Edge Functions
+
+  ## Domain Knowledge
+  - Weekly rotating menus with automatic shopping list generation
+  - Nutritional personalization (kcal/day, protein grams/day)
+  - OCR processing for menu images
+  - Ingredient management and recipe integration
+
+  ## Conventions
+  - Edge Functions: TypeScript in supabase/functions/<name>/
+  - Frontend pages: menu-web/pages/*.vue
+  - Database: PostgreSQL with migrations in supabase/migrations/
+  - Bot commands: /start, /semanal, /generar, /monthly, /shopping, /help
+
+  ## Key Files
+  - supabase/functions/telegram-webhook/index.ts - Bot Telegram
+  - supabase/functions/generate-monthly-menu/index.ts - Monthly menu + shopping list
+  - supabase/schema.sql - Database schema
+  - menu-web/pages/index.vue - Menu list
+  - menu-web/pages/generar.vue - Rotative generator
+  - PROJECT_CONTEXT.md - Full project documentation
+
+# Per-artifact rules
+rules:
+  proposal:
+    - Keep proposals under 500 words
+    - Always include a "Non-goals" section
+    - Reference PROJECT_CONTEXT.md for context
+
+  tasks:
+    - Break tasks into chunks of max 2 hours
+    - Group related changes together
+
+  design:
+    - Include database migrations if needed
+    - Consider edge function performance
+
+# Automation rules for deployment
+automation:
+  menu-web:
+    description: "Frontend changes (menu-web/)"
+    steps:
+      - Create branch: "git checkout -b feature/<change-name>"
+      - Commit changes: "git add . && git commit -m 'feat: <change-description>'"
+      - Push branch: "git push -u origin feature/<change-name>"
+      - Create PR: "gh pr create --title 'feat: <change-description>' --body '...'"
+      - Merge after CI: "git checkout main && git pull && git branch -d <branch>"
+
+  supabase:
+    description: "Backend changes (supabase/functions/ or migrations)"
+    steps:
+      - Deploy edge function: "supabase functions deploy <function-name>"
+      - Or run migration: supabase db push or supabase migrations up
+      - Verify with: "supabase functions serve <function-name>"

@@ -11,16 +11,16 @@ The rotating menu generator SHALL treat confirmed recipe ingredient quantities a
 - **WHEN** a fixed/base breakfast recipe is included in a rotating day
 - **THEN** its ingredient quantities SHALL remain at least the curated recipe quantities before any profile-specific increase is applied
 
-### Requirement: Implausible recipe bases MUST block generation
-The system SHALL reject complete normal recipes whose confirmed ingredient quantities produce implausibly low base nutrition or placeholder-sized gram quantities.
+### Requirement: Placeholder recipe bases MUST scale as relative quantities
+The system SHALL treat complete normal recipes with placeholder-sized positive quantities as relative ingredient weights, not as hard blockers, and SHALL scale them to meaningful profile portions.
 
 #### Scenario: Ingredient quantities are placeholder grams
 - **WHEN** a recipe contains confirmed gram-convertible ingredients that normalize to about `1 g` each
-- **THEN** generation SHALL fail before persistence with diagnostics naming the dish, ingredient, quantity, unit and reason `implausible_recipe_quantity`
+- **THEN** generation SHALL mark the recipe as using relative quantities and SHALL allow multipliers above the old `x2.50` cap to reach target nutrition
 
 #### Scenario: Dish base kcal is too low for a normal meal
 - **WHEN** a complete non-special dish has a calculated `base_kcal` below the configured minimum normal-dish threshold
-- **THEN** generation SHALL discard/block that dish with reason `implausible_recipe_base_kcal`
+- **THEN** generation SHALL keep the dish eligible as a relative-quantity recipe and SHALL expose diagnostics for curation follow-up
 
 ### Requirement: Portion scaling MUST fit profile targets or fail loudly
 The generator SHALL calculate profile portions from target kcal/protein and validated recipe bases, and SHALL fail before persistence when selected meals cannot produce acceptable day totals.

@@ -15,7 +15,7 @@ Current failure modes:
 **Goals:**
 
 - Preserve confirmed recipe quantities as fixed/base quantities; never scale below base for normal meals.
-- Detect implausible recipe bases before persistence, including per-ingredient gram floors and dish kcal floors.
+- Detect implausible recipe bases before persistence and treat positive placeholder quantities as relative weights for scaling.
 - Replace the blind `0.55..2.5` clamp with explicit scaling policy: base minimum, profile target attempt, realistic max, and hard failure if target cannot be reached.
 - Validate generated daily profile totals against kcal/protein targets with clear diagnostics.
 - Add deterministic tests for the reported class of failure.
@@ -28,11 +28,11 @@ Current failure modes:
 
 ## Decisions
 
-1. Validate recipe bases before scaling.
+1. Classify recipe bases before scaling.
 
-   A normal recipe SHALL be rejected if its confirmed ingredient base is implausible. Initial thresholds should be conservative: no gram-normalized ingredient below 5 g unless unit is inherently count-based, no total dish base below 50 kcal, and no non-special complete recipe with zero meaningful macro mass.
+   A normal recipe with invalid/non-positive quantities SHALL be rejected. A recipe with positive but placeholder-sized quantities (for example 1 g rows) SHALL be treated as relative ingredient weights and scaled with a high enough multiplier to reach profile targets.
 
-   Alternative considered: let the multiplier compensate. Rejected because a 1 g recipe base requires multipliers in the hundreds and creates unusable shopping lists.
+   Alternative considered: block placeholder recipes. Rejected because current production data uses 1 g placeholders widely, causing 409 generation failures.
 
 2. Separate base quantities from profile scaling.
 
@@ -58,7 +58,7 @@ Current failure modes:
 
 ## Risks / Trade-offs
 
-- [Risk] Existing curated recipes with placeholder quantities will start blocking generation -> Mitigation: diagnostics must list dish, ingredient, base grams, base kcal and required correction.
+- [Risk] Placeholder recipes may produce rough quantities -> Mitigation: use them as relative weights, avoid the old `x2.50` cap, and expose diagnostics for later curation.
 - [Risk] Some legitimate low-kcal side dishes may fail the 50 kcal floor -> Mitigation: thresholds should evaluate compound/day context and can allow side dishes if the full meal/day still reaches targets.
 - [Risk] Protein targets may be impossible for a selected menu -> Mitigation: fail with a target-fit diagnostic instead of silently producing wrong macros.
 - [Risk] Tight guardrails may require recipe data cleanup before generation works -> Mitigation: this is intentional; bad input should not produce fake menus.

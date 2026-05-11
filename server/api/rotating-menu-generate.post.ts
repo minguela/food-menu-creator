@@ -21,6 +21,7 @@ const MIN_REGULAR_DAY_KCAL_BUDGET = 300;
 const MIN_RECIPE_INGREDIENT_GRAMS = 5;
 const MIN_NORMAL_RECIPE_BASE_KCAL = 50;
 const MAX_SERVING_MULTIPLIER = 8;
+const MAX_RELATIVE_SERVING_MULTIPLIER = 500;
 const MIN_KCAL_TARGET_RATIO = 0.8;
 const MIN_PROTEIN_TARGET_RATIO = 0.75;
 
@@ -409,6 +410,8 @@ export default defineEventHandler(async (event) => {
       }>;
       base_kcal: number;
       base_protein: number;
+      uses_relative_quantities?: boolean;
+      scaling_warnings?: any[];
     }
   >();
   const discardedRecipes: Array<{
@@ -669,6 +672,8 @@ export default defineEventHandler(async (event) => {
       ingredient_base: ingredientBase,
       base_kcal: baseKcal,
       base_protein: baseProtein,
+      uses_relative_quantities: recipeBaseValidation.usesRelativeQuantities,
+      scaling_warnings: recipeBaseValidation.issues,
     });
   }
 
@@ -705,6 +710,13 @@ export default defineEventHandler(async (event) => {
       ingredient_base: combinedIngredientBase,
       base_kcal: firstValid.base_kcal + secondValid.base_kcal,
       base_protein: firstValid.base_protein + secondValid.base_protein,
+      uses_relative_quantities:
+        Boolean(firstValid.uses_relative_quantities) ||
+        Boolean(secondValid.uses_relative_quantities),
+      scaling_warnings: [
+        ...(firstValid.scaling_warnings || []),
+        ...(secondValid.scaling_warnings || []),
+      ],
     });
   }
 
@@ -922,6 +934,13 @@ export default defineEventHandler(async (event) => {
             ingredient_base: Array.from(ingredientMap.values()),
             base_kcal: firstValid.base_kcal + secondValid.base_kcal,
             base_protein: firstValid.base_protein + secondValid.base_protein,
+            uses_relative_quantities:
+              Boolean(firstValid.uses_relative_quantities) ||
+              Boolean(secondValid.uses_relative_quantities),
+            scaling_warnings: [
+              ...(firstValid.scaling_warnings || []),
+              ...(secondValid.scaling_warnings || []),
+            ],
           });
         }
       }
@@ -1176,6 +1195,8 @@ export default defineEventHandler(async (event) => {
         base_protein: baseProtein,
         recipe_status: recipeStatus,
         ingredient_base: ingredientBase,
+        uses_relative_quantities: Boolean(validRecipe?.uses_relative_quantities),
+        scaling_warnings: validRecipe?.scaling_warnings || [],
       });
     }
 
@@ -1266,6 +1287,9 @@ export default defineEventHandler(async (event) => {
         const targetMealProtein = remainingProteinBudget * mealProteinShare;
         const targetMealCarbs = remainingCarbsBudget * mealKcalShare;
         const targetMealFat = remainingFatBudget * mealKcalShare;
+        const usesRelativeQuantities = Boolean(
+          plannedMeal.uses_relative_quantities,
+        );
 
         const desiredMultiplier = Math.max(
           1,
@@ -1285,16 +1309,20 @@ export default defineEventHandler(async (event) => {
           const kcal = Number(nutrition.kcal_per_100g || 0);
           return kcal > 200 && kcal <= 400;
         });
-        const densityCap = hasVeryCaloricIngredient
-          ? 1.7
-          : hasCaloricIngredient
-            ? 2.5
-            : MAX_SERVING_MULTIPLIER;
+        const densityCap = usesRelativeQuantities
+          ? MAX_RELATIVE_SERVING_MULTIPLIER
+          : hasVeryCaloricIngredient
+            ? 1.7
+            : hasCaloricIngredient
+              ? 2.5
+              : MAX_SERVING_MULTIPLIER;
         const multiplierDecision = computeAppliedMultiplier({
           desiredMultiplier,
           minMultiplier: 1,
           densityCap,
-          maxMultiplier: MAX_SERVING_MULTIPLIER,
+          maxMultiplier: usesRelativeQuantities
+            ? MAX_RELATIVE_SERVING_MULTIPLIER
+            : MAX_SERVING_MULTIPLIER,
         });
         const appliedMultiplier = multiplierDecision.appliedMultiplier;
         let kcal = 0;
@@ -1369,6 +1397,8 @@ export default defineEventHandler(async (event) => {
           nutrition_pending: pending,
           is_special: false,
           special_kcal_reserved: 0,
+          uses_relative_quantities: usesRelativeQuantities,
+          scaling_warnings: plannedMeal.scaling_warnings || [],
           all_special_day: allSpecialDay,
           low_regular_budget_warning: lowRegularBudgetWarning,
           ingredients,

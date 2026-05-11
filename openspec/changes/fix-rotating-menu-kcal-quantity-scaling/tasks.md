@@ -6,9 +6,9 @@
 
 ## 2. Recipe Base Validation
 
-- [x] 2.1 Implement validation for implausible confirmed ingredient quantities after unit normalization.
+- [x] 2.1 Implement classification for implausible positive quantities as relative weights after unit normalization.
 - [x] 2.2 Implement validation for implausibly low non-special dish `base_kcal` and macro mass.
-- [x] 2.3 Ensure invalid recipe bases are surfaced as blocking diagnostics and prevent persistence.
+- [x] 2.3 Ensure invalid non-positive recipe bases block while positive placeholders remain generatable with diagnostics.
 - [x] 2.4 Confirm compound meals combine and validate constituent bases without hiding invalid constituent quantities.
 
 ## 3. Portion Scaling Rules
@@ -28,7 +28,7 @@
 ## 5. Regression Tests
 
 - [x] 5.1 Extract pure helpers for recipe-base validation and profile portion calculation if needed for fast tests.
-- [x] 5.2 Add tests for placeholder 1 g ingredient recipes failing with `implausible_recipe_quantity`.
+- [x] 5.2 Add tests for placeholder 1 g ingredient recipes becoming relative quantities instead of 409 blockers.
 - [x] 5.3 Add tests that fixed/base recipe quantities are never reduced below curated quantities.
 - [x] 5.4 Add tests for the reported collapsed menu pattern proving it cannot persist a 54 kcal day.
 - [ ] 5.5 Add tests for successful realistic fixtures reaching configured kcal/protein tolerance for David and Lydia style profiles.

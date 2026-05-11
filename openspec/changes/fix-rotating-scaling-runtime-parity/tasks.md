@@ -9,6 +9,7 @@
 - [x] 2.1 Add root tests for implausible 1 g recipes.
 - [x] 2.2 Add root tests for collapsed day guardrail.
 - [x] 2.3 Wire tests into root `test:rotating` script.
+- [x] 2.4 Add Playwright coverage for placeholder recipes, x2.50 cap regression and collapsed-day guardrail.
 
 ## 3. Verification
 

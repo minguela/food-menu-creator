@@ -12,10 +12,11 @@ export function validateRecipeBase({
   isCountBasedUnit: isCountUnit = isCountBasedUnit,
 }) {
   if (isSpecial) {
-    return { valid: true, issues: [] };
+    return { valid: true, issues: [], usesRelativeQuantities: false };
   }
 
   const issues = [];
+  const blockingIssues = [];
   for (const ing of ingredientBase || []) {
     const grams = Number(ing.grams);
     const quantity = Number(ing.quantity);
@@ -28,6 +29,7 @@ export function validateRecipeBase({
         grams,
         message: "ingredient quantity must be > 0",
       });
+      blockingIssues.push("invalid_recipe_quantity");
       continue;
     }
     if (
@@ -56,8 +58,12 @@ export function validateRecipeBase({
   }
 
   return {
-    valid: issues.length === 0,
+    valid: blockingIssues.length === 0,
     issues,
+    usesRelativeQuantities: issues.some((issue) =>
+      issue.code === "implausible_recipe_quantity" ||
+      issue.code === "implausible_recipe_base_kcal"
+    ),
   };
 }
 

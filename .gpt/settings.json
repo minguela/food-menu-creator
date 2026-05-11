@@ -1,0 +1,9 @@
+{
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "document-skills@anthropic-agent-skills": true,
+    "kotlin-lsp@claude-plugins-official": true,
+    "superpowers-dev@superpowers-marketplace": true,
+    "example-skills@anthropic-agent-skills": true
+  }
+}

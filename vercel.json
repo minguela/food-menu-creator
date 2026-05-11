@@ -1,4 +1,5 @@
 {
+  "rootDirectory": "menu-web",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",

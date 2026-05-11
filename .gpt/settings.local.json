@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"https://api.telegram.org/bot8587163921:AAEsLsIwMV3j8KXH_UbasvIdEHp6cLojieA/getWebhookInfo\")",
+      "Bash(npx supabase:*)",
+      "Bash(supabase db:*)",
+      "Bash(npm install:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(psql https://tceusgxbfpekjcthrrqu.supabase.co -c ':*)",
+      "Bash(pnpm exec:*)",
+      "Bash(zip -r function.zip index.ts)",
+      "Bash(curl -s -X POST https://tceusgxbfpekjcthrrqu.supabase.co/functions/v1 -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVzZ3hiZnBla2pjdGhycnF1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTY4NjM1MiwiZXhwIjoyMDkxMjYyMzUyfQ.jeK7YwFAxbMJ2rW3MLXe32jdQAyRlCt-3rsNifjwprg' -H 'Content-Type: application/zip' --data-binary @function.zip -w '\\\\nHTTP Status: %{http_code}\\\\n')",
+      "Bash(curl -s -X POST https://tceusgxbfpekjcthrrqu.supabase.co/functions/v1 -H 'X-Api-Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVzZ3hiZnBla2pjdGhycnF1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTY4NjM1MiwiZXhwIjoyMDkxMjYyMzUyfQ.jeK7YwFAxbMJ2rW3MLXe32jdQAyRlCt-3rsNifjwprg' -H 'Content-Type: application/zip' --data-binary @function.zip)",
+      "Bash(curl -s https://tceusgxbfpekjcthrrqu.supabase.co/rest/v1/ -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVzZ3hiZnBla2pjdGhycnF1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTY4NjM1MiwiZXhwIjoyMDkxMjYyMzUyfQ.jeK7YwFAxbMJ2rW3MLXe32jdQAyRlCt-3rsNifjwprg' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVzZ3hiZnBla2pjdGhycnF1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTY4NjM1MiwiZXhwIjoyMDkxMjYyMzUyfQ.jeK7YwFAxbMJ2rW3MLXe32jdQAyRlCt-3rsNifjwprg')",
+      "Bash(zip -rf function.zip index.ts)",
+      "Bash(curl -s -X PUT https://tceusgxbfpekjcthrrqu.supabase.co/functions/v1/telegram-webhook -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVzZ3hiZnBla2pjdGhycnF1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTY4NjM1MiwiZXhwIjoyMDkxMjYyMzUyfQ.jeK7YwFAxbMJ2rW3MLXe32jdQAyRlCt-3rsNifjwprg' -H 'Content-Type: application/zip' --data-binary @function.zip)",
+      "Bash(zip function.zip index.ts)",
+      "Bash(curl -s -o /dev/null -w 'telegram-webhook: %{http_code}\\\\n' https://tceusgxbfpekjcthrrqu.supabase.co/functions/v1/telegram-webhook)",
+      "Bash(curl -s -o /dev/null -w 'ocr-processor: %{http_code}\\\\n' https://tceusgxbfpekjcthrrqu.supabase.co/functions/v1/ocr-processor)",
+      "Bash(curl -s -o /dev/null -w 'generate-monthly-menu: %{http_code}\\\\n' https://tceusgxbfpekjcthrrqu.supabase.co/functions/v1/generate-monthly-menu)",
+      "Bash(curl -s https://tceusgxbfpekjcthrrqu.supabase.co/rest/v1/weekly_menus -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVzZ3hiZnBla2pjdGhycnF1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTY4NjM1MiwiZXhwIjoyMDkxMjYyMzUyfQ.jeK7YwFAxbMJ2rW3MLXe32jdQAyRlCt-3rsNifjwprg' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVzZ3hiZnBla2pjdGhycnF1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTY4NjM1MiwiZXhwIjoyMDkxMjYyMzUyfQ.jeK7YwFAxbMJ2rW3MLXe32jdQAyRlCt-3rsNifjwprg' -H 'Prefer: count=exact' -w '\\\\nHTTP Status: %{http_code}\\\\n')",
+      "Bash(claude --plugins install thedotmack/claude-mem)",
+      "WebSearch",
+      "Bash(npx claude-mem:*)",
+      "Bash(curl -s https://tceusgxbfpekjcthrrqu.supabase.co/rest/v1/ -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVzZ3hiZnBla2pjdGhycnF1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTY4NjM1MiwiZXhwIjoyMDkxMjYyMzUyfQ.jeK7YwFAxbMJ2rW3MLXe32jdQAyRlCt-3rsNifjwprg')",
+      "Bash(curl -s -X PUT https://tceusgxbfpekjcthrrqu.supabase.co/functions/v1/apply-migration -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVzZ3hiZnBla2pjdGhycnF1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTY4NjM1MiwiZXhwIjoyMDkxMjYyMzUyfQ.jeK7YwFAxbMJ2rW3MLXe32jdQAyRlCt-3rsNifjwprg' -H 'Content-Type: application/json' -d '{\"code\": __CMDSUB_OUTPUT__')",
+      "Bash(npx nuxi@latest init menu-web --packageManager npm --no-gitInit)",
+      "Bash(npx nuxi@latest init menu-web --template v3 --packageManager npm --no-gitInit --force)",
+      "Bash(npm run:*)",
+      "Bash(npx vercel:*)",
+      "Bash(vercel link:*)"
+    ]
+  }
+}

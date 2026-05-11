@@ -977,3 +977,134 @@ Resueltas en el checklist de cierre de la sesiÃ³n 2026-04-30.
 - [ ] Tarea #193: Commit y push de cambios en menu-web
 - [ ] Tarea #194: Crear PR contra main
 - [ ] Tarea #195: Mergear PR tras verificaciÃ³n
+
+## Sesiï¿½n actual: 2026-05-10 - Fix normalizaciï¿½n acentos en dishes + duplicados en ingredientes + filtro nutriciï¿½n incompleta
+
+### Checklist de tareas
+
+- [x] Tarea #196: Crear migraciï¿½n Supabase para normalizar dish names quitando acentos
+  - Nota: migraciï¿½n supabase/migrations/20260510150000_fix_dish_normalized_name_accents.sql con funciï¿½n 
+ormalize_dish_name(text) (translate + regexp_replace), trigger dishes_before_write_trigger en public.dishes, y backfill de datos existentes. Aplicada en producciï¿½n vï¿½a supabase db push.
+
+- [x] Tarea #197: Verificar migraciï¿½n aplicada en producciï¿½n
+  - Nota: confirmado que 
+ormalize_dish_name('Ensalada verde con piï¿½a') devuelve 'ensalada verde con pina' en la DB remota; no quedan dishes con acentos en 
+ormalized_name.
+
+- [x] Tarea #198: Fix error 500 por duplicado de ingrediente al confirmar en recetas
+  - Nota: menu-web/server/api/recipe-confirmed-ingredients-save.post.ts ahora consulta ingredientes existentes tanto por 
+ormalized_name como por 
+ame, fusiona ambos resultados en mapas de bï¿½squeda, y evita intentar insertar ingredientes que ya existen por nombre. Tambiï¿½n vincula correctamente el ingredient_id cuando se encuentra por nombre aunque el 
+ormalized_name difiera.
+
+- [x] Tarea #199: Aï¿½adir filtro "Nutriciï¿½n incompleta" en pantalla de recetas
+  - Nota: menu-web/pages/recipes.vue aï¿½ade opciï¿½n incomplete_nutrition al filtro de recetas (con label "Nutriciï¿½n incompleta"), actualiza ilteredDishes para filtrar por ese estado, y mejora statusMeta para mostrar label naranja en recetas con incomplete_nutrition.
+
+- [x] Tarea #200: Crear branch, commit y push de cambios menu-web
+  - Nota: rama ix/duplicate-ingredient-and-recipe-filter creada en repo menu-web, commit con los dos archivos modificados, push a origin.
+
+- [x] Tarea #201: Crear PR contra main
+  - Nota: PR https://github.com/minguela/food-menu-creator/pull/35 creado con descripciï¿½n de ambos fixes.
+
+- [x] Tarea #202: Mergear PR a main
+  - Nota: PR #35 mergeado a main con fast-forward (2 archivos, 34 insertions, 8 deletions). Rama eliminada.
+
+## Sesión actual: 2026-05-10 - Fix platos compuestos en generación de menús rotativos
+
+### Checklist de tareas
+
+- [x] Tarea #203: Diagnóstico de platos compuestos en rotating-menu-generate
+  - Nota: el generador no cargaba compound_day_id ni consultaba compound_day_meals, por lo que buscaba nombres como "Pescado blanco + ensalada" en la tabla dishes donde solo existen recetas individuales.
+
+- [x] Tarea #204: Cargar compound_day_id y compound_day_meals en el generador
+  - Nota: añadido select de compound_day_id en weekly_meals y query a compound_day_meals(first_dish_id, second_dish_id) después de cargar dishes.
+
+- [x] Tarea #205: Construir virtual dishes para platos compuestos
+  - Nota: cuando un sourceMeal tiene compound_day_id, se buscan ambos platos individuales, se crea un dish virtual con id sintético compound:, recipe_status combinado (complete solo si ambos lo son), y se añade a dishByNormalizedName.
+
+- [x] Tarea #206: Validar recetas de platos compuestos
+  - Nota: después del loop de validación de platos simples, se validan los platos compuestos verificando que ambos platos individuales estén en validRecipeById. Si son válidos, se combinan sus ingredientes (sumando cantidades para ingredientes idénticos por normalized_name) y se añade el plato compuesto a validRecipeById con base_kcal y base_protein sumadas.
+
+- [x] Tarea #207: Commit, PR y merge a main
+  - Nota: rama fix/rotating-menu-compound-meals, PR https://github.com/minguela/food-menu-creator/pull/36, mergeado a main con fast-forward.
+
+## Sesión actual: 2026-05-10 - Fallback para platos compuestos sin compound_day_id
+
+### Checklist de tareas
+
+- [x] Tarea #208: Diagnóstico de platos compuestos sin compound_day_id
+  - Nota: el error persistía porque weekly_meals tenía dish_name = "Pescado blanco a elegir + ensalada de hoja verde" pero compound_day_id = null. La solución anterior solo funcionaba cuando compound_day_id estaba presente.
+
+- [x] Tarea #209: Implementar fallback por nombre en rotating-menu-generate
+  - Nota: cuando linkedDish es null y dish_name contiene '+', se divide por /\s*\+\s*/, se normaliza cada parte, se busca en dishByNormalizedName, y si todas las partes se encuentran se construye un virtual compound dish con id sintético compound:split:{hash}. El recipe_status es complete solo si todos los platos individuales son complete.
+
+- [x] Tarea #210: Commit, PR y merge a main
+  - Nota: rama fix/rotating-menu-compound-fallback, PR https://github.com/minguela/food-menu-creator/pull/37, mergeado a main con fast-forward (+38 líneas).
+
+## Sesión actual: 2026-05-10 - Fix carga de platos individuales en nombres compuestos
+
+### Checklist de tareas
+
+- [x] Tarea #211: Diagnóstico de por qué el fallback seguía fallando
+  - Nota: uniqueDishNames solo recopilaba el nombre completo del plato compuesto (ej: "Pescado blanco a elegir + ensalada de hoja verde"). La query a dishes buscaba ese nombre exacto, no encontraba nada, y dishByNormalizedName quedaba vacío. El fallback intentaba buscar las partes individuales, pero como la query no las había cargado, tampoco las encontraba.
+
+- [x] Tarea #212: Modificar uniqueDishNames para incluir partes individuales
+  - Nota: se cambió la construcción de uniqueDishNames para que, cuando un nombre contiene '+', incluya tanto el nombre completo como cada parte individual. Así la query a dishes carga todas las recetas necesarias.
+
+- [x] Tarea #213: Commit, PR y merge a main
+  - Nota: rama fix/rotating-menu-compound-dish-loading, PR https://github.com/minguela/food-menu-creator/pull/38, mergeado a main con fast-forward.
+
+## Sesión actual: 2026-05-10 - Fix validRecipeById para platos compuestos (iteración 5)
+
+### Checklist de tareas
+
+- [x] Tarea #214: Diagnóstico de recipe_not_validated en platos compuestos
+  - Nota: los platos individuales SI se encontraban (recipe_name_not_found desapareció), pero el plato compuesto se descartaba con recipe_not_validated. La causa: el loop de validación de platos compuestos (líneas 620-654) corre ANTES del loop de matching (línea 764+), donde se crean los virtual dishes. Cuando el matching comprueba validRecipeById.has(linkedDish.id), el ID sintético compound:split:... nunca fue añadido porque la validación de compuestos ya pasó.
+
+- [x] Tarea #215: Poblar validRecipeById inline en el loop de matching
+  - Nota: justo después de crear el virtual dish (en compound_day_id path y fallback path), se añade un bloque que comprueba si ambos platos individuales están en validRecipeById, combina sus ingredient_base (sumando cantidades para ingredientes duplicados por normalized_name), y añade el plato compuesto a validRecipeById con base_kcal y base_protein sumadas.
+
+- [x] Tarea #216: Commit, PR y merge a main
+  - Nota: rama fix/rotating-menu-compound-validation, PR https://github.com/minguela/food-menu-creator/pull/39, mergeado a main con fast-forward (+27 líneas).
+
+## Sesión actual: 2026-05-10 - Fix constraint meal_slot en rotating_menu_meals (iteración 6)
+
+### Checklist de tareas
+
+- [x] Tarea #217: Diagnóstico de error 500 por violation de meal_slot_check
+  - Nota: tras resolver la validación de platos compuestos, apareció un nuevo error 500: "rotating_menu_meals_meal_slot_check". La constraint solo permitía meal_slot in (1, 2), pero existían weekly_meals con meal_slot = 3 (ej: "Kéfir" como tercera comida de la cena).
+
+- [x] Tarea #218: Crear y aplicar migración para extender constraint a 3 slots
+  - Nota: migración 20260510160000_fix_rotating_menu_meal_slot_3.sql que cambia la constraint a meal_slot in (1, 2, 3). El rango de valores en producción es min=1, max=3.
+
+## Sesión actual: 2026-05-10 - Agrupación por semanas, etiquetas de menú fuente y estilos neutros comida libre
+
+### Checklist de tareas
+
+- [x] Tarea #219: Migración para añadir source_weekly_menu_id a rotating_menu_days
+  - Nota: migración 20260510170000_add_source_weekly_menu_id_to_days.sql añade columna uuid a rotating_menu_days.
+
+- [x] Tarea #220: Guardar source_weekly_menu_id durante la generación
+  - Nota: rotating-menu-generate.post.ts añade source_weekly_menu_id al objeto generatedDays (desde plannedDayBlock) y al insert de rotating_menu_days.
+
+- [x] Tarea #221: Cargar source_weekly_menu_id y nombres en detail API
+  - Nota: rotating-menu-detail.get.ts consulta weekly_menus por los IDs fuente, construye weeklyMenuNameById, añade source_weekly_menu_name a cada día ensamblado y source_weekly_menu_names al response.
+
+- [x] Tarea #222: Agrupar días por semanas en la UI
+  - Nota: rotating/[id].vue añade computed weeks que agrupa días en bloques de 7 (Semana 1: días 1-7, etc.). El template renderiza semanas con header "Semana N · Días X-Y" y badge con nombre del menú semanal fuente.
+
+- [x] Tarea #223: Estilos neutros para "comida libre"
+  - Nota: se cambian los estilos ámbar (border-amber, bg-amber, text-amber) por grises neutros (bg-gray-100, text-gray-600, border-gray-200) para que las comidas libres se integren visualmente con el resto.
+
+- [x] Tarea #224: Commit, PR y merge a main
+  - Nota: rama feat/rotating-menu-week-groups, PR https://github.com/minguela/food-menu-creator/pull/40, mergeado a main con fast-forward (3 archivos, +189/-117).
+
+## Sesión actual: 2026-05-10 - Selector de semanas en lugar de navegación día a día
+
+### Checklist de tareas
+
+- [x] Tarea #225: Reemplazar navegación por días con selector de semanas
+  - Nota: rotating/[id].vue ahora muestra botones de semana (Semana 1, Semana 2...) con rango de días. Solo se renderiza la semana seleccionada, con sus 7 días visibles. Eliminados los toggles de colapsar/expandir días individuales. Simplificación neta: -68 líneas, +28 líneas.
+
+- [x] Tarea #226: Commit, PR y merge a main
+  - Nota: rama feat/rotating-week-selector, PR https://github.com/minguela/food-menu-creator/pull/41, mergeado a main con fast-forward.

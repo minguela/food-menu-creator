@@ -620,27 +620,30 @@ export default defineEventHandler(async (event) => {
 
   for (const [, dish] of dishByNormalizedName) {
     if (!dish._compound) continue;
-    const firstValid = validRecipeById.get(dish._firstDishId);
-    const secondValid = validRecipeById.get(dish._secondDishId);
-    if (!firstValid || !secondValid) {
+    const compoundDishIds = Array.isArray(dish._compoundDishIds)
+      ? dish._compoundDishIds
+      : [dish._firstDishId, dish._secondDishId].filter(Boolean);
+    const validParts = compoundDishIds.map((dishId: string) =>
+      validRecipeById.get(dishId),
+    );
+    if (validParts.some((part: any) => !part)) {
       discardedRecipes.push({
         dish_id: dish.id,
         dish_name: dish.name,
         reason: "recipe_not_validated",
-        details: `compound_missing_valid_recipe:${dish._firstDishId}:${dish._secondDishId}`,
+        details: `compound_missing_valid_recipe:${compoundDishIds.join(":")}`,
       });
       continue;
     }
     const ingredientMap = new Map<string, any>();
-    for (const ing of firstValid.ingredient_base) {
-      ingredientMap.set(ing.normalized_name, { ...ing });
-    }
-    for (const ing of secondValid.ingredient_base) {
-      const existing = ingredientMap.get(ing.normalized_name);
-      if (existing) {
-        existing.quantity += ing.quantity;
-      } else {
-        ingredientMap.set(ing.normalized_name, { ...ing });
+    for (const validPart of validParts) {
+      for (const ing of validPart.ingredient_base) {
+        const existing = ingredientMap.get(ing.normalized_name);
+        if (existing) {
+          existing.quantity += ing.quantity;
+        } else {
+          ingredientMap.set(ing.normalized_name, { ...ing });
+        }
       }
     }
     const combinedIngredientBase = Array.from(ingredientMap.values());
@@ -649,8 +652,11 @@ export default defineEventHandler(async (event) => {
       dish_name: dish.name,
       normalized_name: dish.normalized_name,
       ingredient_base: combinedIngredientBase,
-      base_kcal: firstValid.base_kcal + secondValid.base_kcal,
-      base_protein: firstValid.base_protein + secondValid.base_protein,
+      base_kcal: validParts.reduce((sum: number, part: any) => sum + part.base_kcal, 0),
+      base_protein: validParts.reduce(
+        (sum: number, part: any) => sum + part.base_protein,
+        0,
+      ),
     });
   }
 
@@ -797,6 +803,7 @@ export default defineEventHandler(async (event) => {
               _compound: true,
               _firstDishId: firstDish.id,
               _secondDishId: secondDish.id,
+              _compoundDishIds: [firstDish.id, secondDish.id],
             };
             dishByNormalizedName.set(
               normalizeDishName(sourceMeal.dish_name),
@@ -815,27 +822,29 @@ export default defineEventHandler(async (event) => {
           .map((part) => dishByNormalizedName.get(normalizeDishName(part)) || null)
           .filter(Boolean);
         if (matchedParts.length === parts.length && matchedParts.length >= 2) {
-          const firstDish = matchedParts[0];
-          const secondDish = matchedParts[1];
-          const combinedName = `${firstDish.name} + ${secondDish.name}`;
+          const combinedName = matchedParts.map((dish) => dish.name).join(" + ");
           const allComplete = matchedParts.every((d) => d.recipe_status === "complete");
           const allNotRequired = matchedParts.every((d) => d.recipe_status === "not_required");
+          const firstIncomplete = matchedParts.find(
+            (d) => d.recipe_status !== "complete" && d.recipe_status !== "not_required",
+          );
           linkedDish = {
-            id: `compound:split:${normalizeDishName(sourceMeal.dish_name)}`,
+            id: `compound:split:${parts.map((part) => normalizeDishName(part)).join("+")}`,
             name: combinedName,
             normalized_name: normalizeDishName(combinedName),
             recipe_status: allComplete
               ? "complete"
               : allNotRequired
                 ? "not_required"
-                : matchedParts[0].recipe_status,
+                : firstIncomplete?.recipe_status || matchedParts[0].recipe_status,
             is_special: matchedParts.some((d) => d.is_special),
             special_kcal_reserved: Math.max(
               ...matchedParts.map((d) => d.special_kcal_reserved || 0),
             ),
             _compound: true,
-            _firstDishId: firstDish.id,
-            _secondDishId: secondDish.id,
+            _firstDishId: matchedParts[0].id,
+            _secondDishId: matchedParts[1].id,
+            _compoundDishIds: matchedParts.map((dish) => dish.id),
           };
           dishByNormalizedName.set(
             normalizeDishName(sourceMeal.dish_name),
@@ -845,19 +854,22 @@ export default defineEventHandler(async (event) => {
       }
 
       if (linkedDish && linkedDish._compound) {
-        const firstValid = validRecipeById.get(linkedDish._firstDishId);
-        const secondValid = validRecipeById.get(linkedDish._secondDishId);
-        if (firstValid && secondValid) {
+        const compoundDishIds = Array.isArray(linkedDish._compoundDishIds)
+          ? linkedDish._compoundDishIds
+          : [linkedDish._firstDishId, linkedDish._secondDishId].filter(Boolean);
+        const validParts = compoundDishIds.map((dishId: string) =>
+          validRecipeById.get(dishId),
+        );
+        if (validParts.every((part: any) => part)) {
           const ingredientMap = new Map<string, any>();
-          for (const ing of firstValid.ingredient_base) {
-            ingredientMap.set(ing.normalized_name, { ...ing });
-          }
-          for (const ing of secondValid.ingredient_base) {
-            const existing = ingredientMap.get(ing.normalized_name);
-            if (existing) {
-              existing.quantity += ing.quantity;
-            } else {
-              ingredientMap.set(ing.normalized_name, { ...ing });
+          for (const validPart of validParts) {
+            for (const ing of validPart.ingredient_base) {
+              const existing = ingredientMap.get(ing.normalized_name);
+              if (existing) {
+                existing.quantity += ing.quantity;
+              } else {
+                ingredientMap.set(ing.normalized_name, { ...ing });
+              }
             }
           }
           validRecipeById.set(linkedDish.id, {
@@ -865,8 +877,14 @@ export default defineEventHandler(async (event) => {
             dish_name: linkedDish.name,
             normalized_name: linkedDish.normalized_name,
             ingredient_base: Array.from(ingredientMap.values()),
-            base_kcal: firstValid.base_kcal + secondValid.base_kcal,
-            base_protein: firstValid.base_protein + secondValid.base_protein,
+            base_kcal: validParts.reduce(
+              (sum: number, part: any) => sum + part.base_kcal,
+              0,
+            ),
+            base_protein: validParts.reduce(
+              (sum: number, part: any) => sum + part.base_protein,
+              0,
+            ),
           });
         }
       }

@@ -1,5 +1,24 @@
 # Registro de Tareas
 
+## SesiÃ³n actual: 2026-05-11 - Escalado rotativo, cantidades relativas y warnings nutricionales
+
+### Checklist de tareas
+
+- [x] Tarea #159: Trazar OpenSpec para corregir colapso de kcal/cantidades en menÃºs rotativos
+  - Nota: creado `openspec/changes/fix-rotating-menu-kcal-quantity-scaling` para formalizar que el generador no debe persistir cantidades simbÃ³licas tipo 1-3g ni ocultar desviaciones extremas de kcal/proteÃ­na.
+- [x] Tarea #160: Aplicar fix de escalado en runtime real y copia `menu-web`
+  - Nota: se aÃ±adiÃ³ `utils/rotating-portion-scaling.js` y su equivalente en `menu-web/utils`; `server/api/rotating-menu-generate.post.ts` y `menu-web/server/api/rotating-menu-generate.post.ts` usan multiplicador aplicado real, mÃ­nimo `>= 1`, diagnÃ³stico de cap y paridad entre Ã¡rbol raÃ­z y `menu-web`.
+- [x] Tarea #161: Corregir paridad de despliegue raÃ­z vs `menu-web`
+  - Nota: creado `openspec/changes/fix-rotating-scaling-runtime-parity`; se detectÃ³ que producciÃ³n usaba el runtime raÃ­z (`server/`) mientras el primer fix solo tocÃ³ `menu-web/`; se portÃ³ la lÃ³gica y se validÃ³ build raÃ­z.
+- [x] Tarea #162: Evitar que recetas placeholder `1g` rompan generaciÃ³n con `409`
+  - Nota: las cantidades positivas implausibles (`1g`) pasan a tratarse como pesos relativos para el cÃ¡lculo, permitiendo multiplicadores altos por encima del antiguo `x2.50`; los datos estructuralmente invÃ¡lidos (cantidad <= 0, unidades no convertibles, nutrition pending) siguen bloqueando.
+- [x] Tarea #163: Convertir desviaciones kcal/proteÃ­na diarias de error `422` a warning no bloqueante
+  - Nota: creado `openspec/changes/allow-rotating-menu-with-nutrition-warnings`; `dayNutritionGuardrailViolations` ahora se loguea como `warn/completed`, se devuelve en `warnings.day_nutrition_violations`, y el menÃº se guarda/retorna para poder inspeccionarlo aunque no llegue a kcal/proteÃ­na objetivo.
+- [x] Tarea #164: AÃ±adir cobertura de regresiÃ³n Node y Playwright para escalado rotativo
+  - Nota: `npm run test:rotating` cubre recetas placeholder, multiplicadores > `x2.50`, mÃ­nimo de base y detecciÃ³n de dÃ­as colapsados; `npm run test:rotating:playwright` aÃ±ade `tests/rotating-portion-scaling.spec.ts` con cobertura Playwright de placeholder no-bloqueante, escape del cap antiguo y warnings para dÃ­as colapsados.
+- [x] Tarea #165: Validar build, specs y archivar OpenSpec relacionado
+  - Nota: ejecutados `npm run test:rotating`, `npm run test:rotating:playwright`, `npm run build`, `openspec validate` y sincronizadas specs principales `rotating-menu-portion-scaling`, `rotating-scaling-runtime-parity` y `rotating-menu-nutrition-warnings` antes del archivado.
+
 ## SesiÃ³n actual: 2026-05-10 - Fix colisiÃ³n unique en generaciÃ³n rotativa
 
 ### Checklist de tareas
@@ -1009,102 +1028,102 @@ ormalized_name difiera.
 - [x] Tarea #202: Mergear PR a main
   - Nota: PR #35 mergeado a main con fast-forward (2 archivos, 34 insertions, 8 deletions). Rama eliminada.
 
-## Sesión actual: 2026-05-10 - Fix platos compuestos en generación de menús rotativos
+## Sesiï¿½n actual: 2026-05-10 - Fix platos compuestos en generaciï¿½n de menï¿½s rotativos
 
 ### Checklist de tareas
 
-- [x] Tarea #203: Diagnóstico de platos compuestos en rotating-menu-generate
+- [x] Tarea #203: Diagnï¿½stico de platos compuestos en rotating-menu-generate
   - Nota: el generador no cargaba compound_day_id ni consultaba compound_day_meals, por lo que buscaba nombres como "Pescado blanco + ensalada" en la tabla dishes donde solo existen recetas individuales.
 
 - [x] Tarea #204: Cargar compound_day_id y compound_day_meals en el generador
-  - Nota: añadido select de compound_day_id en weekly_meals y query a compound_day_meals(first_dish_id, second_dish_id) después de cargar dishes.
+  - Nota: aï¿½adido select de compound_day_id en weekly_meals y query a compound_day_meals(first_dish_id, second_dish_id) despuï¿½s de cargar dishes.
 
 - [x] Tarea #205: Construir virtual dishes para platos compuestos
-  - Nota: cuando un sourceMeal tiene compound_day_id, se buscan ambos platos individuales, se crea un dish virtual con id sintético compound:, recipe_status combinado (complete solo si ambos lo son), y se añade a dishByNormalizedName.
+  - Nota: cuando un sourceMeal tiene compound_day_id, se buscan ambos platos individuales, se crea un dish virtual con id sintï¿½tico compound:, recipe_status combinado (complete solo si ambos lo son), y se aï¿½ade a dishByNormalizedName.
 
 - [x] Tarea #206: Validar recetas de platos compuestos
-  - Nota: después del loop de validación de platos simples, se validan los platos compuestos verificando que ambos platos individuales estén en validRecipeById. Si son válidos, se combinan sus ingredientes (sumando cantidades para ingredientes idénticos por normalized_name) y se añade el plato compuesto a validRecipeById con base_kcal y base_protein sumadas.
+  - Nota: despuï¿½s del loop de validaciï¿½n de platos simples, se validan los platos compuestos verificando que ambos platos individuales estï¿½n en validRecipeById. Si son vï¿½lidos, se combinan sus ingredientes (sumando cantidades para ingredientes idï¿½nticos por normalized_name) y se aï¿½ade el plato compuesto a validRecipeById con base_kcal y base_protein sumadas.
 
 - [x] Tarea #207: Commit, PR y merge a main
   - Nota: rama fix/rotating-menu-compound-meals, PR https://github.com/minguela/food-menu-creator/pull/36, mergeado a main con fast-forward.
 
-## Sesión actual: 2026-05-10 - Fallback para platos compuestos sin compound_day_id
+## Sesiï¿½n actual: 2026-05-10 - Fallback para platos compuestos sin compound_day_id
 
 ### Checklist de tareas
 
-- [x] Tarea #208: Diagnóstico de platos compuestos sin compound_day_id
-  - Nota: el error persistía porque weekly_meals tenía dish_name = "Pescado blanco a elegir + ensalada de hoja verde" pero compound_day_id = null. La solución anterior solo funcionaba cuando compound_day_id estaba presente.
+- [x] Tarea #208: Diagnï¿½stico de platos compuestos sin compound_day_id
+  - Nota: el error persistï¿½a porque weekly_meals tenï¿½a dish_name = "Pescado blanco a elegir + ensalada de hoja verde" pero compound_day_id = null. La soluciï¿½n anterior solo funcionaba cuando compound_day_id estaba presente.
 
 - [x] Tarea #209: Implementar fallback por nombre en rotating-menu-generate
-  - Nota: cuando linkedDish es null y dish_name contiene '+', se divide por /\s*\+\s*/, se normaliza cada parte, se busca en dishByNormalizedName, y si todas las partes se encuentran se construye un virtual compound dish con id sintético compound:split:{hash}. El recipe_status es complete solo si todos los platos individuales son complete.
+  - Nota: cuando linkedDish es null y dish_name contiene '+', se divide por /\s*\+\s*/, se normaliza cada parte, se busca en dishByNormalizedName, y si todas las partes se encuentran se construye un virtual compound dish con id sintï¿½tico compound:split:{hash}. El recipe_status es complete solo si todos los platos individuales son complete.
 
 - [x] Tarea #210: Commit, PR y merge a main
-  - Nota: rama fix/rotating-menu-compound-fallback, PR https://github.com/minguela/food-menu-creator/pull/37, mergeado a main con fast-forward (+38 líneas).
+  - Nota: rama fix/rotating-menu-compound-fallback, PR https://github.com/minguela/food-menu-creator/pull/37, mergeado a main con fast-forward (+38 lï¿½neas).
 
-## Sesión actual: 2026-05-10 - Fix carga de platos individuales en nombres compuestos
+## Sesiï¿½n actual: 2026-05-10 - Fix carga de platos individuales en nombres compuestos
 
 ### Checklist de tareas
 
-- [x] Tarea #211: Diagnóstico de por qué el fallback seguía fallando
-  - Nota: uniqueDishNames solo recopilaba el nombre completo del plato compuesto (ej: "Pescado blanco a elegir + ensalada de hoja verde"). La query a dishes buscaba ese nombre exacto, no encontraba nada, y dishByNormalizedName quedaba vacío. El fallback intentaba buscar las partes individuales, pero como la query no las había cargado, tampoco las encontraba.
+- [x] Tarea #211: Diagnï¿½stico de por quï¿½ el fallback seguï¿½a fallando
+  - Nota: uniqueDishNames solo recopilaba el nombre completo del plato compuesto (ej: "Pescado blanco a elegir + ensalada de hoja verde"). La query a dishes buscaba ese nombre exacto, no encontraba nada, y dishByNormalizedName quedaba vacï¿½o. El fallback intentaba buscar las partes individuales, pero como la query no las habï¿½a cargado, tampoco las encontraba.
 
 - [x] Tarea #212: Modificar uniqueDishNames para incluir partes individuales
-  - Nota: se cambió la construcción de uniqueDishNames para que, cuando un nombre contiene '+', incluya tanto el nombre completo como cada parte individual. Así la query a dishes carga todas las recetas necesarias.
+  - Nota: se cambiï¿½ la construcciï¿½n de uniqueDishNames para que, cuando un nombre contiene '+', incluya tanto el nombre completo como cada parte individual. Asï¿½ la query a dishes carga todas las recetas necesarias.
 
 - [x] Tarea #213: Commit, PR y merge a main
   - Nota: rama fix/rotating-menu-compound-dish-loading, PR https://github.com/minguela/food-menu-creator/pull/38, mergeado a main con fast-forward.
 
-## Sesión actual: 2026-05-10 - Fix validRecipeById para platos compuestos (iteración 5)
+## Sesiï¿½n actual: 2026-05-10 - Fix validRecipeById para platos compuestos (iteraciï¿½n 5)
 
 ### Checklist de tareas
 
-- [x] Tarea #214: Diagnóstico de recipe_not_validated en platos compuestos
-  - Nota: los platos individuales SI se encontraban (recipe_name_not_found desapareció), pero el plato compuesto se descartaba con recipe_not_validated. La causa: el loop de validación de platos compuestos (líneas 620-654) corre ANTES del loop de matching (línea 764+), donde se crean los virtual dishes. Cuando el matching comprueba validRecipeById.has(linkedDish.id), el ID sintético compound:split:... nunca fue añadido porque la validación de compuestos ya pasó.
+- [x] Tarea #214: Diagnï¿½stico de recipe_not_validated en platos compuestos
+  - Nota: los platos individuales SI se encontraban (recipe_name_not_found desapareciï¿½), pero el plato compuesto se descartaba con recipe_not_validated. La causa: el loop de validaciï¿½n de platos compuestos (lï¿½neas 620-654) corre ANTES del loop de matching (lï¿½nea 764+), donde se crean los virtual dishes. Cuando el matching comprueba validRecipeById.has(linkedDish.id), el ID sintï¿½tico compound:split:... nunca fue aï¿½adido porque la validaciï¿½n de compuestos ya pasï¿½.
 
 - [x] Tarea #215: Poblar validRecipeById inline en el loop de matching
-  - Nota: justo después de crear el virtual dish (en compound_day_id path y fallback path), se añade un bloque que comprueba si ambos platos individuales están en validRecipeById, combina sus ingredient_base (sumando cantidades para ingredientes duplicados por normalized_name), y añade el plato compuesto a validRecipeById con base_kcal y base_protein sumadas.
+  - Nota: justo despuï¿½s de crear el virtual dish (en compound_day_id path y fallback path), se aï¿½ade un bloque que comprueba si ambos platos individuales estï¿½n en validRecipeById, combina sus ingredient_base (sumando cantidades para ingredientes duplicados por normalized_name), y aï¿½ade el plato compuesto a validRecipeById con base_kcal y base_protein sumadas.
 
 - [x] Tarea #216: Commit, PR y merge a main
-  - Nota: rama fix/rotating-menu-compound-validation, PR https://github.com/minguela/food-menu-creator/pull/39, mergeado a main con fast-forward (+27 líneas).
+  - Nota: rama fix/rotating-menu-compound-validation, PR https://github.com/minguela/food-menu-creator/pull/39, mergeado a main con fast-forward (+27 lï¿½neas).
 
-## Sesión actual: 2026-05-10 - Fix constraint meal_slot en rotating_menu_meals (iteración 6)
-
-### Checklist de tareas
-
-- [x] Tarea #217: Diagnóstico de error 500 por violation de meal_slot_check
-  - Nota: tras resolver la validación de platos compuestos, apareció un nuevo error 500: "rotating_menu_meals_meal_slot_check". La constraint solo permitía meal_slot in (1, 2), pero existían weekly_meals con meal_slot = 3 (ej: "Kéfir" como tercera comida de la cena).
-
-- [x] Tarea #218: Crear y aplicar migración para extender constraint a 3 slots
-  - Nota: migración 20260510160000_fix_rotating_menu_meal_slot_3.sql que cambia la constraint a meal_slot in (1, 2, 3). El rango de valores en producción es min=1, max=3.
-
-## Sesión actual: 2026-05-10 - Agrupación por semanas, etiquetas de menú fuente y estilos neutros comida libre
+## Sesiï¿½n actual: 2026-05-10 - Fix constraint meal_slot en rotating_menu_meals (iteraciï¿½n 6)
 
 ### Checklist de tareas
 
-- [x] Tarea #219: Migración para añadir source_weekly_menu_id a rotating_menu_days
-  - Nota: migración 20260510170000_add_source_weekly_menu_id_to_days.sql añade columna uuid a rotating_menu_days.
+- [x] Tarea #217: Diagnï¿½stico de error 500 por violation de meal_slot_check
+  - Nota: tras resolver la validaciï¿½n de platos compuestos, apareciï¿½ un nuevo error 500: "rotating_menu_meals_meal_slot_check". La constraint solo permitï¿½a meal_slot in (1, 2), pero existï¿½an weekly_meals con meal_slot = 3 (ej: "Kï¿½fir" como tercera comida de la cena).
 
-- [x] Tarea #220: Guardar source_weekly_menu_id durante la generación
-  - Nota: rotating-menu-generate.post.ts añade source_weekly_menu_id al objeto generatedDays (desde plannedDayBlock) y al insert de rotating_menu_days.
+- [x] Tarea #218: Crear y aplicar migraciï¿½n para extender constraint a 3 slots
+  - Nota: migraciï¿½n 20260510160000_fix_rotating_menu_meal_slot_3.sql que cambia la constraint a meal_slot in (1, 2, 3). El rango de valores en producciï¿½n es min=1, max=3.
+
+## Sesiï¿½n actual: 2026-05-10 - Agrupaciï¿½n por semanas, etiquetas de menï¿½ fuente y estilos neutros comida libre
+
+### Checklist de tareas
+
+- [x] Tarea #219: Migraciï¿½n para aï¿½adir source_weekly_menu_id a rotating_menu_days
+  - Nota: migraciï¿½n 20260510170000_add_source_weekly_menu_id_to_days.sql aï¿½ade columna uuid a rotating_menu_days.
+
+- [x] Tarea #220: Guardar source_weekly_menu_id durante la generaciï¿½n
+  - Nota: rotating-menu-generate.post.ts aï¿½ade source_weekly_menu_id al objeto generatedDays (desde plannedDayBlock) y al insert de rotating_menu_days.
 
 - [x] Tarea #221: Cargar source_weekly_menu_id y nombres en detail API
-  - Nota: rotating-menu-detail.get.ts consulta weekly_menus por los IDs fuente, construye weeklyMenuNameById, añade source_weekly_menu_name a cada día ensamblado y source_weekly_menu_names al response.
+  - Nota: rotating-menu-detail.get.ts consulta weekly_menus por los IDs fuente, construye weeklyMenuNameById, aï¿½ade source_weekly_menu_name a cada dï¿½a ensamblado y source_weekly_menu_names al response.
 
-- [x] Tarea #222: Agrupar días por semanas en la UI
-  - Nota: rotating/[id].vue añade computed weeks que agrupa días en bloques de 7 (Semana 1: días 1-7, etc.). El template renderiza semanas con header "Semana N · Días X-Y" y badge con nombre del menú semanal fuente.
+- [x] Tarea #222: Agrupar dï¿½as por semanas en la UI
+  - Nota: rotating/[id].vue aï¿½ade computed weeks que agrupa dï¿½as en bloques de 7 (Semana 1: dï¿½as 1-7, etc.). El template renderiza semanas con header "Semana N ï¿½ Dï¿½as X-Y" y badge con nombre del menï¿½ semanal fuente.
 
 - [x] Tarea #223: Estilos neutros para "comida libre"
-  - Nota: se cambian los estilos ámbar (border-amber, bg-amber, text-amber) por grises neutros (bg-gray-100, text-gray-600, border-gray-200) para que las comidas libres se integren visualmente con el resto.
+  - Nota: se cambian los estilos ï¿½mbar (border-amber, bg-amber, text-amber) por grises neutros (bg-gray-100, text-gray-600, border-gray-200) para que las comidas libres se integren visualmente con el resto.
 
 - [x] Tarea #224: Commit, PR y merge a main
   - Nota: rama feat/rotating-menu-week-groups, PR https://github.com/minguela/food-menu-creator/pull/40, mergeado a main con fast-forward (3 archivos, +189/-117).
 
-## Sesión actual: 2026-05-10 - Selector de semanas en lugar de navegación día a día
+## Sesiï¿½n actual: 2026-05-10 - Selector de semanas en lugar de navegaciï¿½n dï¿½a a dï¿½a
 
 ### Checklist de tareas
 
-- [x] Tarea #225: Reemplazar navegación por días con selector de semanas
-  - Nota: rotating/[id].vue ahora muestra botones de semana (Semana 1, Semana 2...) con rango de días. Solo se renderiza la semana seleccionada, con sus 7 días visibles. Eliminados los toggles de colapsar/expandir días individuales. Simplificación neta: -68 líneas, +28 líneas.
+- [x] Tarea #225: Reemplazar navegaciï¿½n por dï¿½as con selector de semanas
+  - Nota: rotating/[id].vue ahora muestra botones de semana (Semana 1, Semana 2...) con rango de dï¿½as. Solo se renderiza la semana seleccionada, con sus 7 dï¿½as visibles. Eliminados los toggles de colapsar/expandir dï¿½as individuales. Simplificaciï¿½n neta: -68 lï¿½neas, +28 lï¿½neas.
 
 - [x] Tarea #226: Commit, PR y merge a main
   - Nota: rama feat/rotating-week-selector, PR https://github.com/minguela/food-menu-creator/pull/41, mergeado a main con fast-forward.

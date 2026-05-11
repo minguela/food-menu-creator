@@ -6,7 +6,7 @@ import {
   validateRecipeBase,
 } from "../utils/rotating-portion-scaling.js";
 
-test("rejects implausible 1g ingredient recipe bases", () => {
+test("marks implausible 1g ingredient recipe bases as relative quantities", () => {
   const result = validateRecipeBase({
     ingredientBase: [
       { name: "tomate", quantity: 1, unit_type: "g", grams: 1 },
@@ -19,9 +19,22 @@ test("rejects implausible 1g ingredient recipe bases", () => {
     isSpecial: false,
   });
 
-  assert.equal(result.valid, false);
+  assert.equal(result.valid, true);
+  assert.equal(result.usesRelativeQuantities, true);
   assert.ok(result.issues.some((issue) => issue.code === "implausible_recipe_quantity"));
   assert.ok(result.issues.some((issue) => issue.code === "implausible_recipe_base_kcal"));
+});
+
+test("allows relative placeholder recipes to use large target-fitting multipliers", () => {
+  const decision = computeAppliedMultiplier({
+    desiredMultiplier: 120,
+    minMultiplier: 1,
+    densityCap: 500,
+    maxMultiplier: 500,
+  });
+
+  assert.equal(decision.appliedMultiplier, 120);
+  assert.equal(decision.capReason, "none");
 });
 
 test("keeps applied multiplier at or above base quantity", () => {

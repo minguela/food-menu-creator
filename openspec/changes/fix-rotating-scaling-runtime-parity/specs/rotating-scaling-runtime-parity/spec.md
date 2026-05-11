@@ -1,11 +1,11 @@
 ## ADDED Requirements
 
 ### Requirement: Deployed rotating runtime MUST enforce non-collapsing scaling
-El runtime desplegado SHALL bloquear recetas base implausibles y SHALL evitar porciones por debajo de base para comidas normales.
+El runtime desplegado SHALL tratar cantidades positivas placeholder como pesos relativos, SHALL evitar porciones por debajo de base para comidas normales y SHALL bloquear dias colapsados antes de persistir.
 
 #### Scenario: Placeholder recipe quantities in deployed runtime
 - **WHEN** una receta normal llega con cantidades de ~1 g
-- **THEN** la generacion SHALL fallar con diagnostico y SHALL NOT persistir menu
+- **THEN** la generacion SHALL usar cantidades relativas y SHALL allow multipliers above `x2.50` instead of failing with 409
 
 ### Requirement: Deployed runtime MUST enforce day-level target guardrails
 El runtime desplegado SHALL validar tolerancias minimas de kcal/proteina por perfil antes de insertar filas.

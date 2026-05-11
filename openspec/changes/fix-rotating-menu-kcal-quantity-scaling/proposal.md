@@ -6,7 +6,7 @@ Rotating menu generation is producing impossible nutrition outputs: example days
 
 - Treat confirmed recipe ingredient quantities as the minimum fixed/base portion for a dish; generation SHALL NOT reduce fixed meal quantities below recipe base values.
 - Replace the current hard cap that clamps regular meal scaling to `2.5` when base kcal is tiny with validated serving calculation rules that can reach profile kcal/protein targets or fail loudly.
-- Add validation that blocks persistence when calculated day totals are materially below target or ingredient quantities are implausibly small.
+- Add validation that blocks persistence when calculated day totals are materially below target and treats tiny positive recipe quantities as relative weights instead of hard blockers.
 - Add diagnostics exposing base kcal, base ingredient grams, chosen multiplier, cap reason, and day/profile deltas.
 - Add regression tests covering the reported `Jamon con tomate`, `Gazpacho`, `Pollo`, salad and fish/rice pattern so totals cannot silently collapse again.
 
@@ -26,5 +26,5 @@ Rotating menu generation is producing impossible nutrition outputs: example days
 ## Non-goals
 
 - No redesign of recipe curation UI.
-- No automatic rewriting of existing recipe ingredient quantities unless they are invalid and must block generation.
+- No automatic rewriting of existing recipe ingredient quantities; placeholder quantities are handled at generation time and surfaced for later curation.
 - No post-generation patching of already persisted broken menus; users should regenerate after the fix.

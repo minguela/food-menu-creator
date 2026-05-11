@@ -160,6 +160,14 @@ jobs:
             -d "text=✅ *Fix PR created!*%0A%0APreview: ${{ env.PR_URL }}%0A%0A*Errors:* ${ERROR_SUMMARY}" \
             -d "parse_mode=Markdown"
 
+      - name: WhatsApp - Fix PR created
+        if: env.STATUS == 'failed' && env.CHANGES_COMMITTED == 'true'
+        uses: ./.github/actions/notify-whatsapp
+        with:
+          apikey: ${{ secrets.CALLMEBOT_API_KEY }}
+          message: "Fix PR created! — ${GITHUB_REPOSITORY}\nPR: ${{ env.PR_URL }}\nErrors: ${{ env.summary }}"
+          status: success
+
       - name: Notify Telegram - Cannot fix
         if: env.STATUS == 'failed' && env.CHANGES_COMMITTED != 'true'
         env:
@@ -172,6 +180,22 @@ jobs:
             -d "chat_id=${TELEGRAM_CHAT_ID}" \
             -d "text=⚠️ *Deploy failed, couldn't auto-fix.*%0A%0A*Errors:* ${ERROR_SUMMARY}%0A%0ACheck logs: ${WORKFLOW_URL}" \
             -d "parse_mode=Markdown"
+
+      - name: WhatsApp - Cannot fix (blocking)
+        if: env.STATUS == 'failed' && env.CHANGES_COMMITTED != 'true'
+        uses: ./.github/actions/notify-whatsapp
+        with:
+          apikey: ${{ secrets.CALLMEBOT_API_KEY }}
+          message: "BLOCKED — Deploy failed, couldn't auto-fix — ${GITHUB_REPOSITORY}\nErrors: ${{ env.summary }}\nLogs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          status: failure
+
+      - name: WhatsApp - All checks passed
+        if: env.STATUS == 'success'
+        uses: ./.github/actions/notify-whatsapp
+        with:
+          apikey: ${{ secrets.CALLMEBOT_API_KEY }}
+          message: "Fix-deploy checks passed — ${GITHUB_REPOSITORY}\nBranch: ${GITHUB_REF_NAME}\nNo action needed."
+          status: success
 
       - name: Summary output
         run: |

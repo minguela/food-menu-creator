@@ -1,0 +1,44 @@
+name: 'Notify WhatsApp (CallMeBot)'
+description: 'Send a WhatsApp message via CallMeBot API'
+
+inputs:
+  phone:
+    description: 'Phone number with country code (e.g. +34677092934)'
+    required: true
+    default: '+34677092934'
+  apikey:
+    description: 'CallMeBot API key'
+    required: true
+  message:
+    description: 'Message text to send'
+    required: true
+  status:
+    description: 'Status emoji prefix: success, failure, warning, info'
+    required: false
+    default: 'info'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Send WhatsApp notification
+      shell: bash
+      if: ${{ inputs.apikey != '' }}
+      env:
+        CALLMEBOT_PHONE: ${{ inputs.phone }}
+        CALLMEBOT_APIKEY: ${{ inputs.apikey }}
+        CALLMEBOT_MESSAGE: ${{ inputs.message }}
+        CALLMEBOT_STATUS: ${{ inputs.status }}
+      run: |
+        EMOJI="ℹ️"
+        if [ "$CALLMEBOT_STATUS" = "success" ]; then
+          EMOJI="✅"
+        elif [ "$CALLMEBOT_STATUS" = "failure" ]; then
+          EMOJI="❌"
+        elif [ "$CALLMEBOT_STATUS" = "warning" ]; then
+          EMOJI="⚠️"
+        fi
+
+        FULL_MSG="${EMOJI} ${CALLMEBOT_MESSAGE}"
+        ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''${FULL_MSG}'''))")
+
+        curl -sS -X GET "https://api.callmebot.com/whatsapp.php?phone=${CALLMEBOT_PHONE}&apikey=${CALLMEBOT_APIKEY}&text=${ENCODED}" > /dev/null 2>&1 || true

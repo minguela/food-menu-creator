@@ -18,7 +18,7 @@ test("rejects macro combinations without carbohydrates or protein floor", () => 
   const result = validateMacroTargets({ fatPct: 50, carbsPct: 0 });
 
   assert.equal(result.valid, false);
-  assert.match(result.message, /al menos/);
+  assert.match(result.message, /mayor que 0/);
 });
 
 test("converts macro percentages to grams from calories", () => {

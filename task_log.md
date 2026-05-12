@@ -27,6 +27,10 @@
 
 ### Checklist de tareas
 
+- [x] Tarea #166: Implementar escalado por densidad calórica en menús rotativos
+  - Nota: creado `openspec/changes/caloric-density-ingredient-scaling`; `utils/rotating-portion-scaling.js` y su copia `menu-web` añaden buckets/factores por densidad, fallback por `kcal_per_100g` y cálculo de cantidad final sin bajar de la cantidad base. Los runtimes raíz y `menu-web` usan esta cantidad final por ingrediente e incluyen diagnósticos `density_bucket`, `density_factor` e `ingredient_multiplier`.
+- [x] Tarea #167: Validar regresiones y archivar OpenSpec de densidad calórica
+  - Nota: añadida cobertura Node y Playwright para probar que ingredientes `low` crecen más que `very_caloric` y que el fallback por kcal funciona; ejecutados `npm run test:rotating`, `npm run test:rotating:playwright`, `npm run build`, validación OpenSpec del cambio y validación global de specs antes del archivado.
 - [x] Tarea #159: Trazar OpenSpec para corregir colapso de kcal/cantidades en menús rotativos
   - Nota: creado `openspec/changes/fix-rotating-menu-kcal-quantity-scaling` para formalizar que el generador no debe persistir cantidades simbólicas tipo 1-3g ni ocultar desviaciones extremas de kcal/proteína.
 - [x] Tarea #160: Aplicar fix de escalado en runtime real y copia `menu-web`

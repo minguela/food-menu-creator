@@ -1,127 +1,270 @@
 <template>
-  <div class="min-h-screen bg-transparent">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="min-h-screen bg-transparent text-[var(--text-1)]">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-      <!-- Status Message -->
-      <div v-if=" statusMessage " class="fixed right-4 top-4 z-50 px-4 py-2 rounded-xl shadow-lg"
-        :class=" statusType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200' ">
-        <span class="text-sm font-medium">{{ statusMessage }}</span>
+      <!-- Toast -->
+      <div
+        v-if="statusMessage"
+        class="fixed right-4 top-4 z-50 px-5 py-3 rounded-2xl text-sm font-medium border shadow-lg backdrop-blur-lg"
+        :class="statusType === 'error'
+          ? 'bg-[rgba(255,100,103,0.12)] text-[var(--danger)] border-[rgba(255,100,103,0.25)]'
+          : 'bg-[rgba(114,206,123,0.12)] text-[var(--success)] border-[rgba(114,206,123,0.25)]'"
+      >
+        {{ statusMessage }}
       </div>
 
       <!-- Header -->
-      <header class="mb-8">
-        <div class="flex items-center gap-4">
-          <div
-            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-lg shadow-slate-200">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M10.325 4.317c.83-1.14 2.423-1.14 3.253 0 .83 1.14.83 2.99 0 4.13-.83 1.14-2.423 1.14-3.253 0-.83-1.14-.83-2.99 0-4.13zM12 12h.01M19 12h.01M6 12h.01M12 19h.01M12 6h.01" />
-            </svg>
-          </div>
-          <div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-              Configuración
-            </h1>
-            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Perfiles con objetivos nutricionales por persona</p>
-          </div>
+      <header class="flex items-center gap-5">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center"
+          style="background: linear-gradient(135deg, rgba(187,222,242,0.18), rgba(209,170,215,0.14)); border: 1px solid rgba(255,255,255,0.08);">
+          <svg class="w-7 h-7 text-[var(--text-1)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-[26px] font-light font-['Montserrat'] tracking-[-0.01em] text-[var(--text-1)]">
+            Perfiles
+          </h1>
+          <p class="text-sm text-[var(--text-3)] mt-1">
+            Define objetivos nutricionales por persona con porcentajes de macronutrientes
+          </p>
         </div>
       </header>
 
-      <!-- Profiles -->
-      <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
-              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Personas</h2>
-          </div>
-          <button @click=" resetProfileForm "
-            class="px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-colors">
-            Nuevo perfil
+      <!-- Form Section -->
+      <section class="ui-surface p-6 sm:p-8">
+        <div class="flex items-center justify-between mb-8">
+          <h2 class="text-lg font-light font-['Montserrat'] tracking-[-0.01em] text-[var(--text-1)]">
+            {{ profileForm.id ? "Editar perfil" : "Nuevo perfil" }}
+          </h2>
+          <button v-if="profileForm.id" @click="resetProfileForm"
+            class="text-sm text-[var(--text-3)] hover:text-[var(--text-1)] transition-colors">
+            Cancelar
           </button>
         </div>
 
-        <form class="grid gap-3 md:grid-cols-7 mb-6 items-end" @submit.prevent=" saveProfile ">
-          <input v-model.trim=" profileForm.name " class="md:col-span-2 border rounded-lg px-3 py-2.5"
-            placeholder="Nombre" required />
-          <select v-model=" profileForm.sex " class="border rounded-lg px-3 py-2.5">
-            <option value="female">Mujer</option>
-            <option value="male">Hombre</option>
-            <option value="other">Otro</option>
-          </select>
-          <input v-model.number=" profileForm.age " type="number" min="1" max="120" class="border rounded-lg px-3 py-2.5"
-            placeholder="Edad" required />
-          <input v-model.number=" profileForm.daily_kcal_target " type="number" min="800" max="6000" step="50"
-            class="border rounded-lg px-3 py-2.5" placeholder="kcal" required />
-          <input v-model.number=" profileForm.carbs_pct_target " type="number" min="5" max="80" step="1"
-            class="border rounded-lg px-3 py-2.5" placeholder="HC %" required />
-          <input v-model.number=" profileForm.fat_pct_target " type="number" min="5" max="70" step="1"
-            class="border rounded-lg px-3 py-2.5" placeholder="Grasa %" required />
-          <button type="submit" :disabled=" !profileFormValid || profileSaving "
-            class="bg-gray-900 text-white rounded-lg px-3 py-2.5 disabled:opacity-50 font-medium">
-            {{ profileForm.id ? "Actualizar" : "Añadir" }}
-          </button>
+        <form @submit.prevent="saveProfile" class="space-y-6">
+          <!-- Basic info row -->
+          <div class="grid gap-4 sm:grid-cols-5">
+            <label class="sm:col-span-2 space-y-1.5">
+              <span class="block text-xs font-medium tracking-[0.08em] uppercase text-[var(--text-3)]">Nombre</span>
+              <input
+                v-model.trim="profileForm.name"
+                class="w-full rounded-xl px-4 py-2.5 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                placeholder="Ej. David"
+                required
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="block text-xs font-medium tracking-[0.08em] uppercase text-[var(--text-3)]">Sexo</span>
+              <select
+                v-model="profileForm.sex"
+                class="w-full rounded-xl px-4 py-2.5 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none appearance-none"
+              >
+                <option value="female">Mujer</option>
+                <option value="male">Hombre</option>
+                <option value="other">Otro</option>
+              </select>
+            </label>
+            <label class="space-y-1.5">
+              <span class="block text-xs font-medium tracking-[0.08em] uppercase text-[var(--text-3)]">Edad</span>
+              <input
+                v-model.number="profileForm.age"
+                type="number" min="1" max="120"
+                class="w-full rounded-xl px-4 py-2.5 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                placeholder="35"
+                required
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="block text-xs font-medium tracking-[0.08em] uppercase text-[var(--text-3)]">kcal/día</span>
+              <input
+                v-model.number="profileForm.daily_kcal_target"
+                type="number" min="800" max="6000" step="50"
+                class="w-full rounded-xl px-4 py-2.5 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                placeholder="1900"
+                required
+              />
+            </label>
+          </div>
+
+          <!-- Macros row -->
+          <div class="pt-2">
+            <p class="text-xs font-medium tracking-[0.08em] uppercase text-[var(--text-3)] mb-4">Distribucion de macros (%)</p>
+            <div class="grid gap-4 sm:grid-cols-4 items-end">
+              <label class="space-y-1.5">
+                <span class="block text-xs text-[var(--text-3)]">Hidratos</span>
+                <div class="relative">
+                  <input
+                    v-model.number="profileForm.carbs_pct_target"
+                    type="number" min="5" max="80" step="1"
+                    class="w-full rounded-xl px-4 py-2.5 pr-10 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                    placeholder="45"
+                    required
+                  />
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-3)]">%</span>
+                </div>
+              </label>
+              <label class="space-y-1.5">
+                <span class="block text-xs text-[var(--text-3)]">Grasas</span>
+                <div class="relative">
+                  <input
+                    v-model.number="profileForm.fat_pct_target"
+                    type="number" min="5" max="70" step="1"
+                    class="w-full rounded-xl px-4 py-2.5 pr-10 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                    placeholder="30"
+                    required
+                  />
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-3)]">%</span>
+                </div>
+              </label>
+
+              <!-- Deduced protein -->
+              <div class="space-y-1.5">
+                <span class="block text-xs text-[var(--text-3)]">Proteína</span>
+                <div
+                  class="rounded-xl px-4 py-2.5 text-sm border"
+                  :class="profileMacroValidation.valid
+                    ? 'bg-[rgba(114,206,123,0.06)] border-[rgba(114,206,123,0.2)] text-[var(--success)]'
+                    : 'bg-[rgba(255,100,103,0.06)] border-[rgba(255,100,103,0.2)] text-[var(--danger)]'"
+                >
+                  <span class="font-semibold">{{ profileForm.protein_pct_target }}%</span>
+                  <span class="ml-1 text-xs opacity-60">deducida</span>
+                </div>
+              </div>
+
+              <!-- Tolerance -->
+              <label class="space-y-1.5">
+                <span class="block text-xs text-[var(--text-3)]">Tolerancia</span>
+                <div class="relative">
+                  <input
+                    v-model.number="profileForm.tolerance_percent"
+                    type="number" min="0" max="50" step="1"
+                    class="w-full rounded-xl px-4 py-2.5 pr-10 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                    placeholder="10"
+                  />
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-3)]">%</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Macro gram summary -->
+          <div
+            v-if="profileForm.daily_kcal_target && profileMacroValidation.valid"
+            class="rounded-2xl px-5 py-4 flex flex-wrap items-center gap-4 text-sm"
+            style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-soft);"
+          >
+            <div class="flex-1 min-w-[140px]">
+              <p class="text-xs tracking-[0.08em] uppercase text-[var(--text-3)] mb-1">Equivalente en gramos</p>
+              <p class="text-[var(--text-2)]">{{ profileMacroSummaryText }}</p>
+            </div>
+            <button
+              type="button"
+              v-if="profileForm.id && profileMacroValidation.valid"
+              class="text-sm px-4 py-2 rounded-xl font-medium border border-[rgba(255,255,255,0.12)] text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-40 transition-colors"
+              :disabled="profileSaving"
+              @click="saveProfileMacros"
+            >
+              Guardar solo macros
+            </button>
+          </div>
+          <div
+            v-if="!profileMacroValidation.valid && (profileForm.carbs_pct_target || profileForm.fat_pct_target)"
+            class="rounded-xl px-4 py-3 text-sm bg-[rgba(255,100,103,0.06)] border border-[rgba(255,100,103,0.2)] text-[var(--danger)]"
+          >
+            {{ profileMacroValidation.message }}
+          </div>
+
+          <!-- Submit -->
+          <div class="flex gap-3 pt-2">
+            <button
+              type="submit"
+              :disabled="!profileFormValid || profileSaving"
+              class="ui-btn-primary px-6 py-2.5 rounded-xl text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {{ profileSaving ? "Guardando..." : profileForm.id ? "Actualizar perfil" : "Crear perfil" }}
+            </button>
+          </div>
         </form>
+      </section>
 
-        <div v-if=" ( profileForm.carbs_pct_target || profileForm.fat_pct_target ) && profileForm.daily_kcal_target "
-          class="mb-6 flex flex-wrap gap-4">
-          <div class="rounded-xl border px-4 py-3 flex-1 min-w-[140px]"
-            :class=" profileMacroValidation.valid ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50' ">
-            <p class="text-xs text-slate-500">Proteína deducida</p>
-            <p class="text-lg font-bold text-slate-900 dark:text-slate-100">
-              {{ profileMacroValidation.proteinPct }}%
+      <!-- Profile List -->
+      <section class="ui-surface p-6 sm:p-8">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-lg font-light font-['Montserrat'] tracking-[-0.01em] text-[var(--text-1)]">
+              Lista de perfiles
+            </h2>
+            <p class="text-sm text-[var(--text-3)] mt-1">
+              {{ profiles.length }} {{ profiles.length === 1 ? "perfil" : "perfiles" }}
             </p>
           </div>
-          <div v-if=" profileMacroValidation.valid " class="rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-800 px-4 py-3 flex-1 min-w-[140px]">
-            <p class="text-xs text-slate-500">En gramos</p>
-            <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">
-              {{ profileMacroSummaryText }}
-            </p>
-          </div>
-          <div v-if=" !profileMacroValidation.valid " class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 flex-1 min-w-[140px]">
-            <p class="text-xs text-red-600">{{ profileMacroValidation.message }}</p>
-          </div>
-          <button type="button" v-if=" profileForm.id && profileMacroValidation.valid "
-            class="rounded-lg border px-3 py-2.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-50"
-            :disabled=" profileSaving " @click=" saveProfileMacros ">
-            Guardar macros
-          </button>
         </div>
 
-        <div v-if=" profiles.length === 0 " class="text-sm text-gray-500 dark:text-slate-400 border rounded-lg p-4">
-          Añade al menos un perfil para adaptar objetivos por persona.
+        <div
+          v-if="profiles.length === 0"
+          class="rounded-xl border border-dashed border-[var(--border-strong)] px-5 py-8 text-center text-sm text-[var(--text-3)]"
+        >
+          Crea tu primer perfil usando el formulario superior para empezar.
         </div>
-        <div v-else class="divide-y border rounded-lg">
-          <div v-for=" profile in profiles " :key=" profile.id "
-            class="flex flex-wrap items-center justify-between gap-3 p-4">
-            <div>
-              <p class="font-medium text-gray-900 dark:text-slate-100">{{ profile.name }}</p>
-              <p class="text-sm text-gray-500 dark:text-slate-400">
-                {{ sexLabel( profile.sex ) }} · {{ profile.age }} años ·
-                {{ profile.daily_kcal_target }} kcal ·
-                HC {{ profile.carbs_pct_target }}% G {{ profile.fat_pct_target }}% P {{ profile.protein_pct_target ?? ( 100 - ( profile.carbs_pct_target || 0 ) - ( profile.fat_pct_target || 0 ) ) }}%
-              </p>
-              <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                {{ profileGramSummary( profile ) }}
-              </p>
+
+        <div v-else class="space-y-3">
+          <article
+            v-for="profile in profiles"
+            :key="profile.id"
+            class="rounded-2xl px-5 py-4 border border-[var(--border-soft)] transition-colors hover:border-[rgba(255,255,255,0.16)]"
+            style="background: rgba(255,255,255,0.02);"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div class="flex-1 min-w-[200px]">
+                <div class="flex items-center gap-3 mb-2">
+                  <h3 class="text-base font-medium text-[var(--text-1)]">{{ profile.name }}</h3>
+                  <span class="text-xs text-[var(--text-3)]">
+                    {{ sexLabel(profile.sex) }} · {{ profile.age }}a
+                  </span>
+                </div>
+
+                <div class="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+                  <span class="text-[var(--text-2)]">
+                    <span class="text-[var(--text-3)]">kcal</span> {{ profile.daily_kcal_target }}
+                  </span>
+                  <span class="text-[var(--text-2)]">
+                    <span class="text-[var(--text-3)]">HC</span> {{ profile.carbs_pct_target }}%
+                  </span>
+                  <span class="text-[var(--text-2)]">
+                    <span class="text-[var(--text-3)]">G</span> {{ profile.fat_pct_target }}%
+                  </span>
+                  <span class="text-[var(--text-2)]">
+                    <span class="text-[var(--text-3)]">P</span> {{ profile.protein_pct_target ?? (100 - (profile.carbs_pct_target || 0) - (profile.fat_pct_target || 0)) }}%
+                  </span>
+                </div>
+
+                <p class="text-xs text-[var(--text-3)] mt-2">
+                  {{ profileGramSummary(profile) }}
+                </p>
+              </div>
+
+              <div class="flex gap-2 shrink-0">
+                <button
+                  @click="editProfile(profile)"
+                  class="rounded-xl px-4 py-2 text-xs font-medium border border-[var(--border-soft)] text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+                >
+                  Editar
+                </button>
+                <button
+                  @click="deleteProfile(profile.id)"
+                  class="rounded-xl px-4 py-2 text-xs font-medium border border-[rgba(255,100,103,0.2)] text-[var(--danger)] hover:bg-[rgba(255,100,103,0.08)] transition-colors"
+                >
+                  Eliminar
+                </button>
+              </div>
             </div>
-            <div class="flex gap-2">
-              <button @click="editProfile( profile )"
-                class="px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded">
-                Editar
-              </button>
-              <button @click="deleteProfile( profile.id )"
-                class="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded">
-                Eliminar
-              </button>
-            </div>
-          </div>
+          </article>
         </div>
       </section>
+
     </div>
   </div>
 </template>
@@ -137,10 +280,10 @@ const supabase = useSupabase();
 const { user, loadCurrentUser } = useCurrentUser();
 const { confirm: confirmDialog } = useConfirmDialog();
 
-const profiles = ref<PersonProfile[]>( [] );
-const profileSaving = ref( false );
-const statusMessage = ref( "" );
-const statusType = ref<"success" | "error">( "success" );
+const profiles = ref<PersonProfile[]>([]);
+const profileSaving = ref(false);
+const statusMessage = ref("");
+const statusType = ref<"success" | "error">("success");
 
 type ProfileForm = {
   id: string;
@@ -154,7 +297,7 @@ type ProfileForm = {
   tolerance_percent: number;
 };
 
-const profileForm = ref<ProfileForm>( {
+const profileForm = ref<ProfileForm>({
   id: "",
   name: "",
   sex: "other",
@@ -164,27 +307,27 @@ const profileForm = ref<ProfileForm>( {
   fat_pct_target: 30,
   protein_pct_target: 25,
   tolerance_percent: 10,
-} );
+});
 
-const profileMacroValidation = computed( () =>
-  validateMacroTargets( {
+const profileMacroValidation = computed(() =>
+  validateMacroTargets({
     fatPct: profileForm.value.fat_pct_target,
     carbsPct: profileForm.value.carbs_pct_target,
-  } ),
+  }),
 );
 
-const profileMacroSummaryText = computed( () => {
-  if ( !profileForm.value.daily_kcal_target || !profileMacroValidation.value.valid ) return "";
-  const targets = macroTargetsFromCalories( profileForm.value.daily_kcal_target, {
+const profileMacroSummaryText = computed(() => {
+  if (!profileForm.value.daily_kcal_target || !profileMacroValidation.value.valid) return "";
+  const targets = macroTargetsFromCalories(profileForm.value.daily_kcal_target, {
     fatPct: profileForm.value.fat_pct_target,
     carbsPct: profileForm.value.carbs_pct_target,
-  } );
-  return `${ targets.protein_g }g proteína · ${ targets.carbs_g }g hidratos · ${ targets.fat_g }g grasas`;
-} );
+  });
+  return `${targets.protein_g}g proteína · ${targets.carbs_g}g hidratos · ${targets.fat_g}g grasas`;
+});
 
 const profileFormValid = computed(
   () =>
-    Boolean( profileForm.value.name ) &&
+    Boolean(profileForm.value.name) &&
     profileForm.value.age >= 1 &&
     profileForm.value.age <= 120 &&
     profileForm.value.daily_kcal_target >= 800 &&
@@ -198,41 +341,38 @@ const profileFormValid = computed(
     profileForm.value.protein_pct_target <= 50,
 );
 
-const profileGramSummary = ( profile: PersonProfile ) => {
-  const proteinPct = profile.protein_pct_target ?? ( 100 - ( profile.carbs_pct_target || 0 ) - ( profile.fat_pct_target || 0 ) );
-  if ( proteinPct <= 0 ) return "";
-  const proteinG = Math.round( ( profile.daily_kcal_target * proteinPct ) / 100 / 4 * 10 ) / 10;
-  const carbsG = Math.round( ( profile.daily_kcal_target * ( profile.carbs_pct_target || 0 ) ) / 100 / 4 * 10 ) / 10;
-  const fatG = Math.round( ( profile.daily_kcal_target * ( profile.fat_pct_target || 0 ) ) / 100 / 9 * 10 ) / 10;
-  return `P ${ proteinG }g · HC ${ carbsG }g · G ${ fatG }g · tolerancia ${ profile.tolerance_percent ?? 10 }%`;
+const profileGramSummary = (profile: PersonProfile) => {
+  const proteinPct = profile.protein_pct_target ?? (100 - (profile.carbs_pct_target || 0) - (profile.fat_pct_target || 0));
+  if (proteinPct <= 0) return "";
+  const proteinG = Math.round((profile.daily_kcal_target * proteinPct) / 100 / 4 * 10) / 10;
+  const carbsG = Math.round((profile.daily_kcal_target * (profile.carbs_pct_target || 0)) / 100 / 4 * 10) / 10;
+  const fatG = Math.round((profile.daily_kcal_target * (profile.fat_pct_target || 0)) / 100 / 9 * 10) / 10;
+  return `P ${proteinG}g · HC ${carbsG}g · G ${fatG}g · tol ${profile.tolerance_percent ?? 10}%`;
 };
 
-const showStatus = ( message: string, type: "success" | "error" = "success" ) => {
+const showStatus = (message: string, type: "success" | "error" = "success") => {
   statusMessage.value = message;
   statusType.value = type;
-  setTimeout( () => {
+  setTimeout(() => {
     statusMessage.value = "";
-  }, 3000 );
+  }, 3000);
 };
 
 const loadData = async () => {
   const currentUser = await loadCurrentUser();
-  if ( !currentUser ) {
-    showStatus(
-      "No hay usuario configurado. Usa /start en Telegram primero.",
-      "error",
-    );
+  if (!currentUser) {
+    showStatus("No hay usuario configurado. Usa /start en Telegram primero.", "error");
     return;
   }
 
   const { data, error } = await supabase
-    .from( "person_profiles" )
-    .select( "*" )
-    .eq( "user_id", currentUser.id )
-    .order( "created_at", { ascending: true } );
+    .from("person_profiles")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: true });
 
-  if ( error ) {
-    showStatus( `Error cargando perfiles: ${ error.message }`, "error" );
+  if (error) {
+    showStatus(`Error cargando perfiles: ${error.message}`, "error");
     return;
   }
 
@@ -241,11 +381,11 @@ const loadData = async () => {
 
 const saveProfile = async () => {
   const currentUser = await loadCurrentUser();
-  if ( !currentUser || !profileFormValid.value ) return;
+  if (!currentUser || !profileFormValid.value) return;
 
   profileSaving.value = true;
   const proteinPct = profileForm.value.protein_pct_target;
-  const proteinG = Math.round( ( profileForm.value.daily_kcal_target * proteinPct ) / 100 / 4 * 10 ) / 10;
+  const proteinG = Math.round((profileForm.value.daily_kcal_target * proteinPct) / 100 / 4 * 10) / 10;
   const payload = {
     user_id: currentUser.id,
     name: profileForm.value.name,
@@ -260,56 +400,53 @@ const saveProfile = async () => {
   };
 
   const request = profileForm.value.id
-    ? supabase
-      .from( "person_profiles" )
-      .update( payload )
-      .eq( "id", profileForm.value.id )
-    : supabase.from( "person_profiles" ).insert( payload );
+    ? supabase.from("person_profiles").update(payload).eq("id", profileForm.value.id)
+    : supabase.from("person_profiles").insert(payload);
 
   const { error } = await request;
   profileSaving.value = false;
 
-  if ( error ) {
-    showStatus( `Error guardando perfil: ${ error.message }`, "error" );
+  if (error) {
+    showStatus(`Error guardando perfil: ${error.message}`, "error");
     return;
   }
 
   resetProfileForm();
   await loadData();
-  showStatus( "Perfil guardado" );
+  showStatus("Perfil guardado");
 };
 
 const saveProfileMacros = async () => {
   const currentUser = await loadCurrentUser();
-  if ( !currentUser || !profileForm.value.id || !profileMacroValidation.value.valid ) return;
+  if (!currentUser || !profileForm.value.id || !profileMacroValidation.value.valid) return;
 
   profileSaving.value = true;
   const proteinPct = profileForm.value.protein_pct_target;
-  const proteinG = Math.round( ( profileForm.value.daily_kcal_target * proteinPct ) / 100 / 4 * 10 ) / 10;
+  const proteinG = Math.round((profileForm.value.daily_kcal_target * proteinPct) / 100 / 4 * 10) / 10;
   const { error } = await supabase
-    .from( "person_profiles" )
-    .update( {
+    .from("person_profiles")
+    .update({
       daily_kcal_target: profileForm.value.daily_kcal_target,
       daily_protein_target: proteinG,
       carbs_pct_target: profileForm.value.carbs_pct_target,
       fat_pct_target: profileForm.value.fat_pct_target,
       protein_pct_target: proteinPct,
       tolerance_percent: profileForm.value.tolerance_percent,
-    } )
-    .eq( "id", profileForm.value.id );
+    })
+    .eq("id", profileForm.value.id);
 
   profileSaving.value = false;
 
-  if ( error ) {
-    showStatus( `Error guardando macros: ${ error.message }`, "error" );
+  if (error) {
+    showStatus(`Error guardando macros: ${error.message}`, "error");
     return;
   }
 
   await loadData();
-  showStatus( "Macros actualizados" );
+  showStatus("Macros actualizados");
 };
 
-const editProfile = ( profile: PersonProfile ) => {
+const editProfile = (profile: PersonProfile) => {
   profileForm.value = {
     id: profile.id,
     name: profile.name,
@@ -318,32 +455,32 @@ const editProfile = ( profile: PersonProfile ) => {
     daily_kcal_target: profile.daily_kcal_target,
     carbs_pct_target: profile.carbs_pct_target || 45,
     fat_pct_target: profile.fat_pct_target || 30,
-    protein_pct_target: profile.protein_pct_target ?? ( 100 - ( profile.carbs_pct_target || 0 ) - ( profile.fat_pct_target || 0 ) ),
+    protein_pct_target: profile.protein_pct_target ?? (100 - (profile.carbs_pct_target || 0) - (profile.fat_pct_target || 0)),
     tolerance_percent: profile.tolerance_percent ?? 10,
   };
 };
 
-const deleteProfile = async ( profileId: string ) => {
-  const confirmed = await confirmDialog( {
+const deleteProfile = async (profileId: string) => {
+  const confirmed = await confirmDialog({
     title: "Eliminar perfil",
     message: "¿Eliminar este perfil?",
     confirmText: "Eliminar",
     danger: true,
-  } );
-  if ( !confirmed ) return;
+  });
+  if (!confirmed) return;
 
   const { error } = await supabase
-    .from( "person_profiles" )
+    .from("person_profiles")
     .delete()
-    .eq( "id", profileId );
+    .eq("id", profileId);
 
-  if ( error ) {
-    showStatus( `Error eliminando perfil: ${ error.message }`, "error" );
+  if (error) {
+    showStatus(`Error eliminando perfil: ${error.message}`, "error");
     return;
   }
 
   await loadData();
-  showStatus( "Perfil eliminado" );
+  showStatus("Perfil eliminado");
 };
 
 const resetProfileForm = () => {
@@ -360,19 +497,19 @@ const resetProfileForm = () => {
   };
 };
 
-const sexLabel = ( sex: PersonProfile[ "sex" ] ) => {
-  if ( sex === "female" ) return "Mujer";
-  if ( sex === "male" ) return "Hombre";
+const sexLabel = (sex: PersonProfile["sex"]) => {
+  if (sex === "female") return "Mujer";
+  if (sex === "male") return "Hombre";
   return "Otro";
 };
 
 watch(
-  () => [ profileForm.value.carbs_pct_target, profileForm.value.fat_pct_target ],
+  () => [profileForm.value.carbs_pct_target, profileForm.value.fat_pct_target],
   () => {
     profileForm.value.protein_pct_target =
       100 - profileForm.value.carbs_pct_target - profileForm.value.fat_pct_target;
   },
 );
 
-onMounted( loadData );
+onMounted(loadData);
 </script>

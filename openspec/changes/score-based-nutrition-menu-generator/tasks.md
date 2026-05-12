@@ -31,11 +31,11 @@
 
 ## 5. API And Persistence
 
-- [ ] 5.1 Add `POST /api/nutrition-menu-generate` for preview generation without invented macros.
-- [ ] 5.2 Add save behavior via `POST /api/nutrition-menu-save` or a clearly documented combined generate-and-save route.
-- [ ] 5.3 Add `GET /api/nutrition-menu-detail` to return days, meals, totals, deviations, score, and compliance status.
-- [ ] 5.4 Add `GET /api/nutrition-menu-shopping-list` to aggregate scaled ingredients and format grams/kg.
-- [ ] 5.5 Ensure API errors distinguish invalid profile input, insufficient candidates, and incomplete recipe nutrition.
+- [x] 5.1 Add `POST /api/nutrition-menu-generate` for preview generation without invented macros.
+- [x] 5.2 Add save behavior via `POST /api/nutrition-menu-save` or a clearly documented combined generate-and-save route.
+- [x] 5.3 Add `GET /api/nutrition-menu-detail` to return days, meals, totals, deviations, score, and compliance status.
+- [x] 5.4 Add `GET /api/nutrition-menu-shopping-list` to aggregate scaled ingredients and format grams/kg.
+- [x] 5.5 Ensure API errors distinguish invalid profile input, insufficient candidates, and incomplete recipe nutrition.
 
 ## 6. UI Integration
 

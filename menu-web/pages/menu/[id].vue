@@ -1,36 +1,36 @@
-<template>
-  <div class="space-y-6 text-slate-100">
+﻿<template>
+  <div class="space-y-6 ">
     <div v-if=" loading " class="text-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400 mx-auto"></div>
-      <p class="mt-4 text-slate-300">Cargando menú...</p>
+      <p class="mt-4 ">Cargando menú...</p>
     </div>
 
     <div v-else-if=" menu " class="space-y-6">
       <header class="flex flex-wrap justify-between gap-4">
         <div>
-          <button @click="$router.back()" class="text-slate-400 hover:text-white mb-2">
+          <button @click="$router.back()" class="hover:text-white mb-2">
             ← Volver
           </button>
 
           <div class="flex items-center gap-3">
             <h1 class="text-2xl font-bold text-white">{{ menu.name }}</h1>
-            <span class="text-xs bg-indigo-500/20 text-indigo-200 px-2 py-1 rounded-full border border-indigo-400/30">
+            <span class="text-xs /20 px-2 py-1 rounded-full border border-indigo-400/30">
               Semana {{ menu.week_number }}
             </span>
           </div>
 
-          <p class="text-sm text-slate-400 mt-1">
+          <p class="text-sm text-[var(--text-3)] mt-1">
             {{ mealsCount }}/14 comidas y cenas · {{ formatDate( menu.created_at ) }}
           </p>
         </div>
 
         <div class="text-right flex flex-col items-end gap-3">
-          <button type="button" class="text-sm text-red-400 hover:text-red-300" @click=" deleteMenu ">
+          <button type="button" class="text-sm hover:" @click=" deleteMenu ">
             Eliminar menú
           </button>
 
           <div>
-            <p class="text-sm text-slate-400">Ingredientes únicos</p>
+            <p class="text-sm text-[var(--text-3)]">Ingredientes únicos</p>
             <p class="text-2xl font-semibold text-white">
               {{ consolidatedIngredients.length }}
             </p>
@@ -38,65 +38,63 @@
         </div>
       </header>
 
-      <section class="bg-slate-900 rounded-xl shadow-sm border border-slate-700 p-4">
+      <section class="rounded-xl shadow-sm border border-slate-700 p-4">
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 class="font-semibold text-white">Crear desde imagen</h2>
-            <p class="text-sm text-slate-400 mt-1">
+            <p class="text-sm text-[var(--text-3)] mt-1">
               Sube una foto del menú. El OCR solo extraerá comida y cena,
               manteniendo cada día completo.
             </p>
           </div>
 
           <div class="inline-flex rounded-lg border border-slate-700 overflow-hidden">
-            <button type="button" @click="creationMode = 'daily'" class="px-3 py-2 text-sm font-medium" :class=" creationMode === 'daily'
-              ? 'bg-indigo-600 text-white'
-              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            <button type="button" @click="creationMode = 'daily'" class="px-3 py-2 text-sm font-medium" :class="creationMode === 'daily' ? ' text-white'
+              : '  hover:'
               ">
               Día a día
             </button>
             <button type="button" @click="creationMode = 'block'"
-              class="px-3 py-2 text-sm font-medium border-l border-slate-700" :class=" creationMode === 'block'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              class="px-3 py-2 text-sm font-medium border-l border-slate-700" :class="creationMode === 'block' ? ' text-white'
+                : '  hover:'
                 ">
               Por bloque
             </button>
           </div>
         </div>
 
-        <div class="mt-4 rounded-lg bg-indigo-500/10 border border-indigo-400/20 p-3">
-          <p class="text-sm font-medium text-indigo-100">
+        <div class="mt-4 rounded-lg /10 border border-indigo-400/20 p-3">
+          <p class="text-sm font-medium ">
             El OCR extrae únicamente Comida y Cena
           </p>
-          <p class="text-xs text-indigo-200/80 mt-1">
+          <p class="text-xs /80 mt-1">
             Desayuno y merienda se omiten porque el desayuno se elegirá como fijo.
           </p>
         </div>
 
         <div v-if=" creationMode === 'block' " class="mt-4 grid gap-3 md:grid-cols-[140px_140px_1fr]">
           <label>
-            <span class="block text-sm font-medium text-slate-300 mb-1">
+            <span class="block text-sm font-medium mb-1">
               Día inicial
             </span>
             <input v-model.number=" blockStartDay " type="number" min="1" max="7"
-              class="w-full border border-slate-600 rounded-lg px-3 py-2 text-white bg-slate-800" />
+              class="w-full border border-slate-600 rounded-lg px-3 py-2 text-white " />
           </label>
 
           <label>
-            <span class="block text-sm font-medium text-slate-300 mb-1">
+            <span class="block text-sm font-medium mb-1">
               Días incluidos
             </span>
             <input v-model.number=" blockDayCount " type="number" min="1" :max=" 8 - blockStartDay "
-              class="w-full border border-slate-600 rounded-lg px-3 py-2 text-white bg-slate-800" />
+              class="w-full border border-slate-600 rounded-lg px-3 py-2 text-white " />
           </label>
 
           <label class="self-end">
             <span class="sr-only">Subir imagen de bloque</span>
             <input type="file" accept="image/*" class="hidden" @change=" uploadBlockImage " />
             <span
-              class="block text-center px-4 py-2 rounded-lg border border-indigo-400 text-indigo-200 cursor-pointer hover:bg-indigo-500/10"
-              :class=" imageProcessing ? 'opacity-50 pointer-events-none' : '' ">
+              class="block text-center px-4 py-2 rounded-lg border border-indigo-400 cursor-pointer hover:/10"
+              :class="imageProcessing ? 'opacity-50 pointer-events-none' : '' ">
               {{
                 imageProcessing
                   ? "Procesando OCR..."
@@ -106,64 +104,64 @@
           </label>
         </div>
 
-        <div v-else class="mt-4 text-sm text-slate-400">
+        <div v-else class="mt-4 text-sm text-[var(--text-3)]">
           Usa el botón de imagen de cada día si prefieres procesar días individuales.
         </div>
 
-        <p v-if=" imageError " class="text-sm text-red-400 mt-3">
+        <p v-if=" imageError " class="text-sm mt-3">
           {{ imageError }}
         </p>
       </section>
 
-      <section class="bg-slate-900 rounded-xl shadow-sm border border-slate-700 p-4">
+      <section class="rounded-xl shadow-sm border border-slate-700 p-4">
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 class="font-semibold text-white">Días compuestos</h2>
-            <p class="text-sm text-slate-400 mt-1">
+            <p class="text-sm text-[var(--text-3)] mt-1">
               Crea días con 2 platos que siempre irán juntos en los menús rotativos.
             </p>
           </div>
           <button type="button" @click="openCompoundDayModal()"
-            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 text-sm font-medium">
+            class="px-4 py-2 text-white rounded-lg hover: text-sm font-medium">
             + Nuevo día compuesto
           </button>
         </div>
 
-        <div v-if=" loadingCompoundDays " class="mt-4 text-center text-slate-400">
+        <div v-if=" loadingCompoundDays " class="mt-4 text-center text-[var(--text-3)]">
           Cargando...
         </div>
 
-        <div v-else-if=" compoundDays.length === 0 " class="mt-4 text-sm text-slate-400">
+        <div v-else-if=" compoundDays.length === 0 " class="mt-4 text-sm text-[var(--text-3)]">
           No hay días compuestos todavía. Crea uno para empezar.
         </div>
 
         <div v-else class="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          <div v-for=" cd in compoundDays " :key=" cd.id " class="bg-slate-800 rounded-lg p-3 border border-slate-700">
+          <div v-for=" cd in compoundDays " :key=" cd.id " class="rounded-lg p-3 border border-slate-700">
             <div class="flex justify-between items-start">
               <h3 class="font-medium text-white">{{ cd.name }}</h3>
               <div class="flex gap-2">
-                <button @click="openCompoundDayModal( cd )" class="text-indigo-400 hover:text-indigo-300 text-sm">
+                <button @click="openCompoundDayModal( cd )" class="hover: text-sm">
                   Editar
                 </button>
-                <button @click="deleteCompoundDay( cd.id )" class="text-red-400 hover:text-red-300 text-sm">
+                <button @click="deleteCompoundDay( cd.id )" class="hover: text-sm">
                   Eliminar
                 </button>
               </div>
             </div>
-            <p class="text-sm text-slate-400 mt-2">
+            <p class="text-sm text-[var(--text-3)] mt-2">
               1º: {{ cd.first_dish?.name || "Sin asignar" }}
             </p>
-            <p class="text-sm text-slate-400">
+            <p class="text-sm text-[var(--text-3)]">
               2º: {{ cd.second_dish?.name || "Sin asignar" }}
             </p>
           </div>
         </div>
       </section>
 
-      <section class="bg-slate-900 rounded-xl shadow-sm border border-slate-700 overflow-hidden">
-        <div class="px-4 py-3 border-b border-slate-700 bg-slate-950">
+      <section class="rounded-xl shadow-sm border border-slate-700 overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-700 ">
           <h2 class="font-semibold text-white">Menú semanal</h2>
-          <p class="text-sm text-slate-400 mt-1">
+          <p class="text-sm text-[var(--text-3)] mt-1">
             Haz clic en cualquier comida o cena para editarla, marcarla como libre
             o curar sus ingredientes.
           </p>
@@ -172,17 +170,17 @@
         <div class="overflow-x-auto">
           <table class="min-w-full border-collapse">
             <thead>
-              <tr class="bg-slate-950">
+              <tr class="">
                 <th
-                  class="sticky left-0 z-10 bg-slate-950 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-300 border-r border-slate-700">
+                  class="sticky left-0 z-10 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide  border-r border-slate-700">
                   Franja
                 </th>
                 <th v-for=" day in 7 " :key=" `head-${ day }` "
-                  class="min-w-[170px] px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-300 border-r border-slate-700 last:border-r-0">
+                  class="min-w-[170px] px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide border-r border-slate-700 last:border-r-0">
                   <div class="flex items-center justify-center gap-2">
                     <span>Día {{ day }}</span>
-                    <label class="text-[11px] normal-case text-indigo-300 cursor-pointer hover:text-indigo-200"
-                      :class=" imageProcessing ? 'opacity-50 pointer-events-none' : '' ">
+                    <label class="text-[11px] normal-case cursor-pointer hover:"
+                      :class="imageProcessing ? 'opacity-50 pointer-events-none' : '' ">
                       {{ imageProcessing ? "OCR..." : "Imagen" }}
                       <input type="file" accept="image/*" class="hidden" @change="uploadDailyImage( day, $event )" />
                     </label>
@@ -191,7 +189,7 @@
                   <img v-if=" getDayImage( day ) " :src=" getDayImage( day )?.image_url " alt="Imagen del menú diario"
                     class="mt-2 h-16 w-full object-cover rounded border border-slate-700" />
 
-                  <p v-if=" getDayImage( day )?.ocr_status " class="text-[11px] text-slate-400 mt-1 normal-case">
+                  <p v-if=" getDayImage( day )?.ocr_status " class="text-[11px] text-[var(--text-3)] mt-1 normal-case">
                     OCR: {{ ocrStatusLabel( getDayImage( day )?.ocr_status ) }}
                   </p>
                 </th>
@@ -201,26 +199,26 @@
             <tbody>
               <tr v-for=" type in displayMealTypes " :key=" `row-${ type }` " class="border-t border-slate-700">
                 <th
-                  class="sticky left-0 z-10 bg-slate-950 px-4 py-4 text-left text-sm font-bold text-slate-100 border-r border-slate-700 align-top">
+                  class="sticky left-0 z-10 px-4 py-4 text-left text-sm font-bold  border-r border-slate-700 align-top">
                   {{ mealLabel( type ) }}
                 </th>
 
                 <td v-for=" day in 7 " :key=" `${ day }-${ type }` "
-                  class="align-top border-r border-slate-700 last:border-r-0 p-2 bg-slate-900">
+                  class="align-top border-r border-slate-700 last:border-r-0 p-2 ">
                   <div class="space-y-2">
                     <button type="button" v-for=" meal in getMealsForDayType( day, type ) " :key=" meal.id "
                       class="w-full min-h-[92px] rounded-lg border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                      :class=" cellClass( meal ) " @click="openMealModal( day, type, meal)">
+                      :class="cellClass( meal ) " @click="openMealModal( day, type, meal)">
                       <div class="mb-1 flex items-center justify-between gap-2">
-                        <p class="text-[11px] font-semibold text-slate-300">Plato {{ meal.meal_slot || 1 }}</p>
-                        <p v-if=" meal.is_special " class="text-[11px] text-amber-200">Libre · {{ meal.special_kcal_reserved || 700 }} kcal</p>
+                        <p class="text-[11px] font-semibold ">Plato {{ meal.meal_slot || 1 }}</p>
+                        <p v-if=" meal.is_special " class="text-[11px] ">Libre · {{ meal.special_kcal_reserved || 700 }} kcal</p>
                       </div>
                       <p class="text-sm font-semibold leading-snug text-white">{{ meal.dish_name }}</p>
-                      <p v-if=" recipeStatusText( meal ) " class="mt-2 text-[11px] text-slate-400">{{ recipeStatusText( meal ) }}</p>
+                      <p v-if=" recipeStatusText( meal ) " class="mt-2 text-[11px] text-[var(--text-3)]">{{ recipeStatusText( meal ) }}</p>
                     </button>
 
                     <button type="button"
-                      class="w-full rounded-lg border border-dashed border-slate-600 bg-slate-950/40 px-3 py-2 text-left text-xs text-slate-300 hover:border-indigo-400 hover:text-indigo-300"
+                      class="w-full rounded-lg border border-dashed border-slate-600 /40 px-3 py-2 text-left text-xs hover:border-indigo-400 hover:"
                       @click="openMealModal( day, type )">
                       + Añadir plato {{ mealLabel( type ).toLowerCase() }}
                     </button>
@@ -232,21 +230,21 @@
         </div>
       </section>
 
-      <section class="bg-slate-900 rounded-xl shadow-sm border border-slate-700 p-4">
+      <section class="rounded-xl shadow-sm border border-slate-700 p-4">
         <h2 class="font-semibold text-white mb-3">
           Ingredientes consolidados
         </h2>
 
-        <div v-if=" consolidatedIngredients.length === 0 " class="text-sm text-slate-400">
+        <div v-if=" consolidatedIngredients.length === 0 " class="text-sm text-[var(--text-3)]">
           Añade ingredientes exactos a los platos para generar una lista de compra
           deduplicada.
         </div>
 
         <div v-else class="grid gap-2 md:grid-cols-4">
           <div v-for=" ingredient in consolidatedIngredients " :key=" `${ ingredient.name }-${ ingredient.unit_type }` "
-            class="text-sm bg-slate-800 rounded-lg p-3 border border-slate-700">
+            class="text-sm rounded-lg p-3 border border-slate-700">
             <p class="font-medium text-white">{{ ingredient.name }}</p>
-            <p class="text-slate-300">
+            <p class="">
               {{ ingredient.quantity }} {{ ingredient.unit_type }}
             </p>
           </div>
@@ -256,7 +254,7 @@
       <div v-if=" showMealModal " class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
         @click.self=" closeMealModal ">
         <form
-          class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-xl flex flex-col"
+          class="border border-slate-700 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-xl flex flex-col"
           @submit.prevent=" saveMeal ">
           <div class="p-6 overflow-y-auto">
           <div class="flex items-start justify-between gap-4 mb-4">
@@ -265,22 +263,22 @@
                 {{ editingMealId ? "Editar" : "Añadir" }}
                 {{ mealLabel( selectedType ).toLowerCase() }} · Día {{ selectedDay }}
               </h2>
-              <p class="text-sm text-slate-400 mt-1">
+              <p class="text-sm text-[var(--text-3)] mt-1">
                 Si hay dos platos, mantenlos unidos con “ + ”.
               </p>
             </div>
 
-            <button type="button" class="text-slate-400 hover:text-white" @click=" closeMealModal ">
+            <button type="button" class="hover:text-white" @click=" closeMealModal ">
               ✕
             </button>
           </div>
 
           <label class="block mb-4">
-            <span class="block text-sm font-medium text-slate-300 mb-1">
+            <span class="block text-sm font-medium mb-1">
               Usar receta existente o día compuesto
             </span>
             <select v-model=" selectedRecipeId "
-              class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800"
+              class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white "
               @change=" applySavedRecipeToModal ">
               <option value="">Editar manualmente...</option>
               <optgroup label="Días compuestos" v-if=" compoundDays.length > 0 ">
@@ -298,46 +296,46 @@
 
           <div class="grid gap-3 md:grid-cols-2">
             <label class="md:col-span-2">
-              <span class="block text-sm font-medium text-slate-300 mb-1">
+              <span class="block text-sm font-medium mb-1">
                 Plato o platos unidos
               </span>
               <textarea v-model.trim=" newMeal.dish_name " rows="3"
-                class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800 placeholder:text-slate-500 dark:text-slate-400"
+                class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white placeholder: text-[var(--text-3)]"
                 placeholder="Ej: Crema de calabacín + Pescado a elegir" required />
             </label>
 
             <label class="md:col-span-2">
-              <span class="block text-sm font-medium text-slate-300 mb-1">
+              <span class="block text-sm font-medium mb-1">
                 Descripción
               </span>
               <input v-model.trim=" newMeal.dish_description "
-                class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800 placeholder:text-slate-500 dark:text-slate-400" />
+                class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white placeholder: text-[var(--text-3)]" />
             </label>
 
             <label class="md:col-span-2">
-              <span class="inline-flex items-center gap-2 text-sm text-slate-300">
+              <span class="inline-flex items-center gap-2 text-sm ">
                 <input v-model=" newMeal.is_special " type="checkbox" />
                 <span>Marcar como comida libre/especial</span>
               </span>
             </label>
 
             <label v-if=" newMeal.is_special " class="md:col-span-2">
-              <span class="block text-sm font-medium text-slate-300 mb-1">
+              <span class="block text-sm font-medium mb-1">
                 kcal reservadas para comida libre
               </span>
               <input v-model.number=" newMeal.special_kcal_reserved " type="number" min="0" max="2000" step="10"
-                class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800" />
+                class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white " />
             </label>
           </div>
 
           <div v-if=" getCompositeParts( newMeal.dish_name ).length > 1 "
-            class="mt-4 rounded-lg border border-indigo-400/20 bg-indigo-500/10 p-3">
-            <p class="text-sm font-medium text-indigo-100">
+            class="mt-4 rounded-lg border border-indigo-400/20 /10 p-3">
+            <p class="text-sm font-medium ">
               Esta celda contiene varios platos:
             </p>
             <ul class="mt-2 space-y-1">
               <li v-for=" part in getCompositeParts( newMeal.dish_name ) " :key=" part "
-                class="text-sm text-indigo-200">
+                class="text-sm ">
                 · {{ part }}
               </li>
             </ul>
@@ -346,13 +344,13 @@
           <div class="mt-5">
             <div class="flex justify-between items-center mb-2">
               <h3 class="font-medium text-white">Ingredientes exactos</h3>
-              <button type="button" @click=" addIngredientRow " class="text-sm text-indigo-300 hover:text-indigo-200">
+              <button type="button" @click=" addIngredientRow " class="text-sm hover:">
                 + Ingrediente
               </button>
             </div>
 
             <div v-if=" newMeal.is_special "
-              class="rounded-lg border border-amber-300/20 bg-amber-400/10 p-3 text-sm text-amber-200">
+              class="rounded-lg border border-amber-300/20 /10 p-3 text-sm ">
               Esta comida es libre. Sus ingredientes no se usarán para el cálculo
               del menú rotativo ni para la lista de la compra.
             </div>
@@ -361,41 +359,41 @@
               <div v-for=" ( ingredient, index ) in ingredientRows " :key=" index "
                 class="grid grid-cols-[1fr_90px_90px_32px] gap-2">
                 <input v-model.trim=" ingredient.name "
-                  class="border border-slate-600 rounded-lg px-3 py-2 text-white bg-slate-800 placeholder:text-slate-500 dark:text-slate-400"
+                  class="border border-slate-600 rounded-lg px-3 py-2 text-white placeholder: text-[var(--text-3)]"
                   placeholder="Nombre" />
                 <input v-model.number=" ingredient.quantity " type="number" min="0.01" step="0.01"
-                  class="border border-slate-600 rounded-lg px-3 py-2 text-white bg-slate-800" />
+                  class="border border-slate-600 rounded-lg px-3 py-2 text-white " />
                 <select v-model=" ingredient.unit_type "
-                  class="border border-slate-600 rounded-lg px-3 py-2 text-white bg-slate-800">
+                  class="border border-slate-600 rounded-lg px-3 py-2 text-white ">
                   <option v-for=" unit in unitTypes " :key=" unit " :value=" unit ">
                     {{ unit }}
                   </option>
                 </select>
-                <button type="button" @click="removeIngredientRow( index )" class="text-red-400 hover:text-red-300">
+                <button type="button" @click="removeIngredientRow( index )" class="hover:">
                   ×
                 </button>
               </div>
             </div>
           </div>
 
-          <p v-if=" formError " class="text-sm text-red-400 mt-3">
+          <p v-if=" formError " class="text-sm mt-3">
             {{ formError }}
           </p>
 
           <div class="flex justify-between gap-2 mt-6">
             <button v-if=" editingMealId " type="button" @click=" deleteCurrentMeal "
-              class="px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg">
+              class="px-4 py-2 hover:bg-red-500/10 rounded-lg">
               Eliminar
             </button>
             <span v-else></span>
 
             <div class="flex justify-end gap-2">
               <button type="button" @click=" closeMealModal "
-                class="px-4 py-2 text-slate-300 hover:bg-slate-800 rounded-lg">
+                class="px-4 py-2 hover: rounded-lg">
                 Cancelar
               </button>
               <button type="submit" :disabled=" savingMeal || !mealFormValid "
-                class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 disabled:opacity-50">
+                class="px-4 py-2 text-white rounded-lg hover: disabled:opacity-50">
                 {{ savingMeal ? "Guardando..." : editingMealId ? "Actualizar" : "Guardar" }}
               </button>
             </div>
@@ -405,9 +403,9 @@
       </div>
     </div>
 
-    <div v-else class="text-center py-12 bg-slate-900 rounded-lg border border-slate-700">
-      <p class="text-slate-300">Menú no encontrado</p>
-      <button @click="$router.push( '/' )" class="mt-4 text-indigo-300 hover:text-indigo-200">
+    <div v-else class="text-center py-12 rounded-lg border border-slate-700">
+      <p class="">Menú no encontrado</p>
+      <button @click="$router.push( '/' )" class="mt-4 hover:">
         Volver a la lista
       </button>
     </div>
@@ -1362,14 +1360,14 @@ const ocrStatusLabel = ( status?: WeeklyDayImage[ "ocr_status" ] ) => {
 
 const cellClass = ( meal?: WeeklyMeal | null ) => {
   if ( !meal ) {
-    return "border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400";
+    return "border-dashed border-slate-300  bg-[rgba(255,255,255,0.03)] bg-[var(--surface-1)] text-[var(--text-3)]";
   }
 
   if ( meal.is_special || isFreeMealName( meal.dish_name ) ) {
-    return "border-amber-200 bg-amber-50";
+    return "border-amber-200 bg-[rgba(255,214,0,0.06)]";
   }
 
-  return "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900";
+  return "border-slate-200 border-[var(--border-soft)] bg-transparent bg-[var(--surface-1)]";
 };
 
 const recipeStatusText = ( meal?: WeeklyMeal | null ) => {

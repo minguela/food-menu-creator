@@ -1,11 +1,11 @@
-<template>
+﻿<template>
   <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
     <label
       v-for="field in fields"
       :key="field.key"
       class="space-y-1"
     >
-      <span class="text-xs font-medium text-gray-600 dark:text-slate-300">{{ field.label }}</span>
+      <span class="text-xs font-medium text-gray-600 text-[var(--text-2)]">{{ field.label }}</span>
       <input
         :value="modelValue[field.key] ?? ''"
         type="number"
@@ -15,8 +15,8 @@
         inputmode="decimal"
         class="w-full rounded-md border px-3 py-2 text-sm"
         :class="changedFields.includes(field.key)
-          ? 'border-indigo-300 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-slate-900 dark:text-slate-100'
-          : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100'"
+          ? 'border-indigo-300 dark:border-indigo-500 bg-[rgba(187,222,242,0.08)] dark:bg-indigo-950/40 text-slate-900 text-[var(--text-1)]'
+          : 'border-gray-200 border-[var(--border-soft)] bg-transparent dark:bg-slate-950 text-slate-900 text-[var(--text-1)]'"
         @input="updateValue(field.key, $event)"
       />
     </label>

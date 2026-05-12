@@ -13,6 +13,7 @@
     "lint:full": "nuxt typecheck && npm run lint:dark && npm run lint:confirm && npx -y prettier@3.6.2 --check .",
     "health-check": "node ./health-check.js",
     "preview": "nuxt preview",
+    "test:nutrition": "playwright test --config=playwright.config.ts tests/nutrition-generator.spec.ts --reporter=line --workers=1",
     "test:ocr": "playwright test tests/ocr-processor.spec.ts",
     "test:rotating:playwright": "playwright test --config=playwright.config.ts tests/rotating-portion-scaling.spec.ts",
     "test:rotating": "node --test tests/rotating-weekly-menu-blocks.test.mjs tests/rotating-menu-completeness.test.mjs tests/rotating-portion-scaling.test.mjs",

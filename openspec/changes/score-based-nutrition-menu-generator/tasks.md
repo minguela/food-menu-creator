@@ -14,11 +14,11 @@
 
 ## 3. Unit Tests And Fixtures
 
-- [ ] 3.1 Add local fixtures for 3 breakfasts, 5 lunches, 5 dinners, 2 snacks, and realistic ingredient nutrition.
-- [ ] 3.2 Add tests for recipe macro calculation from ingredient quantities.
-- [ ] 3.3 Add tests for profile target conversion and invalid percentage/tolerance validation.
-- [ ] 3.4 Add tests for scoring, protein shortfall penalty, and tolerance compliance.
-- [ ] 3.5 Add tests for best-combination selection and serving multiplier scaling.
+- [x] 3.1 Add local fixtures for 3 breakfasts, 5 lunches, 5 dinners, 2 snacks, and realistic ingredient nutrition.
+- [x] 3.2 Add tests for recipe macro calculation from ingredient quantities.
+- [x] 3.3 Add tests for profile target conversion and invalid percentage/tolerance validation.
+- [x] 3.4 Add tests for scoring, protein shortfall penalty, and tolerance compliance.
+- [x] 3.5 Add tests for best-combination selection and serving multiplier scaling.
 
 ## 4. Generator Service
 

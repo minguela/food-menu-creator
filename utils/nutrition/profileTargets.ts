@@ -14,6 +14,7 @@ export type NutritionProfileInput = Partial<
     | "daily_protein_target"
     | "fat_pct_target"
     | "carbs_pct_target"
+    | "protein_pct_target"
     | "tolerance_percent"
   >
 > & {
@@ -36,6 +37,7 @@ export type ProfileNutritionTargets = {
   targetFatG: number;
   carbsPercent: number;
   fatPercent: number;
+  proteinPercent: number;
   tolerancePercent: number;
   bounds: {
     kcal: TargetBounds;
@@ -65,19 +67,25 @@ export function profileTargetsFromProfile(
   }
 
   const targetKcal = Number(normalized.daily_kcal_target);
-  const targetProteinG = Number(
-    normalized.daily_protein_target ?? normalized.daily_protein_target_g,
-  );
   const carbsPercent = Number(
     normalized.carbs_pct_target ?? normalized.daily_carbs_percent,
   );
   const fatPercent = Number(
     normalized.fat_pct_target ?? normalized.daily_fat_percent,
   );
+  const proteinPercent = Number(
+    normalized.protein_pct_target ?? 100 - carbsPercent - fatPercent,
+  );
   const tolerancePercent = resolveTolerancePercent(
     normalized.tolerance_percent,
   );
 
+  const derivedProteinG = roundNutrition(
+    (targetKcal * proteinPercent) / 100 / 4,
+  );
+  const targetProteinG = Number(
+    normalized.daily_protein_target ?? normalized.daily_protein_target_g ?? derivedProteinG,
+  );
   const targetCarbsG = roundNutrition((targetKcal * carbsPercent) / 100 / 4);
   const targetFatG = roundNutrition((targetKcal * fatPercent) / 100 / 9);
 
@@ -90,6 +98,7 @@ export function profileTargetsFromProfile(
     targetFatG,
     carbsPercent,
     fatPercent,
+    proteinPercent,
     tolerancePercent,
     bounds: {
       kcal: toleranceBounds(targetKcal, tolerancePercent),
@@ -108,29 +117,37 @@ export function validateProfileTargets(
 ): string[] {
   const errors: string[] = [];
   const targetKcal = Number(profile.daily_kcal_target);
-  const targetProteinG = Number(
-    profile.daily_protein_target ?? profile.daily_protein_target_g,
-  );
   const carbsPercent = Number(
     profile.carbs_pct_target ?? profile.daily_carbs_percent,
   );
-  const fatPercent = Number(profile.fat_pct_target ?? profile.daily_fat_percent);
+  const fatPercent = Number(
+    profile.fat_pct_target ?? profile.daily_fat_percent,
+  );
+  const proteinPercent = Number(
+    profile.protein_pct_target ?? 100 - carbsPercent - fatPercent,
+  );
   const tolerancePercent = resolveTolerancePercent(profile.tolerance_percent);
 
   if (!Number.isFinite(targetKcal) || targetKcal <= 0) {
     errors.push("daily_kcal_target must be a positive number.");
   }
-  if (!Number.isFinite(targetProteinG) || targetProteinG <= 0) {
-    errors.push("daily_protein_target must be a positive number.");
+  if (!Number.isFinite(carbsPercent) || carbsPercent <= 0) {
+    errors.push("carbs percentage must be positive.");
   }
-  if (!Number.isFinite(carbsPercent) || carbsPercent < 0) {
-    errors.push("carbs percentage must be a non-negative number.");
+  if (!Number.isFinite(fatPercent) || fatPercent <= 0) {
+    errors.push("fat percentage must be positive.");
   }
-  if (!Number.isFinite(fatPercent) || fatPercent < 0) {
-    errors.push("fat percentage must be a non-negative number.");
+  if (!Number.isFinite(proteinPercent) || proteinPercent <= 0) {
+    errors.push("protein percentage must be positive.");
   }
-  if (Number.isFinite(carbsPercent + fatPercent) && carbsPercent + fatPercent > 100) {
-    errors.push("carbs percentage plus fat percentage cannot exceed 100.");
+  if (
+    Number.isFinite(carbsPercent + fatPercent + proteinPercent) &&
+    Math.round(carbsPercent + fatPercent + proteinPercent) !== 100
+  ) {
+    errors.push("carbs, fat, and protein percentages must total exactly 100.");
+  }
+  if (proteinPercent < 5 || proteinPercent > 50) {
+    errors.push("protein percentage must be between 5 and 50.");
   }
   if (
     !Number.isFinite(tolerancePercent) ||
@@ -143,8 +160,8 @@ export function validateProfileTargets(
   }
   if (
     Number.isFinite(targetKcal) &&
-    Number.isFinite(targetProteinG) &&
-    targetProteinG * 4 >= targetKcal
+    Number.isFinite(proteinPercent) &&
+    ((targetKcal * proteinPercent) / 100 / 4) * 4 >= targetKcal
   ) {
     errors.push("protein calories must be lower than daily kcal target.");
   }

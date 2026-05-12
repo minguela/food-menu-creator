@@ -7,6 +7,7 @@ export const nutritionProfileFixture = {
   daily_protein_target: 130,
   carbs_pct_target: 45,
   fat_pct_target: 30,
+  protein_pct_target: 25,
   tolerance_percent: 10,
 };
 

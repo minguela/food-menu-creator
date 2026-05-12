@@ -2,35 +2,39 @@
   <div class="space-y-6">
     <header class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-[var(--text-1)]">Ingredientes maestros</h1>
-        <p class="text-sm text-[var(--text-3)]">
+        <h1 class="text-2xl font-bold text-text-1">Ingredientes maestros</h1>
+        <p class="text-sm text-text-3">
           Base nutricional por 100g para cálculos del menú rotativo.
         </p>
       </div>
-      <button class="px-4 py-2 text-[var(--text-1)] rounded-lg hover:" @click=" addIngredient ">
+      <button class="px-4 py-2 text-text-1 rounded-lg hover:" @click=" addIngredient ">
         Nuevo ingrediente
       </button>
     </header>
 
-    <section class="bg-[var(--surface-1)] rounded-lg border p-4">
+    <section class="ui-surface rounded-xl p-4">
       <div class="flex flex-wrap items-center gap-2">
+<<<<<<< Updated upstream
         <button class="px-3 py-2 text-sm bg-[var(--danger)] text-[var(--text-1)] rounded-lg hover:brightness-110 disabled:opacity-50"
+=======
+        <button class="px-3 py-2 text-sm bg-danger text-text-1 rounded-lg hover:brightness-110 disabled:opacity-50"
+>>>>>>> Stashed changes
           :disabled=" selectedIds.length === 0 " @click=" deleteSelected ">
           Eliminar seleccionados ({{ selectedIds.length }})
         </button>
-        <button class="px-3 py-2 text-sm text-[var(--text-1)] rounded-lg hover:"
+        <button class="px-3 py-2 text-sm text-text-1 rounded-lg hover:"
           @click="showImportCsvModal = true">
           Importar CSV
         </button>
-        <button class="px-3 py-2 text-sm text-[var(--text-1)] rounded-lg hover:"
+        <button class="px-3 py-2 text-sm text-text-1 rounded-lg hover:"
           :disabled="exportingCsv" @click="exportCsv">
           {{ exportingCsv ? "Exportando..." : "Exportar CSV" }}
         </button>
-        <button class="px-3 py-2 text-sm text-[var(--text-1)] rounded-lg hover: disabled:opacity-50"
+        <button class="px-3 py-2 text-sm text-text-1 rounded-lg hover: disabled:opacity-50"
           :disabled="selectedIds.length < 2" @click="openMergeSelectedModal">
           Fusionar seleccionados
         </button>
-        <span class="text-xs text-[var(--text-3)]">
+        <span class="text-xs text-text-3">
           Valores nutricionales expresados por 100 g.
         </span>
       </div>
@@ -39,31 +43,35 @@
     <section class="ui-surface rounded-xl p-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 class="text-lg font-semibold text-[var(--text-1)]">Expansiones de ingredientes</h2>
+          <h2 class="text-lg font-semibold text-text-1">Expansiones de ingredientes</h2>
           <p class="text-sm ui-muted">
             Gestiona reglas de expansion en una pagina dedicada.
           </p>
         </div>
         <NuxtLink
           href="/ingredients/expansions"
-          class="rounded-2xl border border-white/30 px-4 py-2 text-sm font-medium text-[var(--text-1)] hover:bg-[rgba(255,255,255,0.08)]"
+          class="rounded-2xl border border-border-soft px-4 py-2 text-sm font-medium text-text-1 hover:bg-white/8"
         >
           Abrir expansiones
         </NuxtLink>
       </div>
     </section>
 
-    <section class="bg-[var(--surface-1)] rounded-lg border p-4">
+    <section class="ui-surface rounded-xl p-4">
       <div class="grid gap-2 md:grid-cols-1">
         <input v-model.trim=" query " class="w-full border rounded-lg px-3 py-2" placeholder="Buscar ingrediente..." />
       </div>
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <button v-for=" option in filterOptions " :key=" option.value "
+<<<<<<< Updated upstream
           class="rounded-full border px-3 py-1.5 text-xs font-medium" :class="filterMode === option.value ? 'border-[rgba(187,222,242,0.25)] bg-[rgba(187,222,242,0.08)] ' : 'border-[var(--border-soft)] text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] bg-[var(--surface-1)]'
+=======
+          class="rounded-full border px-3 py-1.5 text-xs font-medium" :class="filterMode === option.value ? 'border-accent/25 bg-accent/10 ' : 'border-border-soft text-text-2 hover:bg-white/6 bg-surface-1'
+>>>>>>> Stashed changes
             " @click="filterMode = option.value">
           {{ option.label }} {{ option.count }}
         </button>
-        <label class="inline-flex items-center gap-2 rounded-full border border-[var(--border-soft)] px-3 py-1.5 text-xs font-medium text-[var(--text-2)]">
+        <label class="inline-flex items-center gap-2 rounded-full border border-border-soft px-3 py-1.5 text-xs font-medium text-text-2">
           <input v-model=" showOnlyWithoutRecipes " type="checkbox" class="h-3.5 w-3.5" />
           Solo sin recetas
         </label>
@@ -71,12 +79,17 @@
     </section>
 
     <section class="space-y-3">
+<<<<<<< Updated upstream
       <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-[var(--surface-1)] p-4">
         <label class="inline-flex items-center gap-2 text-sm text-[var(--text-2)]">
+=======
+      <div class="flex flex-wrap items-center justify-between gap-3 ui-surface rounded-xl p-4">
+        <label class="inline-flex items-center gap-2 text-sm text-text-2">
+>>>>>>> Stashed changes
           <input type="checkbox" :checked=" allFilteredSelected " @change=" toggleSelectAllFiltered " />
           Seleccionar visibles
         </label>
-        <div class="text-xs text-[var(--text-3)]">
+        <div class="text-xs text-text-3">
           Mostrando {{ filtered.length }} de {{ rows.length }} ingredientes
         </div>
       </div>
@@ -94,7 +107,11 @@
         @save-next="save( row, { goNext: true } )" @toggle-selected="toggleSelected( row.id )"
         @previous="moveActive( row.id, -1 )" @next="moveActive( row.id, 1 )" @delete="deleteOne( row.id )"
         @apply-candidate=" applyCandidate " @show-candidate-debug=" showCandidateDebug " />
+<<<<<<< Updated upstream
       <div v-if=" filtered.length === 0 " class="rounded-lg border bg-[var(--surface-1)] p-4 text-sm text-[var(--text-3)]">
+=======
+      <div v-if=" filtered.length === 0 " class="ui-surface rounded-xl p-4 text-sm text-text-3">
+>>>>>>> Stashed changes
         {{ showOnlyWithoutRecipes
           ? "No se encontraron ingredientes sin recetas con los filtros actuales."
           : "No hay ingredientes que coincidan con los filtros actuales."
@@ -102,7 +119,11 @@
       </div>
     </section>
 
+<<<<<<< Updated upstream
     <section v-if=" selectedCandidateDebug " class="rounded-lg border border-[rgba(187,222,242,0.15)] bg-[rgba(187,222,242,0.08)] p-3 space-y-2">
+=======
+    <section v-if=" selectedCandidateDebug " class="rounded-lg border border-accent/15 bg-accent/10 p-3 space-y-2">
+>>>>>>> Stashed changes
       <div class="flex items-center justify-between gap-2">
         <p class="text-xs font-medium ">
           Debug OFF/USDA: {{ selectedCandidateDebug.name }} · confianza {{ Number( selectedCandidateDebug.confidence || 0 ).toFixed( 2 ) }}
@@ -111,6 +132,7 @@
           Cerrar
         </button>
       </div>
+<<<<<<< Updated upstream
       <pre class="max-h-64 overflow-auto rounded bg-[var(--surface-1)] p-2 text-[11px] text-[var(--text-2)]">{{ JSON.stringify( selectedCandidateDebug.raw_payload || {}, null, 2 ) }}</pre>
     </section>
 
@@ -119,13 +141,23 @@
       <div class="relative w-full max-w-3xl rounded-lg bg-[var(--surface-1)] p-4 space-y-3">
         <h3 class="text-lg font-semibold text-[var(--text-1)]">Importar CSV</h3>
         <p class="text-xs text-[var(--text-3)]">
+=======
+      <pre class="max-h-64 overflow-auto rounded bg-surface-1 p-2 text-[11px] text-text-2">{{ JSON.stringify( selectedCandidateDebug.raw_payload || {}, null, 2 ) }}</pre>
+    </section>
+
+    <div v-if="showImportCsvModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showImportCsvModal = false">
+      <div class="absolute inset-0 bg-canvas/50"></div>
+      <div class="relative w-full max-w-3xl rounded-lg bg-surface-1 p-4 space-y-3">
+        <h3 class="text-lg font-semibold text-text-1">Importar CSV</h3>
+        <p class="text-xs text-text-3">
+>>>>>>> Stashed changes
           Cabeceras: `name,english_name,normalized_name,default_unit_type,kcal_per_100g,protein_per_100g,carbs_per_100g,fat_per_100g`
         </p>
         <textarea v-model="csvInput" class="w-full min-h-[240px] border rounded-lg px-3 py-2 text-sm"
           placeholder="Pega aquí el CSV completo" />
         <div class="flex justify-end gap-2">
           <button class="px-3 py-2 border rounded-lg" @click="showImportCsvModal = false">Cancelar</button>
-          <button class="px-3 py-2 text-[var(--text-1)] rounded-lg disabled:opacity-50"
+          <button class="px-3 py-2 text-text-1 rounded-lg disabled:opacity-50"
             :disabled="importingCsv || !csvInput.trim()" @click="importCsv">
             {{ importingCsv ? "Importando..." : "Importar" }}
           </button>
@@ -134,17 +166,24 @@
     </div>
 
     <div v-if="showMergeSelectedModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showMergeSelectedModal = false">
+<<<<<<< Updated upstream
       <div class="absolute inset-0 bg-[var(--bg-canvas)]/50"></div>
       <div class="relative w-full max-w-xl rounded-lg bg-[var(--surface-1)] p-4 space-y-3">
         <h3 class="text-lg font-semibold text-[var(--text-1)]">Fusionar ingredientes seleccionados</h3>
         <p class="text-sm text-[var(--text-2)]">Seleccionados: {{ selectedIds.length }}. Elige cuál se queda como destino.</p>
+=======
+      <div class="absolute inset-0 bg-canvas/50"></div>
+      <div class="relative w-full max-w-xl rounded-lg bg-surface-1 p-4 space-y-3">
+        <h3 class="text-lg font-semibold text-text-1">Fusionar ingredientes seleccionados</h3>
+        <p class="text-sm text-text-2">Seleccionados: {{ selectedIds.length }}. Elige cuál se queda como destino.</p>
+>>>>>>> Stashed changes
         <select v-model="mergeDestinationId" class="w-full border rounded-lg px-3 py-2">
           <option value="">Selecciona destino</option>
           <option v-for="item in mergeSelectedOptions" :key="item.id" :value="item.id">{{ item.name }}</option>
         </select>
         <div class="flex justify-end gap-2">
           <button class="px-3 py-2 border rounded-lg" @click="showMergeSelectedModal = false">Cancelar</button>
-          <button class="px-3 py-2 text-[var(--text-1)] rounded-lg disabled:opacity-50"
+          <button class="px-3 py-2 text-text-1 rounded-lg disabled:opacity-50"
             :disabled="mergingSelected || !mergeDestinationId" @click="mergeSelectedIngredients">
             {{ mergingSelected ? "Fusionando..." : "Confirmar fusión" }}
           </button>

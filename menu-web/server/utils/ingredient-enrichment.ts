@@ -1,4 +1,4 @@
-export const USDA_ALIASES: Record<string, string> = {
+﻿export const USDA_ALIASES: Record<string, string> = {
   arroz: "rice",
   pollo: "chicken",
   pechuga_de_pollo: "chicken breast",

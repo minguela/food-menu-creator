@@ -1,4 +1,4 @@
-import type { PersonProfile } from "~/types";
+﻿import type { PersonProfile } from "~/types";
 import { roundNutrition } from "./calculateRecipeMacros";
 
 export const DEFAULT_TOLERANCE_PERCENT = 10;

@@ -1,8 +1,7 @@
 ﻿<template>
   <article
     class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4 shadow-sm"
-    :class="[
-      active ? 'border-indigo-300 dark:border-indigo-500 ring-2 ring-indigo-100 dark:ring-indigo-900/50' : 'border-gray-200 border-[var(--border-soft)]',
+    :class="[ active ? 'border-[rgba(255,255,255,0.25)]  ring-2 ring-[rgba(187,222,242,0.3)] ' : 'border-[var(--border-soft)]',
       quality.status === 'inconsistent' ? 'border-red-200' : '',
       quality.status === 'incomplete' ? 'border-amber-200' : '',
     ]"
@@ -36,13 +35,13 @@
         </div>
         <input
           :value="row.name"
-          class="w-full rounded-md border border-gray-200 border-[var(--border-soft)] bg-transparent dark:bg-slate-950 px-3 py-2 text-base font-semibold text-[var(--text-1)] text-[var(--text-1)]"
+          class="w-full rounded-md border border-[var(--border-soft)] bg-transparent px-3 py-2 text-base font-semibold text-[var(--text-1)]"
           placeholder="Nombre del ingrediente"
           @input="patchName"
         />
         <input
           :value="row.english_name || ''"
-          class="w-full rounded-md border border-gray-200 border-[var(--border-soft)] bg-transparent dark:bg-slate-950 px-3 py-2 text-sm text-[var(--text-2)] text-[var(--text-2)]"
+          class="w-full rounded-md border border-[var(--border-soft)] bg-transparent px-3 py-2 text-sm text-[var(--text-2)]"
           placeholder="Nombre en inglés (opcional)"
           @input="patchEnglishName"
         />
@@ -50,14 +49,14 @@
 
       <div class="flex flex-wrap justify-end gap-2">
         <button
-          class="rounded-md border border-gray-200 border-[var(--border-soft)] px-3 py-2 text-xs font-medium text-[var(--text-2)] text-[var(--text-2)] hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
+          class="rounded-md border border-[var(--border-soft)] px-3 py-2 text-xs font-medium text-[var(--text-2)] hover:bg-gray-50 disabled:opacity-50"
           :disabled="saving || isFirst"
           @click="$emit('previous')"
         >
           Anterior
         </button>
         <button
-          class="rounded-md border border-gray-200 border-[var(--border-soft)] px-3 py-2 text-xs font-medium text-[var(--text-2)] text-[var(--text-2)] hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
+          class="rounded-md border border-[var(--border-soft)] px-3 py-2 text-xs font-medium text-[var(--text-2)] hover:bg-gray-50 disabled:opacity-50"
           :disabled="saving || isLast"
           @click="$emit('next')"
         >
@@ -68,10 +67,10 @@
 
     <div class="mt-4 grid gap-3 lg:grid-cols-[140px_1fr]">
       <label class="space-y-1">
-        <span class="text-xs font-medium text-gray-600 text-[var(--text-2)]">Unidad</span>
+        <span class="text-xs font-medium text-[var(--text-2)]">Unidad</span>
         <select
           :value="row.default_unit_type"
-          class="w-full rounded-md border border-gray-200 border-[var(--border-soft)] bg-transparent dark:bg-slate-950 px-3 py-2 text-sm text-[var(--text-2)] text-[var(--text-2)]"
+          class="w-full rounded-md border border-[var(--border-soft)] bg-transparent px-3 py-2 text-sm text-[var(--text-2)]"
           @change="patchUnit"
         >
           <option v-for="unit in unitTypes" :key="unit" :value="unit">
@@ -100,8 +99,8 @@
     </div>
 
     <div class="mt-3 grid gap-3 lg:grid-cols-2">
-      <div class="rounded-md bg-[var(--surface-2)] bg-[var(--surface-3)] p-3 text-xs text-gray-600 text-[var(--text-2)]">
-        <p class="font-medium text-[var(--text-2)] text-[var(--text-2)]">Valores originales</p>
+      <div class="rounded-md bg-[var(--surface-2)] p-3 text-xs text-[var(--text-2)]">
+        <p class="font-medium text-[var(--text-2)]">Valores originales</p>
         <p>
           {{ original.kcal_per_100g ?? "?" }} kcal · P
           {{ original.protein_per_100g ?? "?" }} · H
@@ -109,36 +108,36 @@
           {{ original.fat_per_100g ?? "?" }}
         </p>
       </div>
-      <div class="rounded-md bg-[var(--surface-2)] bg-[var(--surface-3)] p-3 text-xs text-gray-600 text-[var(--text-2)]">
-        <p class="font-medium text-[var(--text-2)] text-[var(--text-2)]">Recetas</p>
+      <div class="rounded-md bg-[var(--surface-2)] p-3 text-xs text-[var(--text-2)]">
+        <p class="font-medium text-[var(--text-2)]">Recetas</p>
         <div class="mt-1 flex flex-wrap gap-1">
           <NuxtLink
             v-for="recipe in recipes.slice(0, 4)"
             :key="recipe.id"
             :to="{ path: '/recipes', query: { recipe: recipe.id } }"
-            class="rounded border border-[var(--border-soft)] border-[var(--border-soft)] bg-transparent bg-[var(--surface-1)] px-2 py-1 text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-slate-800"
+            class="rounded border border-[var(--border-soft)] bg-transparent bg-[var(--surface-1)] px-2 py-1 text-sky-700 hover:bg-[rgba(187,222,242,0.08)] "
           >
             {{ recipe.name }}
           </NuxtLink>
-          <span v-if="recipes.length > 4" class="px-2 py-1 text-[var(--text-3)] text-[var(--text-3)]">
+          <span v-if="recipes.length > 4" class="px-2 py-1 text-[var(--text-3)]">
             +{{ recipes.length - 4 }}
           </span>
-          <span v-if="recipes.length === 0" class="text-gray-400 text-[var(--text-3)]">
+          <span v-if="recipes.length === 0" class="text-[var(--text-3)]">
             Sin recetas
           </span>
         </div>
       </div>
     </div>
 
-    <div v-if="candidates.length > 0" class="mt-3 rounded-md border border-sky-100 dark:border-sky-900 bg-sky-50 dark:bg-sky-950/40 p-3">
-      <p class="text-xs font-medium text-sky-800 dark:text-sky-300">Sugerencias disponibles</p>
+    <div v-if="candidates.length > 0" class="mt-3 rounded-md border border-[rgba(187,222,242,0.2)] bg-[rgba(187,222,242,0.08)]  p-3">
+      <p class="text-xs font-medium text-[var(--accent)] ">Sugerencias disponibles</p>
       <div class="mt-2 space-y-2">
         <div
           v-for="candidate in candidates.slice(0, 2)"
           :key="candidate.id"
           class="flex flex-wrap items-center justify-between gap-2 rounded-md bg-transparent bg-[var(--surface-1)] p-2 text-xs"
         >
-          <span class="text-gray-700 text-[var(--text-2)]">
+          <span class="text-[var(--text-2)]">
             {{ candidate.name }} · {{ candidate.kcal_per_100g ?? "?" }} kcal ·
             confianza {{ Number(candidate.confidence || 0).toFixed(2) }}
           </span>
@@ -149,7 +148,7 @@
             Aplicar
           </button>
           <button
-            class="font-medium text-gray-600 text-[var(--text-2)]"
+            class="font-medium text-[var(--text-2)]"
             @click="$emit('show-candidate-debug', candidate.id)"
           >
             Ver debug
@@ -167,21 +166,21 @@
           Error al guardar
         </span>
         <button
-          class="rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          class="rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-[var(--text-1)] hover:bg-indigo-700 disabled:opacity-50"
           :disabled="saving || !row.name.trim()"
           @click="$emit('save')"
         >
           {{ saving ? "Guardando..." : "Guardar ingrediente" }}
         </button>
         <button
-          class="rounded-md bg-emerald-600 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          class="rounded-md bg-emerald-600 px-3 py-2 text-xs font-medium text-[var(--text-1)] hover:bg-emerald-700 disabled:opacity-50"
           :disabled="saving || !row.name.trim()"
           @click="$emit('save-next')"
         >
           Guardar y siguiente
         </button>
         <button
-          class="rounded-md border border-[rgba(255,100,103,0.2)] px-3 py-2 text-xs font-medium text-[var(--danger)] hover:bg-red-50"
+          class="rounded-md border border-[rgba(255,100,103,0.2)] px-3 py-2 text-xs font-medium text-[var(--danger)] hover:bg-[rgba(255,100,103,0.08)]"
           @click="$emit('delete')"
         >
           Eliminar

@@ -2,8 +2,8 @@
   <div class="space-y-6">
     <header class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100">Ingredientes maestros</h1>
-        <p class="text-sm text-gray-500 dark:text-slate-400">
+        <h1 class="text-2xl font-bold ui-title ui-title">Ingredientes maestros</h1>
+        <p class="text-sm ui-subtle ui-subtle">
           Base nutricional por 100g para cálculos del menú rotativo.
         </p>
       </div>
@@ -12,7 +12,7 @@
       </button>
     </header>
 
-    <section class="bg-white dark:bg-slate-900 rounded-lg border p-4">
+    <section class="ui-surface rounded-lg border p-4">
       <div class="flex flex-wrap items-center gap-2">
         <button class="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
           :disabled=" selectedIds.length === 0 " @click=" deleteSelected ">
@@ -30,7 +30,7 @@
           :disabled="selectedIds.length < 2" @click="openMergeSelectedModal">
           Fusionar seleccionados
         </button>
-        <span class="text-xs text-gray-500 dark:text-slate-400">
+        <span class="text-xs ui-subtle ui-subtle">
           Valores nutricionales expresados por 100 g.
         </span>
       </div>
@@ -46,14 +46,14 @@
         </div>
         <NuxtLink
           href="/ingredients/expansions"
-          class="rounded-2xl border border-white/30 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
+          class="rounded-2xl border border-white/30 px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-surface-3)]/60"
         >
           Abrir expansiones
         </NuxtLink>
       </div>
     </section>
 
-    <section class="bg-white dark:bg-slate-900 rounded-lg border p-4">
+    <section class="ui-surface rounded-lg border p-4">
       <div class="grid gap-2 md:grid-cols-1">
         <input v-model.trim=" query " class="w-full border rounded-lg px-3 py-2" placeholder="Buscar ingrediente..." />
       </div>
@@ -61,11 +61,11 @@
         <button v-for=" option in filterOptions " :key=" option.value "
           class="rounded-full border px-3 py-1.5 text-xs font-medium" :class=" filterMode === option.value
             ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-            : 'border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:bg-slate-900'
+            : 'ui-divider ui-divider ui-subtle ui-muted hover:bg-[var(--color-surface-3)]'
             " @click="filterMode = option.value">
           {{ option.label }} {{ option.count }}
         </button>
-        <label class="inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-slate-300">
+        <label class="inline-flex items-center gap-2 rounded-full border ui-divider ui-divider px-3 py-1.5 text-xs font-medium ui-subtle ui-muted">
           <input v-model=" showOnlyWithoutRecipes " type="checkbox" class="h-3.5 w-3.5" />
           Solo sin recetas
         </label>
@@ -73,12 +73,12 @@
     </section>
 
     <section class="space-y-3">
-      <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white dark:bg-slate-900 p-4">
-        <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
+      <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border ui-surface p-4">
+        <label class="inline-flex items-center gap-2 text-sm ui-muted ui-muted">
           <input type="checkbox" :checked=" allFilteredSelected " @change=" toggleSelectAllFiltered " />
           Seleccionar visibles
         </label>
-        <div class="text-xs text-gray-500 dark:text-slate-400">
+        <div class="text-xs ui-subtle ui-subtle">
           Mostrando {{ filtered.length }} de {{ rows.length }} ingredientes
         </div>
       </div>
@@ -96,7 +96,7 @@
         @save-next="save( row, { goNext: true } )" @toggle-selected="toggleSelected( row.id )"
         @previous="moveActive( row.id, -1 )" @next="moveActive( row.id, 1 )" @delete="deleteOne( row.id )"
         @apply-candidate=" applyCandidate " @show-candidate-debug=" showCandidateDebug " />
-      <div v-if=" filtered.length === 0 " class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-sm text-gray-500 dark:text-slate-400">
+      <div v-if=" filtered.length === 0 " class="rounded-lg border ui-surface p-4 text-sm ui-subtle ui-subtle">
         {{ showOnlyWithoutRecipes
           ? "No se encontraron ingredientes sin recetas con los filtros actuales."
           : "No hay ingredientes que coincidan con los filtros actuales."
@@ -113,14 +113,14 @@
           Cerrar
         </button>
       </div>
-      <pre class="max-h-64 overflow-auto rounded bg-white dark:bg-slate-900 p-2 text-[11px] text-slate-700 dark:text-slate-200">{{ JSON.stringify( selectedCandidateDebug.raw_payload || {}, null, 2 ) }}</pre>
+      <pre class="max-h-64 overflow-auto rounded ui-surface p-2 text-[11px] text-slate-700 ui-muted">{{ JSON.stringify( selectedCandidateDebug.raw_payload || {}, null, 2 ) }}</pre>
     </section>
 
     <div v-if="showImportCsvModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showImportCsvModal = false">
       <div class="absolute inset-0 bg-black/50"></div>
-      <div class="relative w-full max-w-3xl rounded-lg bg-white dark:bg-slate-900 p-4 space-y-3">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100">Importar CSV</h3>
-        <p class="text-xs text-gray-500 dark:text-slate-400">
+      <div class="relative w-full max-w-3xl rounded-lg ui-surface p-4 space-y-3">
+        <h3 class="text-lg font-semibold ui-title ui-title">Importar CSV</h3>
+        <p class="text-xs ui-subtle ui-subtle">
           Cabeceras: `name,english_name,normalized_name,default_unit_type,kcal_per_100g,protein_per_100g,carbs_per_100g,fat_per_100g`
         </p>
         <textarea v-model="csvInput" class="w-full min-h-[240px] border rounded-lg px-3 py-2 text-sm"
@@ -137,9 +137,9 @@
 
     <div v-if="showMergeSelectedModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showMergeSelectedModal = false">
       <div class="absolute inset-0 bg-black/50"></div>
-      <div class="relative w-full max-w-xl rounded-lg bg-white dark:bg-slate-900 p-4 space-y-3">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100">Fusionar ingredientes seleccionados</h3>
-        <p class="text-sm text-gray-600 dark:text-slate-300">Seleccionados: {{ selectedIds.length }}. Elige cuál se queda como destino.</p>
+      <div class="relative w-full max-w-xl rounded-lg ui-surface p-4 space-y-3">
+        <h3 class="text-lg font-semibold ui-title ui-title">Fusionar ingredientes seleccionados</h3>
+        <p class="text-sm ui-subtle ui-muted">Seleccionados: {{ selectedIds.length }}. Elige cuál se queda como destino.</p>
         <select v-model="mergeDestinationId" class="w-full border rounded-lg px-3 py-2">
           <option value="">Selecciona destino</option>
           <option v-for="item in mergeSelectedOptions" :key="item.id" :value="item.id">{{ item.name }}</option>

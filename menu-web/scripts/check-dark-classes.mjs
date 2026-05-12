@@ -4,14 +4,18 @@ import path from "node:path";
 const root = process.cwd();
 const targets = ["pages", "components"];
 const includeExt = new Set([".vue"]);
-const lightTokens = [
+const forbiddenTokens = [
   "bg-white",
   "bg-gray-50",
   "bg-gray-100",
   "bg-slate-50",
   "bg-slate-100",
+  "dark:",
   "text-gray-900",
   "text-gray-800",
+  "text-gray-700",
+  "text-gray-600",
+  "text-gray-500",
   "text-slate-900",
   "text-slate-800",
   "border-gray-200",
@@ -53,8 +57,7 @@ for (const target of targets) {
     lines.forEach((line, idx) => {
       if (!line.includes("class=")) return;
       if (line.includes("dark-check-ignore")) return;
-      if (!lightTokens.some((token) => line.includes(token))) return;
-      if (line.includes("dark:")) return;
+      if (!forbiddenTokens.some((token) => line.includes(token))) return;
       failures.push({
         filePath,
         line: idx + 1,
@@ -65,7 +68,7 @@ for (const target of targets) {
 }
 
 if (failures.length > 0) {
-  console.error("Dark class audit failed. Light-only classes found:");
+  console.error("Theme contract audit failed. Forbidden classes found:");
   failures.slice(0, 200).forEach((item) => {
     console.error(`- ${path.relative(root, item.filePath)}:${item.line} -> ${item.content}`);
   });

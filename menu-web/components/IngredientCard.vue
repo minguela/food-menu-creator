@@ -1,8 +1,8 @@
-<template>
+﻿<template>
   <article
-    class="rounded-lg border bg-white dark:bg-slate-900 p-4 shadow-sm"
+    class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4 shadow-sm"
     :class="[
-      active ? 'border-indigo-300 dark:border-indigo-500 ring-2 ring-indigo-100 dark:ring-indigo-900/50' : 'border-gray-200 dark:border-slate-700',
+      active ? 'border-indigo-300 dark:border-indigo-500 ring-2 ring-indigo-100 dark:ring-indigo-900/50' : 'border-gray-200 border-[var(--border-soft)]',
       quality.status === 'inconsistent' ? 'border-red-200' : '',
       quality.status === 'incomplete' ? 'border-amber-200' : '',
     ]"
@@ -20,7 +20,7 @@
           <ValidationBadge :quality="quality" />
           <span
             v-if="changedFields.length > 0"
-            class="rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700"
+            class="rounded-full bg-[rgba(187,222,242,0.08)] px-2 py-1 text-xs font-medium text-indigo-700"
           >
             Editado
           </span>
@@ -36,13 +36,13 @@
         </div>
         <input
           :value="row.name"
-          class="w-full rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-base font-semibold text-gray-900 dark:text-slate-100"
+          class="w-full rounded-md border border-gray-200 border-[var(--border-soft)] bg-transparent dark:bg-slate-950 px-3 py-2 text-base font-semibold text-[var(--text-1)] text-[var(--text-1)]"
           placeholder="Nombre del ingrediente"
           @input="patchName"
         />
         <input
           :value="row.english_name || ''"
-          class="w-full rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-gray-700 dark:text-slate-200"
+          class="w-full rounded-md border border-gray-200 border-[var(--border-soft)] bg-transparent dark:bg-slate-950 px-3 py-2 text-sm text-[var(--text-2)] text-[var(--text-2)]"
           placeholder="Nombre en inglés (opcional)"
           @input="patchEnglishName"
         />
@@ -50,14 +50,14 @@
 
       <div class="flex flex-wrap justify-end gap-2">
         <button
-          class="rounded-md border border-gray-200 dark:border-slate-700 px-3 py-2 text-xs font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
+          class="rounded-md border border-gray-200 border-[var(--border-soft)] px-3 py-2 text-xs font-medium text-[var(--text-2)] text-[var(--text-2)] hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
           :disabled="saving || isFirst"
           @click="$emit('previous')"
         >
           Anterior
         </button>
         <button
-          class="rounded-md border border-gray-200 dark:border-slate-700 px-3 py-2 text-xs font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
+          class="rounded-md border border-gray-200 border-[var(--border-soft)] px-3 py-2 text-xs font-medium text-[var(--text-2)] text-[var(--text-2)] hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
           :disabled="saving || isLast"
           @click="$emit('next')"
         >
@@ -68,10 +68,10 @@
 
     <div class="mt-4 grid gap-3 lg:grid-cols-[140px_1fr]">
       <label class="space-y-1">
-        <span class="text-xs font-medium text-gray-600 dark:text-slate-300">Unidad</span>
+        <span class="text-xs font-medium text-gray-600 text-[var(--text-2)]">Unidad</span>
         <select
           :value="row.default_unit_type"
-          class="w-full rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-gray-700 dark:text-slate-200"
+          class="w-full rounded-md border border-gray-200 border-[var(--border-soft)] bg-transparent dark:bg-slate-950 px-3 py-2 text-sm text-[var(--text-2)] text-[var(--text-2)]"
           @change="patchUnit"
         >
           <option v-for="unit in unitTypes" :key="unit" :value="unit">
@@ -90,7 +90,7 @@
     <div
       v-if="quality.warnings.length > 0"
       class="mt-3 rounded-md border p-3 text-xs"
-      :class="quality.status === 'inconsistent' ? 'border-red-200 bg-red-50 text-red-700' : 'border-amber-200 bg-amber-50 text-amber-700'"
+      :class="quality.status === 'inconsistent' ? 'border-red-200 bg-[rgba(255,100,103,0.06)] text-[var(--danger)]' : 'border-amber-200 bg-amber-50 text-amber-700'"
     >
       <p class="font-medium">{{ quality.warnings.join(" · ") }}</p>
       <p v-if="quality.calculatedKcal !== null" class="mt-1">
@@ -100,8 +100,8 @@
     </div>
 
     <div class="mt-3 grid gap-3 lg:grid-cols-2">
-      <div class="rounded-md bg-gray-50 dark:bg-slate-800 p-3 text-xs text-gray-600 dark:text-slate-300">
-        <p class="font-medium text-gray-700 dark:text-slate-200">Valores originales</p>
+      <div class="rounded-md bg-[var(--surface-2)] bg-[var(--surface-3)] p-3 text-xs text-gray-600 text-[var(--text-2)]">
+        <p class="font-medium text-[var(--text-2)] text-[var(--text-2)]">Valores originales</p>
         <p>
           {{ original.kcal_per_100g ?? "?" }} kcal · P
           {{ original.protein_per_100g ?? "?" }} · H
@@ -109,21 +109,21 @@
           {{ original.fat_per_100g ?? "?" }}
         </p>
       </div>
-      <div class="rounded-md bg-gray-50 dark:bg-slate-800 p-3 text-xs text-gray-600 dark:text-slate-300">
-        <p class="font-medium text-gray-700 dark:text-slate-200">Recetas</p>
+      <div class="rounded-md bg-[var(--surface-2)] bg-[var(--surface-3)] p-3 text-xs text-gray-600 text-[var(--text-2)]">
+        <p class="font-medium text-[var(--text-2)] text-[var(--text-2)]">Recetas</p>
         <div class="mt-1 flex flex-wrap gap-1">
           <NuxtLink
             v-for="recipe in recipes.slice(0, 4)"
             :key="recipe.id"
             :to="{ path: '/recipes', query: { recipe: recipe.id } }"
-            class="rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-slate-800"
+            class="rounded border border-[var(--border-soft)] border-[var(--border-soft)] bg-transparent bg-[var(--surface-1)] px-2 py-1 text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-slate-800"
           >
             {{ recipe.name }}
           </NuxtLink>
-          <span v-if="recipes.length > 4" class="px-2 py-1 text-gray-500 dark:text-slate-400">
+          <span v-if="recipes.length > 4" class="px-2 py-1 text-[var(--text-3)] text-[var(--text-3)]">
             +{{ recipes.length - 4 }}
           </span>
-          <span v-if="recipes.length === 0" class="text-gray-400 dark:text-slate-500">
+          <span v-if="recipes.length === 0" class="text-gray-400 text-[var(--text-3)]">
             Sin recetas
           </span>
         </div>
@@ -136,9 +136,9 @@
         <div
           v-for="candidate in candidates.slice(0, 2)"
           :key="candidate.id"
-          class="flex flex-wrap items-center justify-between gap-2 rounded-md bg-white dark:bg-slate-900 p-2 text-xs"
+          class="flex flex-wrap items-center justify-between gap-2 rounded-md bg-transparent bg-[var(--surface-1)] p-2 text-xs"
         >
-          <span class="text-gray-700 dark:text-slate-200">
+          <span class="text-gray-700 text-[var(--text-2)]">
             {{ candidate.name }} · {{ candidate.kcal_per_100g ?? "?" }} kcal ·
             confianza {{ Number(candidate.confidence || 0).toFixed(2) }}
           </span>
@@ -149,7 +149,7 @@
             Aplicar
           </button>
           <button
-            class="font-medium text-gray-600 dark:text-slate-300"
+            class="font-medium text-gray-600 text-[var(--text-2)]"
             @click="$emit('show-candidate-debug', candidate.id)"
           >
             Ver debug
@@ -163,7 +163,7 @@
         <span v-if="saveState === 'success'" class="text-xs text-emerald-700">
           Guardado
         </span>
-        <span v-if="saveState === 'error'" class="text-xs text-red-700">
+        <span v-if="saveState === 'error'" class="text-xs text-[var(--danger)]">
           Error al guardar
         </span>
         <button
@@ -181,7 +181,7 @@
           Guardar y siguiente
         </button>
         <button
-          class="rounded-md border border-red-200 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50"
+          class="rounded-md border border-[rgba(255,100,103,0.2)] px-3 py-2 text-xs font-medium text-[var(--danger)] hover:bg-red-50"
           @click="$emit('delete')"
         >
           Eliminar

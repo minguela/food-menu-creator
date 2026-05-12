@@ -130,6 +130,55 @@ export function validateDayNutritionTotals({
   return violations;
 }
 
+export function resolveCaloricDensityBucket({ caloricDensityLevel, kcalPer100g }) {
+  const level = String(caloricDensityLevel || "").trim().toLowerCase();
+  if (level === "very_caloric" || level === "muy_calorico") return "very_caloric";
+  if (level === "caloric" || level === "calorico") return "caloric";
+  if (
+    level === "low" ||
+    level === "low_caloric" ||
+    level === "poco_calorico" ||
+    level === "light"
+  ) {
+    return "low";
+  }
+  if (level === "normal") return "normal";
+
+  const kcal = Number(kcalPer100g || 0);
+  if (kcal > 400) return "very_caloric";
+  if (kcal > 200) return "caloric";
+  if (kcal > 0 && kcal < 80) return "low";
+  return "normal";
+}
+
+export function densityFactorForBucket(bucket) {
+  if (bucket === "very_caloric") return 0.35;
+  if (bucket === "caloric") return 0.65;
+  if (bucket === "low") return 1.35;
+  return 1;
+}
+
+export function calculateDensityScaledQuantity({
+  baseQuantity,
+  mealMultiplier,
+  caloricDensityLevel,
+  kcalPer100g,
+}) {
+  const base = Math.max(0, Number(baseQuantity || 0));
+  const multiplier = Math.max(1, Number(mealMultiplier || 1));
+  const bucket = resolveCaloricDensityBucket({ caloricDensityLevel, kcalPer100g });
+  const densityFactor = densityFactorForBucket(bucket);
+  const ingredientMultiplier = 1 + (multiplier - 1) * densityFactor;
+  const finalQuantity = Math.max(base, base * ingredientMultiplier);
+
+  return {
+    finalQuantity,
+    ingredientMultiplier,
+    densityBucket: bucket,
+    densityFactor,
+  };
+}
+
 function round(value, digits = 2) {
   const factor = 10 ** digits;
   return Math.round(Number(value || 0) * factor) / factor;

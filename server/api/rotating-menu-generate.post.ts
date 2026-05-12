@@ -11,6 +11,7 @@ import {
   isCountBasedUnit,
   validateRecipeBase,
   computeAppliedMultiplier,
+  calculateDensityScaledQuantity,
   validateDayNutritionTotals,
 } from "~/utils/rotating-portion-scaling.js";
 
@@ -1341,11 +1342,15 @@ export default defineEventHandler(async (event) => {
         }
 
         const ingredients = ingredientBase.map((ing: any) => {
-          const finalQuantity = round(
-            Math.max(ing.quantity, ing.quantity * appliedMultiplier),
-          );
-          const normalized = normalizeToGrams(finalQuantity, ing.unit_type);
           const n = nutritionById.get(ing.ingredient_id);
+          const densityScaling = calculateDensityScaledQuantity({
+            baseQuantity: ing.quantity,
+            mealMultiplier: appliedMultiplier,
+            caloricDensityLevel: n?.caloric_density_level,
+            kcalPer100g: n?.kcal_per_100g,
+          });
+          const finalQuantity = round(densityScaling.finalQuantity);
+          const normalized = normalizeToGrams(finalQuantity, ing.unit_type);
           let nutritionPending = false;
           if (!n || n.nutrition_status !== "complete" || normalized === null) {
             nutritionPending = true;
@@ -1370,6 +1375,9 @@ export default defineEventHandler(async (event) => {
             base_quantity: ing.quantity,
             final_quantity: finalQuantity,
             unit_type: ing.unit_type,
+            density_bucket: densityScaling.densityBucket,
+            density_factor: round(densityScaling.densityFactor, 3),
+            ingredient_multiplier: round(densityScaling.ingredientMultiplier, 3),
             nutrition_pending: nutritionPending,
           };
         });

@@ -1,4 +1,4 @@
-﻿export type IngredientCandidate = {
+export type IngredientCandidate = {
   name: string;
   confidence: "high" | "medium" | "low";
   source: "dish_name";

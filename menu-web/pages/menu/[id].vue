@@ -1,4 +1,4 @@
-﻿<template>
+<template>
  <div class="space-y-6 ">
  <div v-if=" loading " class="text-center py-12">
  <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[rgba(187,222,242,0.25)] mx-auto"></div>

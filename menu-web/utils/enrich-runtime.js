@@ -1,4 +1,4 @@
-﻿export const normalizeEnrichSource = (value) => {
+export const normalizeEnrichSource = (value) => {
   const source = String(value || "auto")
     .trim()
     .toLowerCase();

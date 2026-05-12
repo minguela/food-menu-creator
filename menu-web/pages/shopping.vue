@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="min-h-screen bg-gradient-to-br from-[var(--bg-canvas)] via-[rgba(255,255,255,0.03)] to-[var(--bg-canvas)]">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
     <label
       v-for="field in fields"

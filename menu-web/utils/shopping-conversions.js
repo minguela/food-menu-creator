@@ -1,4 +1,4 @@
-﻿const DENSITY_BY_KEYWORD = [
+const DENSITY_BY_KEYWORD = [
   { match: /aceite|oil/i, gramsPerMl: 0.92 },
   { match: /miel|honey/i, gramsPerMl: 1.42 },
   { match: /leche|milk|caldo|zumo|agua|vinagre|salsa/i, gramsPerMl: 1 },

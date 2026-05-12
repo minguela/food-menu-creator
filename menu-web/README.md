@@ -1,4 +1,4 @@
-﻿# 🍽️ MenuPlanner
+# 🍽️ MenuPlanner
 
 Interfaz web para gestionar menús semanales rotativos conectada a Supabase, con perfiles de personas, control nutricional, ingredientes exactos y lista de la compra.
 

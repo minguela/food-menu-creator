@@ -1,4 +1,4 @@
-﻿export type CaloricDensityLevel =
+export type CaloricDensityLevel =
   | "very_low"
   | "low"
   | "normal"

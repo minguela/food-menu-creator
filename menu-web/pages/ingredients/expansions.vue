@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="space-y-6">
     <header class="ui-surface rounded-2xl p-5">
       <div class="flex flex-wrap items-end justify-between gap-3">

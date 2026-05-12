@@ -1,4 +1,4 @@
-﻿# Dark Mode Class Contract
+# Dark Mode Class Contract
 
 Use this contract when styling pages and shared components.
 

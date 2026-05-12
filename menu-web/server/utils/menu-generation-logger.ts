@@ -1,4 +1,4 @@
-﻿type SupabaseAdmin = {
+type SupabaseAdmin = {
   from: (table: string) => any;
 };
 

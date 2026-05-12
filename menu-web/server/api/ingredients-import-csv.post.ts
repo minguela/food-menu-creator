@@ -1,4 +1,4 @@
-﻿import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
 import { validateIngredientNutritionQuality } from "~/utils/ingredient-nutrition-quality";
 import { classifyCaloricDensity } from "~/utils/caloric-density";
 import type { CaloricDensityLevel } from "~/utils/caloric-density";

@@ -119,6 +119,8 @@
               class="border rounded-lg px-3 py-2" placeholder="kcal" required />
             <input v-model.number=" profileForm.daily_protein_target " type="number" min="20" max="400" step="1"
               class="border rounded-lg px-3 py-2" placeholder="proteína g" required />
+            <input v-model.number=" profileForm.tolerance_percent " type="number" min="0" max="50" step="1"
+              class="border rounded-lg px-3 py-2" placeholder="tolerancia %" required />
             <button type="submit" :disabled=" !profileFormValid || profileSaving "
               class="bg-gray-900 text-white rounded-lg px-3 py-2 disabled:opacity-50">
               {{ profileForm.id ? "Actualizar" : "Añadir" }}
@@ -136,7 +138,8 @@
                 <p class="text-sm text-gray-500 dark:text-slate-400">
                   {{ sexLabel( profile.sex ) }} · {{ profile.age }} años ·
                   {{ profile.daily_kcal_target }} kcal ·
-                  {{ profile.daily_protein_target }}g proteína
+                  {{ profile.daily_protein_target }}g proteína ·
+                  tolerancia {{ profile.tolerance_percent ?? 10 }}%
                 </p>
               </div>
               <div class="flex gap-2">
@@ -189,6 +192,7 @@ const profileForm = ref( {
   age: 35,
   daily_kcal_target: 1900,
   daily_protein_target: 120,
+  tolerance_percent: 10,
 } );
 
 const macroValidation = computed( () =>
@@ -225,7 +229,9 @@ const profileFormValid = computed(
     profileForm.value.daily_kcal_target >= 800 &&
     profileForm.value.daily_kcal_target <= 6000 &&
     profileForm.value.daily_protein_target >= 20 &&
-    profileForm.value.daily_protein_target <= 400,
+    profileForm.value.daily_protein_target <= 400 &&
+    profileForm.value.tolerance_percent >= 0 &&
+    profileForm.value.tolerance_percent <= 50,
 );
 
 const showStatus = ( message: string, type: "success" | "error" = "success" ) => {
@@ -315,6 +321,7 @@ const saveProfile = async () => {
     age: profileForm.value.age,
     daily_kcal_target: profileForm.value.daily_kcal_target,
     daily_protein_target: profileForm.value.daily_protein_target,
+    tolerance_percent: profileForm.value.tolerance_percent,
     fat_pct_target: config.value.fat_pct_target,
     carbs_pct_target: config.value.carbs_pct_target,
   };
@@ -347,6 +354,7 @@ const editProfile = ( profile: PersonProfile ) => {
     age: profile.age,
     daily_kcal_target: profile.daily_kcal_target,
     daily_protein_target: profile.daily_protein_target || 120,
+    tolerance_percent: profile.tolerance_percent ?? 10,
   };
 };
 
@@ -381,6 +389,7 @@ const resetProfileForm = () => {
     age: 35,
     daily_kcal_target: config.value.daily_kcal_target,
     daily_protein_target: config.value.daily_protein_target,
+    tolerance_percent: 10,
   };
 };
 

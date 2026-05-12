@@ -16,6 +16,8 @@
   - Nota: añadida migración `20260512120000_nutrition_menu_api_persistence.sql` para persistencia `nutrition_scored`, `recipe_id` en comidas y soporte de `snack`; creadas rutas `/api/nutrition-menu-generate`, `/api/nutrition-menu-save`, `/api/nutrition-menu-detail` y `/api/nutrition-menu-shopping-list`; añadido `server/services/menuGeneratorPersistence.ts` para guardar menús, leer detalle y agregar compra en g/kg. OpenSpec queda en progreso `24/33`.
 - [x] Tarea #173: Completar fase 6 de integración UI del generador nutricional
   - Nota: `pages/config.vue` permite editar/ver tolerancia por perfil; `pages/generar.vue` añade bloque independiente de scoring nutricional con selección de perfil, periodo, snacks, preview, desviaciones, cumplimiento, score y guardado; `pages/rotating/[id].vue` muestra marca/score de menús `nutrition_scored`. OpenSpec queda en progreso `29/33`.
+- [x] Tarea #174: Completar fase 7 de verificación y cierre OpenSpec
+  - Nota: ejecutados `npm run test:nutrition` (9 OK), `npm run test:rotating` (12 OK), `node --test tests/shopping-conversions.test.mjs` (6 OK), `npm run build` OK y `openspec validate "score-based-nutrition-menu-generator"` OK. Verificación manual limitada al flujo compilado/UI/rutas en entorno local sin datos live de Supabase; OpenSpec archivado en `openspec/changes/archive/2026-05-12-score-based-nutrition-menu-generator` y spec sincronizada en `openspec/specs/nutrition-menu-generator/spec.md`.
 
 ## Sesión actual: 2026-05-11 - Escalado rotativo, cantidades relativas y warnings nutricionales
 

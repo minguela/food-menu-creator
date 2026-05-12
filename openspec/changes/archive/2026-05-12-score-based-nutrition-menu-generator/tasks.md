@@ -47,7 +47,7 @@
 
 ## 7. Verification
 
-- [ ] 7.1 Run targeted nutrition generator tests locally.
-- [ ] 7.2 Run existing rotating/menu/shopping tests to check for regressions.
-- [ ] 7.3 Run Nuxt typecheck/build or the repository test command if time permits.
-- [ ] 7.4 Manually verify the expected flow: profile, curated recipes, daily generation, save, detail, and shopping list.
+- [x] 7.1 Run targeted nutrition generator tests locally.
+- [x] 7.2 Run existing rotating/menu/shopping tests to check for regressions.
+- [x] 7.3 Run Nuxt typecheck/build or the repository test command if time permits.
+- [x] 7.4 Manually verify the expected flow: profile, curated recipes, daily generation, save, detail, and shopping list.

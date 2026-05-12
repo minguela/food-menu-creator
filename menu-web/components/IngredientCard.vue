@@ -1,8 +1,8 @@
 <template>
   <article
-    class="rounded-lg border bg-white dark:bg-slate-900 p-4 shadow-sm"
+    class="ui-surface rounded-lg p-4 shadow-sm"
     :class="[
-      active ? 'border-indigo-300 dark:border-indigo-500 ring-2 ring-indigo-100 dark:ring-indigo-900/50' : 'border-gray-200 dark:border-slate-700',
+      active ? 'border-[var(--color-accent)] ring-2 ring-[var(--color-accent-soft)]' : 'ui-divider',
       quality.status === 'inconsistent' ? 'border-red-200' : '',
       quality.status === 'incomplete' ? 'border-amber-200' : '',
     ]"
@@ -20,29 +20,29 @@
           <ValidationBadge :quality="quality" />
           <span
             v-if="changedFields.length > 0"
-            class="rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700"
+            class="rounded-full bg-[var(--color-accent-soft)] px-2 py-1 text-xs font-medium ui-muted"
           >
             Editado
           </span>
-          <span class="rounded-full bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700">
+          <span class="rounded-full bg-[var(--color-warning-muted)] px-2 py-1 text-xs font-medium text-[var(--color-warning)]">
             {{ caloricLabel }}
           </span>
           <span
             v-if="row.review_reason"
-            class="rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700"
+            class="rounded-full bg-[var(--color-warning-muted)] px-2 py-1 text-xs font-medium text-[var(--color-warning)]"
           >
             revisión: {{ row.review_reason }}
           </span>
         </div>
         <input
           :value="row.name"
-          class="w-full rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-base font-semibold text-gray-900 dark:text-slate-100"
+          class="ui-input w-full rounded-md px-3 py-2 text-base font-semibold"
           placeholder="Nombre del ingrediente"
           @input="patchName"
         />
         <input
           :value="row.english_name || ''"
-          class="w-full rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-gray-700 dark:text-slate-200"
+          class="ui-input w-full rounded-md px-3 py-2 text-sm ui-muted"
           placeholder="Nombre en inglés (opcional)"
           @input="patchEnglishName"
         />
@@ -50,14 +50,14 @@
 
       <div class="flex flex-wrap justify-end gap-2">
         <button
-          class="rounded-md border border-gray-200 dark:border-slate-700 px-3 py-2 text-xs font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
+          class="ui-btn-muted rounded-md px-3 py-2 text-xs font-medium disabled:opacity-50"
           :disabled="saving || isFirst"
           @click="$emit('previous')"
         >
           Anterior
         </button>
         <button
-          class="rounded-md border border-gray-200 dark:border-slate-700 px-3 py-2 text-xs font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
+          class="ui-btn-muted rounded-md px-3 py-2 text-xs font-medium disabled:opacity-50"
           :disabled="saving || isLast"
           @click="$emit('next')"
         >
@@ -68,10 +68,10 @@
 
     <div class="mt-4 grid gap-3 lg:grid-cols-[140px_1fr]">
       <label class="space-y-1">
-        <span class="text-xs font-medium text-gray-600 dark:text-slate-300">Unidad</span>
+        <span class="ui-muted text-xs font-medium">Unidad</span>
         <select
           :value="row.default_unit_type"
-          class="w-full rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-gray-700 dark:text-slate-200"
+          class="ui-select w-full rounded-md px-3 py-2 text-sm ui-muted"
           @change="patchUnit"
         >
           <option v-for="unit in unitTypes" :key="unit" :value="unit">
@@ -90,7 +90,7 @@
     <div
       v-if="quality.warnings.length > 0"
       class="mt-3 rounded-md border p-3 text-xs"
-      :class="quality.status === 'inconsistent' ? 'border-red-200 bg-red-50 text-red-700' : 'border-amber-200 bg-amber-50 text-amber-700'"
+      :class="quality.status === 'inconsistent' ? 'border-[var(--color-danger)] bg-[var(--color-danger-muted)] ui-danger' : 'border-[var(--color-warning)] bg-[var(--color-warning-muted)] text-[var(--color-warning)]'"
     >
       <p class="font-medium">{{ quality.warnings.join(" · ") }}</p>
       <p v-if="quality.calculatedKcal !== null" class="mt-1">
@@ -100,8 +100,8 @@
     </div>
 
     <div class="mt-3 grid gap-3 lg:grid-cols-2">
-      <div class="rounded-md bg-gray-50 dark:bg-slate-800 p-3 text-xs text-gray-600 dark:text-slate-300">
-        <p class="font-medium text-gray-700 dark:text-slate-200">Valores originales</p>
+      <div class="rounded-md bg-[var(--color-surface-3)] p-3 text-xs ui-subtle">
+        <p class="font-medium ui-muted">Valores originales</p>
         <p>
           {{ original.kcal_per_100g ?? "?" }} kcal · P
           {{ original.protein_per_100g ?? "?" }} · H
@@ -109,36 +109,36 @@
           {{ original.fat_per_100g ?? "?" }}
         </p>
       </div>
-      <div class="rounded-md bg-gray-50 dark:bg-slate-800 p-3 text-xs text-gray-600 dark:text-slate-300">
-        <p class="font-medium text-gray-700 dark:text-slate-200">Recetas</p>
+      <div class="rounded-md bg-[var(--color-surface-3)] p-3 text-xs ui-subtle">
+        <p class="font-medium ui-muted">Recetas</p>
         <div class="mt-1 flex flex-wrap gap-1">
           <NuxtLink
             v-for="recipe in recipes.slice(0, 4)"
             :key="recipe.id"
             :to="{ path: '/recipes', query: { recipe: recipe.id } }"
-            class="rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-slate-800"
+            class="rounded border ui-divider bg-[var(--color-surface-2)] px-2 py-1 text-sky-300 hover:bg-[var(--color-surface-3)]"
           >
             {{ recipe.name }}
           </NuxtLink>
-          <span v-if="recipes.length > 4" class="px-2 py-1 text-gray-500 dark:text-slate-400">
+          <span v-if="recipes.length > 4" class="px-2 py-1 ui-subtle">
             +{{ recipes.length - 4 }}
           </span>
-          <span v-if="recipes.length === 0" class="text-gray-400 dark:text-slate-500">
+          <span v-if="recipes.length === 0" class="ui-subtle">
             Sin recetas
           </span>
         </div>
       </div>
     </div>
 
-    <div v-if="candidates.length > 0" class="mt-3 rounded-md border border-sky-100 dark:border-sky-900 bg-sky-50 dark:bg-sky-950/40 p-3">
-      <p class="text-xs font-medium text-sky-800 dark:text-sky-300">Sugerencias disponibles</p>
+    <div v-if="candidates.length > 0" class="mt-3 rounded-md border border-sky-700/50 bg-sky-950/30 p-3">
+      <p class="text-xs font-medium text-sky-300">Sugerencias disponibles</p>
       <div class="mt-2 space-y-2">
         <div
           v-for="candidate in candidates.slice(0, 2)"
           :key="candidate.id"
-          class="flex flex-wrap items-center justify-between gap-2 rounded-md bg-white dark:bg-slate-900 p-2 text-xs"
+           class="flex flex-wrap items-center justify-between gap-2 rounded-md bg-[var(--color-surface-2)] p-2 text-xs"
         >
-          <span class="text-gray-700 dark:text-slate-200">
+          <span class="ui-muted">
             {{ candidate.name }} · {{ candidate.kcal_per_100g ?? "?" }} kcal ·
             confianza {{ Number(candidate.confidence || 0).toFixed(2) }}
           </span>
@@ -149,7 +149,7 @@
             Aplicar
           </button>
           <button
-            class="font-medium text-gray-600 dark:text-slate-300"
+            class="font-medium ui-subtle"
             @click="$emit('show-candidate-debug', candidate.id)"
           >
             Ver debug
@@ -167,21 +167,21 @@
           Error al guardar
         </span>
         <button
-          class="rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          class="ui-btn-primary rounded-md px-3 py-2 text-xs font-medium disabled:opacity-50"
           :disabled="saving || !row.name.trim()"
           @click="$emit('save')"
         >
           {{ saving ? "Guardando..." : "Guardar ingrediente" }}
         </button>
         <button
-          class="rounded-md bg-emerald-600 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          class="ui-btn-primary rounded-md px-3 py-2 text-xs font-medium disabled:opacity-50"
           :disabled="saving || !row.name.trim()"
           @click="$emit('save-next')"
         >
           Guardar y siguiente
         </button>
         <button
-          class="rounded-md border border-red-200 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50"
+          class="ui-btn-danger rounded-md px-3 py-2 text-xs font-medium"
           @click="$emit('delete')"
         >
           Eliminar

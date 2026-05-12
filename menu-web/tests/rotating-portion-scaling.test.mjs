@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  calculateDensityScaledQuantity,
   computeAppliedMultiplier,
+  resolveCaloricDensityBucket,
   validateDayNutritionTotals,
   validateRecipeBase,
 } from "../utils/rotating-portion-scaling.js";
@@ -71,4 +73,32 @@ test("flags collapsed day totals against kcal and protein guardrails", () => {
   assert.equal(violations[0].profile_id, "david");
   assert.ok(violations[0].kcal_ratio < 0.8);
   assert.ok(violations[0].protein_ratio < 0.75);
+});
+
+test("scales low density ingredients more than very caloric ingredients", () => {
+  const oil = calculateDensityScaledQuantity({
+    baseQuantity: 10,
+    mealMultiplier: 4,
+    caloricDensityLevel: "very_caloric",
+    kcalPer100g: 884,
+  });
+  const tomato = calculateDensityScaledQuantity({
+    baseQuantity: 10,
+    mealMultiplier: 4,
+    caloricDensityLevel: "low",
+    kcalPer100g: 20,
+  });
+
+  assert.equal(oil.densityBucket, "very_caloric");
+  assert.equal(tomato.densityBucket, "low");
+  assert.ok(oil.finalQuantity > 10);
+  assert.ok(tomato.finalQuantity > oil.finalQuantity);
+  assert.ok(tomato.ingredientMultiplier > oil.ingredientMultiplier);
+});
+
+test("infers density bucket from kcal per 100g when label is missing", () => {
+  assert.equal(resolveCaloricDensityBucket({ kcalPer100g: 500 }), "very_caloric");
+  assert.equal(resolveCaloricDensityBucket({ kcalPer100g: 250 }), "caloric");
+  assert.equal(resolveCaloricDensityBucket({ kcalPer100g: 35 }), "low");
+  assert.equal(resolveCaloricDensityBucket({ kcalPer100g: 120 }), "normal");
 });

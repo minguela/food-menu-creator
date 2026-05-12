@@ -1,9 +1,9 @@
 ﻿<template>
   <article
-    class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4 shadow-sm"
-    :class="[ active ? 'border-[rgba(255,255,255,0.25)]  ring-2 ring-[rgba(187,222,242,0.3)] ' : 'border-[var(--border-soft)]',
-      quality.status === 'inconsistent' ? 'border-red-200' : '',
-      quality.status === 'incomplete' ? 'border-amber-200' : '',
+    class="rounded-lg border bg-[var(--surface-1)] p-4 shadow-sm"
+    :class="[ active ? 'border-[rgba(255,255,255,0.25)] ring-2 ring-[rgba(187,222,242,0.3)] ' : 'border-[var(--border-soft)]',
+      quality.status === 'inconsistent' ? 'border-[rgba(255,100,103,0.2)]' : '',
+      quality.status === 'incomplete' ? 'border-[rgba(255,214,0,0.2)]' : '',
     ]"
   >
     <div class="flex flex-wrap items-start justify-between gap-3">
@@ -19,16 +19,16 @@
           <ValidationBadge :quality="quality" />
           <span
             v-if="changedFields.length > 0"
-            class="rounded-full bg-[rgba(187,222,242,0.08)] px-2 py-1 text-xs font-medium text-indigo-700"
+            class="rounded-full bg-[rgba(187,222,242,0.08)] px-2 py-1 text-xs font-medium text-[var(--accent)]"
           >
             Editado
           </span>
-          <span class="rounded-full bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700">
+          <span class="rounded-full bg-[rgba(255,154,0,0.08)] px-2 py-1 text-xs font-medium text-[var(--goldenrod)]">
             {{ caloricLabel }}
           </span>
           <span
             v-if="row.review_reason"
-            class="rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700"
+            class="rounded-full bg-[rgba(255,214,0,0.06)] px-2 py-1 text-xs font-medium text-[var(--goldenrod)]"
           >
             revisión: {{ row.review_reason }}
           </span>
@@ -49,14 +49,14 @@
 
       <div class="flex flex-wrap justify-end gap-2">
         <button
-          class="rounded-md border border-[var(--border-soft)] px-3 py-2 text-xs font-medium text-[var(--text-2)] hover:bg-gray-50 disabled:opacity-50"
+          class="rounded-md border border-[var(--border-soft)] px-3 py-2 text-xs font-medium text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-50"
           :disabled="saving || isFirst"
           @click="$emit('previous')"
         >
           Anterior
         </button>
         <button
-          class="rounded-md border border-[var(--border-soft)] px-3 py-2 text-xs font-medium text-[var(--text-2)] hover:bg-gray-50 disabled:opacity-50"
+          class="rounded-md border border-[var(--border-soft)] px-3 py-2 text-xs font-medium text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-50"
           :disabled="saving || isLast"
           @click="$emit('next')"
         >
@@ -89,7 +89,7 @@
     <div
       v-if="quality.warnings.length > 0"
       class="mt-3 rounded-md border p-3 text-xs"
-      :class="quality.status === 'inconsistent' ? 'border-red-200 bg-[rgba(255,100,103,0.06)] text-[var(--danger)]' : 'border-amber-200 bg-amber-50 text-amber-700'"
+      :class="quality.status === 'inconsistent' ? 'border-[rgba(255,100,103,0.2)] bg-[rgba(255,100,103,0.06)] text-[var(--danger)]' : 'border-[rgba(255,214,0,0.2)] bg-[rgba(255,214,0,0.06)] text-[var(--goldenrod)]'"
     >
       <p class="font-medium">{{ quality.warnings.join(" · ") }}</p>
       <p v-if="quality.calculatedKcal !== null" class="mt-1">
@@ -115,7 +115,7 @@
             v-for="recipe in recipes.slice(0, 4)"
             :key="recipe.id"
             :to="{ path: '/recipes', query: { recipe: recipe.id } }"
-            class="rounded border border-[var(--border-soft)] bg-transparent bg-[var(--surface-1)] px-2 py-1 text-sky-700 hover:bg-[rgba(187,222,242,0.08)] "
+            class="rounded border border-[var(--border-soft)] bg-[var(--surface-1)] px-2 py-1 text-[var(--accent)] hover:bg-[rgba(187,222,242,0.08)] "
           >
             {{ recipe.name }}
           </NuxtLink>
@@ -129,20 +129,20 @@
       </div>
     </div>
 
-    <div v-if="candidates.length > 0" class="mt-3 rounded-md border border-[rgba(187,222,242,0.2)] bg-[rgba(187,222,242,0.08)]  p-3">
+    <div v-if="candidates.length > 0" class="mt-3 rounded-md border border-[rgba(187,222,242,0.2)] bg-[rgba(187,222,242,0.08)] p-3">
       <p class="text-xs font-medium text-[var(--accent)] ">Sugerencias disponibles</p>
       <div class="mt-2 space-y-2">
         <div
           v-for="candidate in candidates.slice(0, 2)"
           :key="candidate.id"
-          class="flex flex-wrap items-center justify-between gap-2 rounded-md bg-transparent bg-[var(--surface-1)] p-2 text-xs"
+          class="flex flex-wrap items-center justify-between gap-2 rounded-md bg-[var(--surface-1)] p-2 text-xs"
         >
           <span class="text-[var(--text-2)]">
             {{ candidate.name }} · {{ candidate.kcal_per_100g ?? "?" }} kcal ·
             confianza {{ Number(candidate.confidence || 0).toFixed(2) }}
           </span>
           <button
-            class="font-medium text-sky-700"
+            class="font-medium text-[var(--accent)]"
             @click="$emit('apply-candidate', candidate.id)"
           >
             Aplicar
@@ -159,21 +159,21 @@
 
     <div class="mt-4 flex flex-wrap items-center justify-end gap-3">
       <div class="flex flex-wrap items-center gap-2">
-        <span v-if="saveState === 'success'" class="text-xs text-emerald-700">
+        <span v-if="saveState === 'success'" class="text-xs text-[var(--success)]">
           Guardado
         </span>
         <span v-if="saveState === 'error'" class="text-xs text-[var(--danger)]">
           Error al guardar
         </span>
         <button
-          class="rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-[var(--text-1)] hover:bg-indigo-700 disabled:opacity-50"
+          class="rounded-md bg-[var(--accent)] px-3 py-2 text-xs font-medium text-[var(--text-1)] hover:brightness-110 disabled:opacity-50"
           :disabled="saving || !row.name.trim()"
           @click="$emit('save')"
         >
           {{ saving ? "Guardando..." : "Guardar ingrediente" }}
         </button>
         <button
-          class="rounded-md bg-emerald-600 px-3 py-2 text-xs font-medium text-[var(--text-1)] hover:bg-emerald-700 disabled:opacity-50"
+          class="rounded-md bg-[var(--success)] px-3 py-2 text-xs font-medium text-[var(--text-1)] hover:brightness-110 disabled:opacity-50"
           :disabled="saving || !row.name.trim()"
           @click="$emit('save-next')"
         >

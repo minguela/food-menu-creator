@@ -28,7 +28,7 @@
       </div>
     </header>
 
-    <section v-if=" loading " class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-6 text-sm text-[var(--text-3)]">
+    <section v-if=" loading " class="rounded-lg border bg-[var(--surface-1)] p-6 text-sm text-[var(--text-3)]">
       Cargando menú generado...
     </section>
 
@@ -36,7 +36,7 @@
       <p class="font-semibold">No se pudo visualizar el menú generado</p>
       <p class="mt-1">{{ error }}</p>
       <pre v-if=" debug "
-        class="mt-3 max-h-80 overflow-auto rounded border border-[rgba(255,100,103,0.2)] bg-transparent bg-[var(--surface-1)] p-3 text-xs">{{ JSON.stringify( debug, null, 2 ) }}</pre>
+        class="mt-3 max-h-80 overflow-auto rounded border border-[rgba(255,100,103,0.2)] bg-[var(--surface-1)] p-3 text-xs">{{ JSON.stringify( debug, null, 2 ) }}</pre>
     </section>
 
     <section v-else-if=" !detail || detail.days.length === 0 "
@@ -50,27 +50,27 @@
 
     <template v-else>
       <section class="grid gap-3 md:grid-cols-4">
-        <article class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
+        <article class="rounded-lg border bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
           <p class="text-xs text-[var(--text-3)]">Estado job</p>
           <p class="mt-1 font-semibold text-[var(--text-1)]">
             {{ detail.job?.status || "Sin job vinculado" }}
           </p>
         </article>
-        <article class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
+        <article class="rounded-lg border bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
           <p class="text-xs text-[var(--text-3)]">Días</p>
           <p class="mt-1 font-semibold text-[var(--text-1)]">{{ detail.days.length }}</p>
         </article>
-        <article class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
+        <article class="rounded-lg border bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
           <p class="text-xs text-[var(--text-3)]">Comidas</p>
           <p class="mt-1 font-semibold text-[var(--text-1)]">{{ mealsCount }}</p>
         </article>
-        <article class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
+        <article class="rounded-lg border bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
           <p class="text-xs text-[var(--text-3)]">Compra</p>
           <p class="mt-1 font-semibold text-[var(--text-1)]">
             {{ detail.shopping_items.length }} líneas
           </p>
         </article>
-        <article v-if=" detail.menu?.generator_type === 'nutrition_scored' " class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
+        <article v-if=" detail.menu?.generator_type === 'nutrition_scored' " class="rounded-lg border bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
           <p class="text-xs text-[var(--text-3)]">Score</p>
           <p class="mt-1 font-semibold text-[var(--text-1)]">
             {{ fixed( detail.menu?.score ) }} · {{ detail.menu?.meets_targets ? "cumple" : "revisar" }}
@@ -78,7 +78,7 @@
         </article>
       </section>
 
-      <section class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
+      <section class="rounded-lg border bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 class="font-semibold text-[var(--text-1)]">Semanas</h2>
@@ -90,8 +90,7 @@
         <div class="mt-3 flex gap-2 overflow-x-auto pb-1">
           <button v-for=" week in weeks " :key=" `nav-week-${ week.weekNumber }` "
             class="min-w-28 rounded-lg border px-4 py-2.5 text-sm"
-            :class="selectedWeekNumber === week.weekNumber ? 'border-indigo-500 text-[var(--text-1)]'
-                : ' text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.06)]'
+            :class="selectedWeekNumber === week.weekNumber ? 'border-[rgba(187,222,242,0.25)] text-[var(--text-1)]' : ' text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.06)]'
               " @click=" selectedWeekNumber = week.weekNumber">
             <div class="font-semibold">Semana {{ week.weekNumber }}</div>
             <div class="text-xs opacity-70">Días {{ week.startDay }}-{{ week.endDay }}</div>
@@ -122,7 +121,7 @@
 
           <div class="space-y-4">
             <article v-for=" day in week.days " :id=" `day-${ day.day_number }` " :key=" day.id "
-              class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
+              class="rounded-lg border bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 class="text-lg font-semibold text-[var(--text-1)]">
@@ -138,7 +137,7 @@
               </div>
 
               <div class="mt-4 space-y-3">
-                <article v-for=" meal in day.meals " :key=" meal.id " class="rounded-lg border p-3 bg-transparent bg-[var(--surface-1)]"
+                <article v-for=" meal in day.meals " :key=" meal.id " class="rounded-lg border p-3 bg-[var(--surface-1)]"
                   :class="meal.is_special ? '' : ''">
                   <div class="flex flex-wrap items-start justify-between gap-3">
                     <div>
@@ -204,7 +203,7 @@
                   </div>
                 </article>
 
-                <div class="overflow-x-auto rounded-lg border bg-transparent bg-[var(--surface-1)]">
+                <div class="overflow-x-auto rounded-lg border bg-[var(--surface-1)]">
                   <table class="min-w-[820px] w-full text-sm text-[var(--text-1)]">
                     <thead class="text-left text-[var(--text-2)]">
                       <tr>
@@ -245,7 +244,7 @@
         </template>
       </section>
 
-      <section class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
+      <section class="rounded-lg border bg-[var(--surface-1)] p-4 text-[var(--text-1)]">
         <h2 class="font-semibold text-[var(--text-1)]">Lista de la compra generada</h2>
         <p class="mt-1 text-xs text-[var(--text-3)]">
           Generada desde este menú. Las comidas libres/especiales se ignoran.

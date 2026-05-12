@@ -1,5 +1,5 @@
 <template>
-  <div class="dark min-h-screen overflow-x-hidden">
+  <div class="dark min-h-screen overflow-x-hidden bg-[var(--color-deep-space)] text-[var(--color-text-1)]">
     <header class="sticky top-0 z-40 border-b ui-divider bg-[var(--bg-shell)]/80 backdrop-blur-xl">
       <div
         class="mx-auto flex h-16 w-full max-w-7xl items-center px-4 sm:px-6 lg:px-8"
@@ -34,7 +34,7 @@
     </header>
 
     <main
-      class="mx-auto w-full max-w-7xl px-4 pb-24 pt-8 sm:px-6 lg:px-8 lg:pb-8"
+      class="mx-auto w-full max-w-7xl px-4 pb-24 pt-8 sm:px-6 lg:px-8 lg:pb-8 bg-[var(--color-deep-space)]"
     >
       <NuxtPage />
     </main>

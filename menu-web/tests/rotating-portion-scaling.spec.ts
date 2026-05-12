@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 import {
+  calculateDensityScaledQuantity,
   computeAppliedMultiplier,
+  resolveCaloricDensityBucket,
   validateDayNutritionTotals,
   validateRecipeBase,
 } from "../utils/rotating-portion-scaling.js";
@@ -59,5 +61,31 @@ test.describe("rotating menu scaling guardrails", () => {
 
     expect(violations).toHaveLength(1);
     expect(violations[0].kcal_ratio).toBeLessThan(0.8);
+  });
+
+  test("density-aware scaling grows low-density ingredients more than very caloric ones", async () => {
+    const oil = calculateDensityScaledQuantity({
+      baseQuantity: 20,
+      mealMultiplier: 3,
+      caloricDensityLevel: "very_caloric",
+      kcalPer100g: 884,
+    });
+    const cucumber = calculateDensityScaledQuantity({
+      baseQuantity: 20,
+      mealMultiplier: 3,
+      caloricDensityLevel: "low",
+      kcalPer100g: 15,
+    });
+
+    expect(oil.finalQuantity).toBeGreaterThanOrEqual(20);
+    expect(cucumber.finalQuantity).toBeGreaterThan(oil.finalQuantity);
+    expect(cucumber.ingredientMultiplier).toBeGreaterThan(oil.ingredientMultiplier);
+    expect(oil.densityBucket).toBe("very_caloric");
+    expect(cucumber.densityBucket).toBe("low");
+  });
+
+  test("missing density labels fall back to kcal per 100g buckets", async () => {
+    expect(resolveCaloricDensityBucket({ kcalPer100g: 450 })).toBe("very_caloric");
+    expect(resolveCaloricDensityBucket({ kcalPer100g: 50 })).toBe("low");
   });
 });

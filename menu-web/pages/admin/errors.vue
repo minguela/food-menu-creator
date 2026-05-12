@@ -25,7 +25,7 @@
 
     <div v-else-if="loading" class="text-center py-10">
       <div
-        class="mx-auto h-10 w-10 animate-spin rounded-full border-b-2 border-sky-400"
+        class="mx-auto h-10 w-10 animate-spin rounded-full border-b-2 border-[rgba(187,222,242,0.25)]"
       ></div>
       <p class="mt-3 text-sm text-[var(--text-3)]">Cargando registros...</p>
     </div>
@@ -53,7 +53,7 @@
         <details v-if="item.stack_trace" class="mt-3 text-xs text-[var(--text-3)]">
           <summary class="cursor-pointer select-none">Ver stack trace</summary>
           <pre
-            class="mt-2 overflow-x-auto rounded-xl border border-zinc-700 p-3"
+            class="mt-2 overflow-x-auto rounded-xl border border-[var(--border-soft)] p-3"
             >{{ item.stack_trace }}</pre
           >
         </details>

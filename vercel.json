@@ -1,7 +1,7 @@
 {
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
+  "buildCommand": "cd menu-web && npm run build",
+  "devCommand": "cd menu-web && npm run dev",
+  "installCommand": "cd menu-web && npm install",
   "framework": "nuxtjs",
   "env": {
     "NUXT_PUBLIC_SUPABASE_URL": "https://tceusgxbfpekjcthrrqu.supabase.co",

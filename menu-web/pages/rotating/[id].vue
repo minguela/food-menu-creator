@@ -12,6 +12,9 @@
           {{ detail?.menu?.duration_days || 0 }} días ·
           {{ detail?.profiles?.length || 0 }} perfiles ·
           {{ detail?.days?.length || 0 }} días cargados
+          <span v-if=" detail?.menu?.generator_type === 'nutrition_scored' ">
+            · scoring nutricional
+          </span>
         </p>
       </div>
       <div class="flex flex-wrap gap-2">
@@ -65,6 +68,12 @@
           <p class="text-xs text-gray-500 dark:text-slate-400">Compra</p>
           <p class="mt-1 font-semibold text-gray-900 dark:text-slate-100">
             {{ detail.shopping_items.length }} líneas
+          </p>
+        </article>
+        <article v-if=" detail.menu?.generator_type === 'nutrition_scored' " class="rounded-lg border bg-white dark:bg-slate-900 p-4 text-gray-900 dark:text-slate-100">
+          <p class="text-xs text-gray-500 dark:text-slate-400">Score</p>
+          <p class="mt-1 font-semibold text-gray-900 dark:text-slate-100">
+            {{ fixed( detail.menu?.score ) }} · {{ detail.menu?.meets_targets ? "cumple" : "revisar" }}
           </p>
         </article>
       </section>
@@ -124,6 +133,9 @@
                     {{ day.meals.length }} comidas · {{ day.profile_totals.length }} perfiles
                   </p>
                 </div>
+                <span v-if=" day.score != null " class="rounded-full px-2 py-1 text-xs font-semibold" :class=" day.meets_targets ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' ">
+                  score {{ fixed( day.score ) }} · {{ day.meets_targets ? "cumple" : "mejor disponible" }}
+                </span>
               </div>
 
               <div class="mt-4 space-y-3">

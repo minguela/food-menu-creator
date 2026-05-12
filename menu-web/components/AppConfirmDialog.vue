@@ -4,25 +4,25 @@
     class="fixed inset-0 z-[70] flex items-center justify-center p-4"
     @click.self="confirmCancel"
   >
-    <div class="absolute inset-0 bg-slate-950/65 backdrop-blur-[1px]" />
-    <div class="relative w-full max-w-md overflow-hidden rounded-2xl border border-[var(--border-soft)] border-[var(--border-soft)] bg-transparent bg-[var(--surface-1)] shadow-2xl">
+    <div class="absolute inset-0 bg-[var(--bg-canvas)]/70 backdrop-blur-[1px]" />
+    <div class="relative w-full max-w-md overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-transparent bg-[var(--surface-1)] shadow-2xl">
       <div class="h-1.5" :class="state.danger ? 'bg-gradient-to-r from-red-500 to-rose-600' : 'bg-gradient-to-r from-indigo-500 to-sky-600'" />
       <div class="p-5">
-      <h3 class="text-lg font-semibold text-slate-900 text-[var(--text-1)]">
+      <h3 class="text-lg font-semibold text-[var(--text-1)]">
         {{ state.title }}
       </h3>
-      <p class="mt-2 text-sm text-[var(--text-2)] text-[var(--text-2)]">
+      <p class="mt-2 text-sm text-[var(--text-2)]">
         {{ state.message }}
       </p>
       <div class="mt-5 flex justify-end gap-2">
         <button
-          class="rounded-lg border border-[var(--border-soft)] border-[var(--border-soft)] px-3 py-2 text-sm text-slate-700 text-[var(--text-2)] hover:bg-slate-50 dark:hover:bg-slate-800"
+          class="rounded-lg border border-[var(--border-soft)] px-3 py-2 text-sm text-[var(--text-2)] hover:bg-slate-50 "
           @click="confirmCancel"
         >
           {{ state.cancelText }}
         </button>
         <button
-          class="rounded-lg px-3 py-2 text-sm text-white"
+          class="rounded-lg px-3 py-2 text-sm text-[var(--text-1)]"
           :class="state.danger ? 'bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/30' : 'bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/30'"
           @click="confirmAccept"
         >

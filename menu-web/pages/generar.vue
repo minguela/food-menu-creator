@@ -21,7 +21,7 @@
         <div class="flex items-center gap-4">
           <div
             class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-200">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-6 h-6 text-[var(--text-1)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
             </svg>
@@ -35,11 +35,11 @@
         </div>
         <div class="flex gap-3">
           <NuxtLink href="/shopping"
-            class="px-4 py-2.5 border border-[var(--border-soft)] text-[var(--text-2)] rounded-xl hover: bg-[var(--surface-1)] hover:border-slate-300  transition-all text-sm font-medium">
+            class="px-4 py-2.5 border border-[var(--border-soft)] text-[var(--text-2)] rounded-xl hover: bg-[var(--surface-1)] hover:border-[var(--border-soft)] transition-all text-sm font-medium">
             Ir a compra
           </NuxtLink>
           <button
-            class="px-5 py-2.5 text-white rounded-xl hover: disabled:opacity-50 text-sm font-medium shadow-lg shadow-black/40 hover:shadow-xl transition-all disabled:cursor-not-allowed"
+            class="px-5 py-2.5 text-[var(--text-1)] rounded-xl hover: disabled:opacity-50 text-sm font-medium shadow-lg shadow-black/40 hover:shadow-xl transition-all disabled:cursor-not-allowed"
             :disabled=" generatedDays.length === 0 " @click=" printMenu ">
             <span class="flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,7 +54,7 @@
 
       <section class="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <!-- Config Section -->
-        <article class="bg-white bg-[var(--surface-1)] rounded-2xl border border-[var(--border-soft)] shadow-sm p-6">
+        <article class="bg-[var(--surface-1)] rounded-2xl border border-[var(--border-soft)] shadow-sm p-6">
           <div class="flex items-center gap-3 mb-6">
             <div class="w-10 h-10 rounded-xl bg-[var(--surface-3)] flex items-center justify-center">
               <svg class="w-5 h-5 text-[var(--text-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +150,7 @@
           <p v-if=" error " class="mt-3 text-sm text-[var(--danger)]">{{ error }}</p>
 
           <div class="mt-4 flex flex-wrap gap-2">
-            <button class="rounded-lg px-4 py-2 text-white hover: disabled:opacity-50"
+            <button class="rounded-lg px-4 py-2 text-[var(--text-1)] hover: disabled:opacity-50"
               :disabled=" loading || currentJob?.status === 'processing' " @click=" generateRotatingMenu ">
               {{
                 loading || currentJob?.status === "processing"
@@ -188,8 +188,7 @@
               5. Lista de compra creada automáticamente
             </li>
           </ol>
-          <div v-if=" currentJob " class="mt-4 rounded-lg border p-3 text-sm" :class="currentJob.status === 'failed' ? 'border-red-200 bg-[rgba(255,100,103,0.06)] text-[var(--danger)]'
-            : currentJob.status === 'completed'
+          <div v-if=" currentJob " class="mt-4 rounded-lg border p-3 text-sm" :class="currentJob.status === 'failed' ? 'border-red-200 bg-[rgba(255,100,103,0.06)] text-[var(--danger)]' : currentJob.status === 'completed'
               ? 'border-emerald-200 bg-[rgba(114,206,123,0.06)] text-[var(--success)]'
               : 'border-amber-200 bg-[rgba(255,214,0,0.06)] text-[var(--goldenrod)]'
             ">
@@ -207,8 +206,7 @@
               {{ currentJob.progress ?? 0 }}%
             </p>
             <div class="mt-3 h-2 w-full overflow-hidden rounded bg-transparent bg-[var(--surface-1)]/70">
-              <div class="h-2 rounded transition-all" :class="currentJob.status === 'failed' ? 'bg-red-500'
-                : currentJob.status === 'completed'
+              <div class="h-2 rounded transition-all" :class="currentJob.status === 'failed' ? 'bg-red-500' : currentJob.status === 'completed'
                   ? ''
                   : ''
                 " :style=" { width: `${ Math.max( 0, Math.min( 100, currentJob.progress || 0 ) ) }%` } " />
@@ -289,7 +287,7 @@
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button class="rounded-lg px-4 py-2 text-sm font-medium text-white hover: disabled:opacity-50"
+            <button class="rounded-lg px-4 py-2 text-sm font-medium text-[var(--text-1)] hover: disabled:opacity-50"
               :disabled=" nutritionGenerating || !selectedNutritionProfileId " @click=" generateNutritionMenu ">
               {{ nutritionGenerating ? "Calculando..." : "Generar preview" }}
             </button>
@@ -537,7 +535,7 @@
                       Día libre completo
                     </span>
                     <span v-if=" total.low_regular_budget_warning "
-                      class="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] ">
+                      class="ml-2 rounded bg-[rgba(255,100,103,0.12)] px-1.5 py-0.5 text-[10px] ">
                       Poco margen
                     </span>
                   </td>

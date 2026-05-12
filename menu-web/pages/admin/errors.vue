@@ -2,8 +2,8 @@
   <div class="space-y-6">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-text-1">Error Logs</h1>
-        <p class="text-sm text-text-3">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100">Error Logs</h1>
+        <p class="text-sm text-gray-500 dark:text-slate-400">
           Registro centralizado de errores de web, Telegram y OCR.
         </p>
       </div>
@@ -17,7 +17,7 @@
     </header>
 
     <div v-if="!isAuthorized" class="ui-surface p-5">
-      <p class="text-sm ">
+      <p class="text-sm text-red-300">
         Acceso restringido. Esta vista solo está disponible para el
         administrador.
       </p>
@@ -25,14 +25,14 @@
 
     <div v-else-if="loading" class="text-center py-10">
       <div
-        class="mx-auto h-10 w-10 animate-spin rounded-full border-b-2 border-[rgba(187,222,242,0.25)]"
+        class="mx-auto h-10 w-10 animate-spin rounded-full border-b-2 border-sky-400"
       ></div>
-      <p class="mt-3 text-sm text-text-3">Cargando registros...</p>
+      <p class="mt-3 text-sm text-gray-500 dark:text-slate-400">Cargando registros...</p>
     </div>
 
     <div
       v-else-if="logs.length === 0"
-      class="ui-surface p-5 text-sm text-text-3"
+      class="ui-surface p-5 text-sm text-gray-500 dark:text-slate-400"
     >
       No hay errores registrados.
     </div>
@@ -43,17 +43,17 @@
           <span class="ui-chip px-2 py-0.5 text-xs uppercase tracking-wide">{{
             item.source
           }}</span>
-          <span class="text-xs text-text-3">{{
+          <span class="text-xs text-gray-500 dark:text-slate-400">{{
             formatDate(item.created_at)
           }}</span>
         </div>
-        <p class="text-sm whitespace-pre-wrap">
+        <p class="text-sm text-gray-100 whitespace-pre-wrap">
           {{ item.message }}
         </p>
-        <details v-if="item.stack_trace" class="mt-3 text-xs text-text-3">
+        <details v-if="item.stack_trace" class="mt-3 text-xs text-gray-400">
           <summary class="cursor-pointer select-none">Ver stack trace</summary>
           <pre
-            class="mt-2 overflow-x-auto rounded-xl border border-[var(--border-soft)] p-3"
+            class="mt-2 overflow-x-auto rounded-xl border border-zinc-700 p-3"
             >{{ item.stack_trace }}</pre
           >
         </details>

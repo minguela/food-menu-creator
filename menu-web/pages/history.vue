@@ -2,37 +2,33 @@
   <div class="space-y-6">
     <header class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-text-1">Menús rotativos</h1>
-        <p class="text-sm text-text-3">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100">Menús rotativos</h1>
+        <p class="text-sm text-gray-500 dark:text-slate-400">
           Estado de generación y acceso rápido a menús creados.
         </p>
       </div>
       <NuxtLink
         href="/generar"
-        class="rounded-lg px-4 py-2 text-sm text-text-1 hover:"
+        class="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
       >
         Nuevo menú rotativo
       </NuxtLink>
     </header>
 
-<<<<<<< Updated upstream
-    <section class="rounded-lg border bg-[var(--surface-1)] p-4">
-=======
-    <section class="rounded-lg border bg-surface-1 p-4">
->>>>>>> Stashed changes
+    <section class="rounded-lg border bg-white dark:bg-slate-900 p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 class="font-semibold text-text-1">En creación</h2>
+        <h2 class="font-semibold text-gray-900 dark:text-slate-100">En creación</h2>
         <button
-          class="rounded border px-3 py-1.5 text-xs text-text-2 hover:bg-white/6 bg-surface-1"
+          class="rounded border px-3 py-1.5 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
           @click="cleanupFinishedJobs"
         >
           Limpiar completados/errores
         </button>
       </div>
-      <div v-if="loadingJobs" class="text-sm text-text-3">Cargando jobs...</div>
+      <div v-if="loadingJobs" class="text-sm text-gray-500 dark:text-slate-400">Cargando jobs...</div>
       <div
         v-else-if="activeJobs.length === 0"
-        class="rounded-lg border border-dashed p-4 text-sm text-text-3"
+        class="rounded-lg border border-dashed p-4 text-sm text-gray-500 dark:text-slate-400"
       >
         No hay menús en proceso ahora mismo.
       </div>
@@ -43,7 +39,7 @@
           class="rounded-lg border p-3"
         >
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <p class="font-medium text-text-1">
+            <p class="font-medium text-gray-900 dark:text-slate-100">
               {{ job.input_payload?.name || "Menú rotativo" }}
             </p>
             <div class="flex items-center gap-2">
@@ -52,34 +48,34 @@
               </span>
               <button
                 v-if="job.result_menu_id"
-                class="rounded border px-2 py-1 text-xs text-text-2 hover:bg-white/6 bg-surface-1"
+                class="rounded border px-2 py-1 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
                 @click="openRotatingMenu(job.result_menu_id)"
               >
                 Abrir menú
               </button>
               <button
-                class="rounded border px-2 py-1 text-xs text-text-2 hover:bg-white/6 bg-surface-1"
+                class="rounded border px-2 py-1 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
                 @click="toggleJobLogs(job)"
               >
                 {{ expandedJobId === job.id ? "Ocultar logs" : "Ver logs" }}
               </button>
               <button
-                class="rounded border border-danger/20 px-2 py-1 text-xs text-danger hover:bg-danger/10"
+                class="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
                 @click="deleteJob(job)"
               >
                 Eliminar job
               </button>
             </div>
           </div>
-          <p class="mt-1 text-xs text-text-3">
+          <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">
             {{ formatDateTime(job.created_at) }} · progreso {{ job.progress || 0 }}%
           </p>
-          <p v-if="job.error_message" class="mt-1 text-xs text-danger">
+          <p v-if="job.error_message" class="mt-1 text-xs text-red-600">
             {{ job.error_message }}
           </p>
           <div
             v-if="job.status === 'failed' && failedRecipes(job).length > 0"
-            class="mt-2 rounded border border-danger/20 bg-danger/6 p-2 text-xs "
+            class="mt-2 rounded border border-red-200 bg-red-50 p-2 text-xs text-red-800"
           >
             <p class="font-medium">Recetas bloqueando la generación:</p>
             <ul class="mt-1 space-y-1">
@@ -96,20 +92,20 @@
               <NuxtLink href="/generar" class="underline">Volver a generar</NuxtLink>
             </div>
           </div>
-          <div class="mt-2 h-2 w-full overflow-hidden rounded bg-surface-3">
+          <div class="mt-2 h-2 w-full overflow-hidden rounded bg-gray-100 dark:bg-slate-800">
             <div
-              class="h-2 rounded transition-all"
+              class="h-2 rounded bg-indigo-600 transition-all"
               :style="{ width: `${Math.max(0, Math.min(100, job.progress || 0))}%` }"
             />
           </div>
           <div
             v-if="expandedJobId === job.id"
-            class="mt-3 rounded-lg border bg-shell p-3 text-xs text-text-1"
+            class="mt-3 rounded-lg border bg-zinc-950 p-3 text-xs text-zinc-100"
           >
-            <div v-if="loadingLogs" class="">Cargando logs...</div>
+            <div v-if="loadingLogs" class="text-zinc-400">Cargando logs...</div>
             <div
               v-else-if="(logsByJob[job.id] || []).length === 0"
-              class=""
+              class="text-zinc-400"
             >
               Este job todavía no tiene logs persistidos.
             </div>
@@ -117,16 +113,16 @@
               <li
                 v-for="log in logsByJob[job.id]"
                 :key="log.id"
-                class="rounded border border-border-soft bg-surface-3 p-2"
+                class="rounded border border-zinc-800 bg-zinc-900 p-2"
               >
                 <div class="flex flex-wrap items-center justify-between gap-2">
                   <span class="font-medium">{{ log.step }}</span>
-                  <span class="">{{ formatDateTime(log.created_at) }}</span>
+                  <span class="text-zinc-500">{{ formatDateTime(log.created_at) }}</span>
                 </div>
-                <p class="mt-1 text-text-2">{{ log.message }}</p>
-                <details v-if="log.metadata" class="mt-2 text-text-3">
+                <p class="mt-1 text-zinc-300">{{ log.message }}</p>
+                <details v-if="log.metadata" class="mt-2 text-zinc-400">
                   <summary class="cursor-pointer">metadata</summary>
-                  <pre class="mt-2 overflow-x-auto rounded border border-border-soft p-2">{{ JSON.stringify(log.metadata, null, 2) }}</pre>
+                  <pre class="mt-2 overflow-x-auto rounded border border-zinc-800 p-2">{{ JSON.stringify(log.metadata, null, 2) }}</pre>
                 </details>
               </li>
             </ol>
@@ -135,18 +131,12 @@
       </div>
     </section>
 
-<<<<<<< Updated upstream
-    <section class="rounded-lg border bg-[var(--surface-1)] p-4">
-      <h2 class="mb-3 font-semibold text-[var(--text-1)]">Creados</h2>
-      <div v-if="loadingMenus" class="text-sm text-[var(--text-3)]">Cargando menús...</div>
-=======
-    <section class="rounded-lg border bg-surface-1 p-4">
-      <h2 class="mb-3 font-semibold text-text-1">Creados</h2>
-      <div v-if="loadingMenus" class="text-sm text-text-3">Cargando menús...</div>
->>>>>>> Stashed changes
+    <section class="rounded-lg border bg-white dark:bg-slate-900 p-4">
+      <h2 class="mb-3 font-semibold text-gray-900 dark:text-slate-100">Creados</h2>
+      <div v-if="loadingMenus" class="text-sm text-gray-500 dark:text-slate-400">Cargando menús...</div>
       <div
         v-else-if="rotatingMenus.length === 0"
-        class="rounded-lg border border-dashed p-4 text-sm text-text-3"
+        class="rounded-lg border border-dashed p-4 text-sm text-gray-500 dark:text-slate-400"
       >
         Todavía no tienes menús rotativos creados.
       </div>
@@ -158,26 +148,26 @@
         >
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p class="font-medium text-text-1">{{ menu.name }}</p>
-              <p class="text-xs text-text-3">
+              <p class="font-medium text-gray-900 dark:text-slate-100">{{ menu.name }}</p>
+              <p class="text-xs text-gray-500 dark:text-slate-400">
                 {{ menu.duration_days }} días · {{ formatDateTime(menu.created_at) }}
               </p>
             </div>
             <div class="flex flex-wrap gap-2">
               <button
-                class="rounded border px-3 py-1.5 text-xs text-text-2 hover:bg-white/6 bg-surface-1"
+                class="rounded border px-3 py-1.5 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
                 @click="openRotatingMenu(menu.id)"
               >
                 Abrir menú
               </button>
               <button
-                class="rounded border px-3 py-1.5 text-xs text-text-2 hover:bg-white/6 bg-surface-1"
+                class="rounded border px-3 py-1.5 text-xs text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900"
                 @click="openShoppingForMenu(menu.id)"
               >
                 Ver compra asociada
               </button>
               <button
-                class="rounded border border-danger/20 px-3 py-1.5 text-xs text-danger hover:bg-danger/10"
+                class="rounded border border-red-200 px-3 py-1.5 text-xs text-red-700 hover:bg-red-50"
                 @click="deleteRotatingMenu(menu)"
               >
                 Eliminar
@@ -239,9 +229,9 @@ const statusLabel = (status: MenuGenerationJob["status"]) => {
 };
 
 const statusClass = (status: MenuGenerationJob["status"]) => {
-  if (status === "completed") return " text-success";
-  if (status === "failed") return "bg-danger/15 ";
-  return " text-warning";
+  if (status === "completed") return "bg-emerald-100 text-emerald-800";
+  if (status === "failed") return "bg-red-100 text-red-800";
+  return "bg-amber-100 text-amber-800";
 };
 
 const formatDateTime = (value: string) =>

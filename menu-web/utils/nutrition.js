@@ -1,4 +1,4 @@
-export const MEAL_TYPES = ["desayuno", "comida", "cena"];
+﻿export const MEAL_TYPES = ["desayuno", "comida", "cena"];
 
 export function validateMacroTargets({ fatPct, carbsPct }) {
   const fat = Number(fatPct);

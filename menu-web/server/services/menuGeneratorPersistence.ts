@@ -1,4 +1,4 @@
-import type { MealType } from "~/types";
+﻿import type { MealType } from "~/types";
 import type { GeneratedMenuResult } from "~/server/services/menuGenerator";
 import { normalizeQuantityToGrams } from "~/utils/nutrition/calculateRecipeMacros";
 

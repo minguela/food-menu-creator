@@ -1,12 +1,12 @@
 ﻿<template>
-  <div class="min-h-screen bg-transparent text-[var(--text-1)]">
+  <div class="min-h-screen bg-transparent text-text-1">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
       <!-- Toast -->
       <div
         v-if="statusMessage"
         class="fixed right-4 top-4 z-50 px-5 py-3 rounded-2xl text-sm font-medium border shadow-lg backdrop-blur-lg"
-        :class="statusType === 'error' ? 'bg-[rgba(255,100,103,0.12)] text-[var(--danger)] border-[rgba(255,100,103,0.25)]' : 'bg-[rgba(114,206,123,0.12)] text-[var(--success)] border-[rgba(114,206,123,0.25)]'"
+        :class="statusType === 'error' ? 'bg-danger/15 text-danger border-danger/25' : 'bg-success/15 text-success border-[rgba(114,206,123,0.25)]'"
       >
         {{ statusMessage }}
       </div>
@@ -15,16 +15,16 @@
       <header class="flex items-center gap-5">
         <div class="w-14 h-14 rounded-2xl flex items-center justify-center"
           style="background: linear-gradient(135deg, rgba(187,222,242,0.18), rgba(209,170,215,0.14)); border: 1px solid rgba(255,255,255,0.08);">
-          <svg class="w-7 h-7 text-[var(--text-1)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-7 h-7 text-text-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
               d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
         </div>
         <div>
-          <h1 class="text-[26px] font-light font-['Montserrat'] tracking-[-0.01em] text-[var(--text-1)]">
+          <h1 class="text-[26px] font-light font-['Montserrat'] tracking-[-0.01em] text-text-1">
             Perfiles
           </h1>
-          <p class="text-sm text-[var(--text-3)] mt-1">
+          <p class="text-sm text-text-3 mt-1">
             Define objetivos nutricionales por persona con porcentajes de macronutrientes
           </p>
         </div>
@@ -33,11 +33,11 @@
       <!-- Form Section -->
       <section class="ui-surface p-6 sm:p-8">
         <div class="flex items-center justify-between mb-8">
-          <h2 class="text-lg font-light font-['Montserrat'] tracking-[-0.01em] text-[var(--text-1)]">
+          <h2 class="text-lg font-light font-['Montserrat'] tracking-[-0.01em] text-text-1">
             {{ profileForm.id ? "Editar perfil" : "Nuevo perfil" }}
           </h2>
           <button v-if="profileForm.id" @click="resetProfileForm"
-            class="text-sm text-[var(--text-3)] hover:text-[var(--text-1)] transition-colors">
+            class="text-sm text-text-3 hover:text-text-1 transition-colors">
             Cancelar
           </button>
         </div>
@@ -46,19 +46,19 @@
           <!-- Basic info row -->
           <div class="grid gap-4 sm:grid-cols-5">
             <label class="sm:col-span-2 space-y-1.5">
-              <span class="block text-xs font-medium tracking-[0.08em] uppercase text-[var(--text-3)]">Nombre</span>
+              <span class="block text-xs font-medium tracking-[0.08em] uppercase text-text-3">Nombre</span>
               <input
                 v-model.trim="profileForm.name"
-                class="w-full rounded-xl px-4 py-2.5 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                class="w-full rounded-xl px-4 py-2.5 text-sm bg-surface-3 border border-border-soft text-text-1 placeholder:text-text-3 focus:border-[var(--accent)] focus:ring-1 focus:ring-accent outline-none"
                 placeholder="Ej. David"
                 required
               />
             </label>
             <label class="space-y-1.5">
-              <span class="block text-xs font-medium tracking-[0.08em] uppercase text-[var(--text-3)]">Sexo</span>
+              <span class="block text-xs font-medium tracking-[0.08em] uppercase text-text-3">Sexo</span>
               <select
                 v-model="profileForm.sex"
-                class="w-full rounded-xl px-4 py-2.5 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none appearance-none"
+                class="w-full rounded-xl px-4 py-2.5 text-sm bg-surface-3 border border-border-soft text-text-1 focus:border-[var(--accent)] focus:ring-1 focus:ring-accent outline-none appearance-none"
               >
                 <option value="female">Mujer</option>
                 <option value="male">Hombre</option>
@@ -66,21 +66,21 @@
               </select>
             </label>
             <label class="space-y-1.5">
-              <span class="block text-xs font-medium tracking-[0.08em] uppercase text-[var(--text-3)]">Edad</span>
+              <span class="block text-xs font-medium tracking-[0.08em] uppercase text-text-3">Edad</span>
               <input
                 v-model.number="profileForm.age"
                 type="number" min="1" max="120"
-                class="w-full rounded-xl px-4 py-2.5 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                class="w-full rounded-xl px-4 py-2.5 text-sm bg-surface-3 border border-border-soft text-text-1 placeholder:text-text-3 focus:border-[var(--accent)] focus:ring-1 focus:ring-accent outline-none"
                 placeholder="35"
                 required
               />
             </label>
             <label class="space-y-1.5">
-              <span class="block text-xs font-medium tracking-[0.08em] uppercase text-[var(--text-3)]">kcal/día</span>
+              <span class="block text-xs font-medium tracking-[0.08em] uppercase text-text-3">kcal/día</span>
               <input
                 v-model.number="profileForm.daily_kcal_target"
                 type="number" min="800" max="6000" step="50"
-                class="w-full rounded-xl px-4 py-2.5 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                class="w-full rounded-xl px-4 py-2.5 text-sm bg-surface-3 border border-border-soft text-text-1 placeholder:text-text-3 focus:border-[var(--accent)] focus:ring-1 focus:ring-accent outline-none"
                 placeholder="1900"
                 required
               />
@@ -89,41 +89,41 @@
 
           <!-- Macros row -->
           <div class="pt-2">
-            <p class="text-xs font-medium tracking-[0.08em] uppercase text-[var(--text-3)] mb-4">Distribucion de macros (%)</p>
+            <p class="text-xs font-medium tracking-[0.08em] uppercase text-text-3 mb-4">Distribucion de macros (%)</p>
             <div class="grid gap-4 sm:grid-cols-4 items-end">
               <label class="space-y-1.5">
-                <span class="block text-xs text-[var(--text-3)]">Hidratos</span>
+                <span class="block text-xs text-text-3">Hidratos</span>
                 <div class="relative">
                   <input
                     v-model.number="profileForm.carbs_pct_target"
                     type="number" min="5" max="80" step="1"
-                    class="w-full rounded-xl px-4 py-2.5 pr-10 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                    class="w-full rounded-xl px-4 py-2.5 pr-10 text-sm bg-surface-3 border border-border-soft text-text-1 placeholder:text-text-3 focus:border-[var(--accent)] focus:ring-1 focus:ring-accent outline-none"
                     placeholder="45"
                     required
                   />
-                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-3)]">%</span>
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-3">%</span>
                 </div>
               </label>
               <label class="space-y-1.5">
-                <span class="block text-xs text-[var(--text-3)]">Grasas</span>
+                <span class="block text-xs text-text-3">Grasas</span>
                 <div class="relative">
                   <input
                     v-model.number="profileForm.fat_pct_target"
                     type="number" min="5" max="70" step="1"
-                    class="w-full rounded-xl px-4 py-2.5 pr-10 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                    class="w-full rounded-xl px-4 py-2.5 pr-10 text-sm bg-surface-3 border border-border-soft text-text-1 placeholder:text-text-3 focus:border-[var(--accent)] focus:ring-1 focus:ring-accent outline-none"
                     placeholder="30"
                     required
                   />
-                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-3)]">%</span>
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-3">%</span>
                 </div>
               </label>
 
               <!-- Deduced protein -->
               <div class="space-y-1.5">
-                <span class="block text-xs text-[var(--text-3)]">Proteína</span>
+                <span class="block text-xs text-text-3">Proteína</span>
                 <div
                   class="rounded-xl px-4 py-2.5 text-sm border"
-                  :class="profileMacroValidation.valid ? 'bg-[rgba(114,206,123,0.06)] border-[rgba(114,206,123,0.2)] text-[var(--success)]' : 'bg-[rgba(255,100,103,0.06)] border-[rgba(255,100,103,0.2)] text-[var(--danger)]'"
+                  :class="profileMacroValidation.valid ? 'bg-success/8 border-success/20 text-success' : 'bg-danger/6 border-danger/20 text-danger'"
                 >
                   <span class="font-semibold">{{ profileForm.protein_pct_target }}%</span>
                   <span class="ml-1 text-xs opacity-60">deducida</span>
@@ -132,15 +132,15 @@
 
               <!-- Tolerance -->
               <label class="space-y-1.5">
-                <span class="block text-xs text-[var(--text-3)]">Tolerancia</span>
+                <span class="block text-xs text-text-3">Tolerancia</span>
                 <div class="relative">
                   <input
                     v-model.number="profileForm.tolerance_percent"
                     type="number" min="0" max="50" step="1"
-                    class="w-full rounded-xl px-4 py-2.5 pr-10 text-sm bg-[var(--surface-3)] border border-[var(--border-soft)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] outline-none"
+                    class="w-full rounded-xl px-4 py-2.5 pr-10 text-sm bg-surface-3 border border-border-soft text-text-1 placeholder:text-text-3 focus:border-[var(--accent)] focus:ring-1 focus:ring-accent outline-none"
                     placeholder="10"
                   />
-                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-3)]">%</span>
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-3">%</span>
                 </div>
               </label>
             </div>
@@ -153,13 +153,13 @@
             style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-soft);"
           >
             <div class="flex-1 min-w-[140px]">
-              <p class="text-xs tracking-[0.08em] uppercase text-[var(--text-3)] mb-1">Equivalente en gramos</p>
-              <p class="text-[var(--text-2)]">{{ profileMacroSummaryText }}</p>
+              <p class="text-xs tracking-[0.08em] uppercase text-text-3 mb-1">Equivalente en gramos</p>
+              <p class="text-text-2">{{ profileMacroSummaryText }}</p>
             </div>
             <button
               type="button"
               v-if="profileForm.id && profileMacroValidation.valid"
-              class="text-sm px-4 py-2 rounded-xl font-medium border border-[rgba(255,255,255,0.12)] text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-40 transition-colors"
+              class="text-sm px-4 py-2 rounded-xl font-medium border border-[rgba(255,255,255,0.12)] text-text-2 hover:bg-white/6 disabled:opacity-40 transition-colors"
               :disabled="profileSaving"
               @click="saveProfileMacros"
             >
@@ -168,7 +168,7 @@
           </div>
           <div
             v-if="!profileMacroValidation.valid && (profileForm.carbs_pct_target || profileForm.fat_pct_target)"
-            class="rounded-xl px-4 py-3 text-sm bg-[rgba(255,100,103,0.06)] border border-[rgba(255,100,103,0.2)] text-[var(--danger)]"
+            class="rounded-xl px-4 py-3 text-sm bg-danger/6 border border-danger/20 text-danger"
           >
             {{ profileMacroValidation.message }}
           </div>
@@ -190,10 +190,10 @@
       <section class="ui-surface p-6 sm:p-8">
         <div class="flex items-center justify-between mb-6">
           <div>
-            <h2 class="text-lg font-light font-['Montserrat'] tracking-[-0.01em] text-[var(--text-1)]">
+            <h2 class="text-lg font-light font-['Montserrat'] tracking-[-0.01em] text-text-1">
               Lista de perfiles
             </h2>
-            <p class="text-sm text-[var(--text-3)] mt-1">
+            <p class="text-sm text-text-3 mt-1">
               {{ profiles.length }} {{ profiles.length === 1 ? "perfil" : "perfiles" }}
             </p>
           </div>
@@ -201,7 +201,7 @@
 
         <div
           v-if="profiles.length === 0"
-          class="rounded-xl border border-dashed border-[var(--border-strong)] px-5 py-8 text-center text-sm text-[var(--text-3)]"
+          class="rounded-xl border border-dashed border-border-strong px-5 py-8 text-center text-sm text-text-3"
         >
           Crea tu primer perfil usando el formulario superior para empezar.
         </div>
@@ -210,34 +210,34 @@
           <article
             v-for="profile in profiles"
             :key="profile.id"
-            class="rounded-2xl px-5 py-4 border border-[var(--border-soft)] transition-colors hover:border-[rgba(255,255,255,0.16)]"
+            class="rounded-2xl px-5 py-4 border border-border-soft transition-colors hover:border-[rgba(255,255,255,0.16)]"
             style="background: rgba(255,255,255,0.02);"
           >
             <div class="flex flex-wrap items-center justify-between gap-4">
               <div class="flex-1 min-w-[200px]">
                 <div class="flex items-center gap-3 mb-2">
-                  <h3 class="text-base font-medium text-[var(--text-1)]">{{ profile.name }}</h3>
-                  <span class="text-xs text-[var(--text-3)]">
+                  <h3 class="text-base font-medium text-text-1">{{ profile.name }}</h3>
+                  <span class="text-xs text-text-3">
                     {{ sexLabel(profile.sex) }} · {{ profile.age }}a
                   </span>
                 </div>
 
                 <div class="flex flex-wrap gap-x-5 gap-y-1 text-sm">
-                  <span class="text-[var(--text-2)]">
-                    <span class="text-[var(--text-3)]">kcal</span> {{ profile.daily_kcal_target }}
+                  <span class="text-text-2">
+                    <span class="text-text-3">kcal</span> {{ profile.daily_kcal_target }}
                   </span>
-                  <span class="text-[var(--text-2)]">
-                    <span class="text-[var(--text-3)]">HC</span> {{ profile.carbs_pct_target }}%
+                  <span class="text-text-2">
+                    <span class="text-text-3">HC</span> {{ profile.carbs_pct_target }}%
                   </span>
-                  <span class="text-[var(--text-2)]">
-                    <span class="text-[var(--text-3)]">G</span> {{ profile.fat_pct_target }}%
+                  <span class="text-text-2">
+                    <span class="text-text-3">G</span> {{ profile.fat_pct_target }}%
                   </span>
-                  <span class="text-[var(--text-2)]">
-                    <span class="text-[var(--text-3)]">P</span> {{ profile.protein_pct_target ?? (100 - (profile.carbs_pct_target || 0) - (profile.fat_pct_target || 0)) }}%
+                  <span class="text-text-2">
+                    <span class="text-text-3">P</span> {{ profile.protein_pct_target ?? (100 - (profile.carbs_pct_target || 0) - (profile.fat_pct_target || 0)) }}%
                   </span>
                 </div>
 
-                <p class="text-xs text-[var(--text-3)] mt-2">
+                <p class="text-xs text-text-3 mt-2">
                   {{ profileGramSummary(profile) }}
                 </p>
               </div>
@@ -245,13 +245,13 @@
               <div class="flex gap-2 shrink-0">
                 <button
                   @click="editProfile(profile)"
-                  class="rounded-xl px-4 py-2 text-xs font-medium border border-[var(--border-soft)] text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+                  class="rounded-xl px-4 py-2 text-xs font-medium border border-border-soft text-text-2 hover:bg-white/6 transition-colors"
                 >
                   Editar
                 </button>
                 <button
                   @click="deleteProfile(profile.id)"
-                  class="rounded-xl px-4 py-2 text-xs font-medium border border-[rgba(255,100,103,0.2)] text-[var(--danger)] hover:bg-[rgba(255,100,103,0.08)] transition-colors"
+                  class="rounded-xl px-4 py-2 text-xs font-medium border border-danger/20 text-danger hover:bg-danger/10 transition-colors"
                 >
                   Eliminar
                 </button>

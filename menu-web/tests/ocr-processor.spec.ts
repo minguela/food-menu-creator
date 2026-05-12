@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+﻿import { expect, test } from "@playwright/test";
 
 const SUPABASE_URL =
   process.env.NUXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";

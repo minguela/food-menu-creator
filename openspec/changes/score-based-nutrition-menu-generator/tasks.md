@@ -22,12 +22,12 @@
 
 ## 4. Generator Service
 
-- [ ] 4.1 Create `server/services/menuGenerator.ts` with typed inputs and outputs for daily, weekly, and monthly generation.
-- [ ] 4.2 Load candidate recipes from `dishes`, `recipe_ingredients`, and `ingredients`, excluding incomplete candidates with diagnostics.
-- [ ] 4.3 Separate candidates by `meal_type` and support breakfast, lunch, dinner, and optional snack.
-- [ ] 4.4 Implement bounded deterministic daily combination search with candidate limits and serving multipliers `[0.75, 1, 1.25, 1.5]`.
-- [ ] 4.5 Implement repetition penalties and period summaries for weekly/monthly generation.
-- [ ] 4.6 Add useful non-noisy logs for candidate counts, excluded recipes, selected scores, and tolerance misses.
+- [x] 4.1 Create `server/services/menuGenerator.ts` with typed inputs and outputs for daily, weekly, and monthly generation.
+- [x] 4.2 Load candidate recipes from `dishes`, `recipe_ingredients`, and `ingredients`, excluding incomplete candidates with diagnostics.
+- [x] 4.3 Separate candidates by `meal_type` and support breakfast, lunch, dinner, and optional snack.
+- [x] 4.4 Implement bounded deterministic daily combination search with candidate limits and serving multipliers `[0.75, 1, 1.25, 1.5]`.
+- [x] 4.5 Implement repetition penalties and period summaries for weekly/monthly generation.
+- [x] 4.6 Add useful non-noisy logs for candidate counts, excluded recipes, selected scores, and tolerance misses.
 
 ## 5. API And Persistence
 

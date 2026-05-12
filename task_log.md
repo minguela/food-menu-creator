@@ -10,6 +10,8 @@
   - Nota: añadida migración `20260512103000_nutrition_menu_generator_foundation.sql` para tolerancia por perfil, metadatos de receta y scoring diario; actualizados tipos en `types/index.ts`; creadas utilidades compartidas `utils/nutrition/calculateRecipeMacros.ts`, `profileTargets.ts` y `menuScoring.ts`. OpenSpec queda en progreso `8/33`.
 - [x] Tarea #170: Completar fase 3 de tests y fixtures nutricionales
   - Nota: añadidos fixtures locales con 3 desayunos, 5 comidas, 5 cenas y 2 snacks; creado `tests/nutrition-generator.spec.ts` con cobertura para cálculo de macros reales, nutrición incompleta, targets de perfil, tolerancia, scoring, penalización de proteína, escalado por multiplicador y selección determinista. Añadido `npm run test:nutrition`; validado con 9 tests OK y OpenSpec queda en progreso `13/33`.
+- [x] Tarea #171: Completar fase 4 del servicio generador nutricional
+  - Nota: creado `server/services/menuGenerator.ts` con carga de recetas candidatas desde `dishes`/`recipe_ingredients`/`ingredients`, exclusión diagnóstica de recetas incompletas, separación por `meal_type`, búsqueda diaria acotada con multiplicadores `[0.75, 1, 1.25, 1.5]`, penalización por repetición, resumen de periodo diario/semanal/mensual y logs de candidatos/periodo. OpenSpec queda en progreso `19/33`.
 
 ## Sesión actual: 2026-05-11 - Escalado rotativo, cantidades relativas y warnings nutricionales
 

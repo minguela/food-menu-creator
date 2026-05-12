@@ -1,24 +1,27 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-[var(--bg-canvas)] via-[rgba(255,255,255,0.03)] to-[var(--bg-canvas)]">
+  <div class="min-h-screen bg-transparent">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div class="flex items-center gap-4">
           <div
-            class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[rgba(187,222,242,0.25)] to-[rgba(209,170,215,0.2)] flex items-center justify-center shadow-lg shadow-black/40 backdrop-blur-sm border border-[var(--border-soft)]">
-            <span class="text-2xl">🛒</span>
+            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-200">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 8a2 2 0 100-4 2 2 0 000 4z" />
+            </svg>
           </div>
           <div>
-            <h1 class="text-3xl font-bold text-[var(--text-1)] tracking-[-0.01em]">
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
               Lista de la Compra
             </h1>
-            <p class="text-[var(--text-3)] text-sm mt-1">Cantidades normalizadas a gramos</p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Cantidades normalizadas a gramos</p>
           </div>
         </div>
-        <button @click="loadShoppingList" :disabled="loading"
-          class="group flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all duration-200 bg-[rgba(255,255,255,0.06)] text-[var(--text-1)] border border-[var(--border-soft)] hover:bg-[rgba(255,255,255,0.1)] hover:border-iridescent-glow/50 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none">
-          <svg class="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" fill="none" stroke="currentColor"
+        <button @click=" loadShoppingList " :disabled=" loading "
+          class="group bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-xl hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 font-medium shadow-lg shadow-amber-200 hover:shadow-xl transition-all flex items-center gap-2">
+          <svg class="w-4 h-4 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor"
             viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M4 4v5h.582m15.582 0A13.93 13.93 0 0120 10c0 3.866-1.598 7.5-4.236 9.94a13.13 13.13 0 01-3.529 2.168A8.994 8.994 0 004 20c1.885 0 3.615.467 5.082 1.257M4 14h5.418a13.93 13.93 0 002.582 2.246c.927.475 1.986.76 3.04.853a8.997 8.997 0 016.336-3.038A8.978 8.978 0 0120 10c0-2.123-.74-4.09-1.96-5.618M4 14h5.418" />
@@ -28,236 +31,190 @@
       </div>
 
       <!-- Generate from menu section -->
-      <section class="backdrop-blur-sm bg-[var(--surface-2)] rounded-2xl border border-[var(--border-soft)] p-6 mb-6 transition-all duration-200 hover:border-[rgba(187,222,242,0.2)] hover:shadow-lg hover:shadow-iridescent-glow/5">
+      <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6 mb-6">
         <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-xl bg-iridescent-glow/20 flex items-center justify-center">
-            <span class="text-lg">📋</span>
+          <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+            </svg>
           </div>
           <div>
-            <h2 class="text-lg font-bold text-[var(--text-1)]">Generar desde menú rotativo</h2>
-            <p class="text-xs text-[var(--text-3)]">Selecciona un menú para generar la lista</p>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Generar desde menú rotativo</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Selecciona un menú para generar la lista</p>
           </div>
         </div>
 
         <div class="flex flex-wrap gap-4 items-end">
           <label class="flex-1 min-w-[280px]">
-            <span class="block text-sm font-semibold text-[var(--text-1)]/90 mb-2">Menú rotativo</span>
-            <select v-model="selectedRotatingMenuId"
-              class="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface-2)] px-4 py-2.5 text-[var(--text-1)] focus:ring-2 focus:ring-iridescent-glow/50 focus:border-iridescent-glow/50 transition-all appearance-none cursor-pointer hover:bg-[rgba(255,255,255,0.06)]">
-              <option value="" class="bg-[var(--bg-canvas)] text-[var(--text-1)]">Selecciona un menú...</option>
-              <option v-for="menu in rotatingMenus" :key="menu.id" :value="menu.id" class="bg-[var(--bg-canvas)] text-[var(--text-1)]">
+            <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Menú rotativo</span>
+            <select v-model=" selectedRotatingMenuId "
+              class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-white dark:bg-slate-900">
+              <option value="">Selecciona un menú...</option>
+              <option v-for=" menu in rotatingMenus " :key=" menu.id " :value=" menu.id ">
                 {{ menu.name }} ({{ menu.duration_days }} días)
               </option>
             </select>
           </label>
           <button
-            class="px-6 py-2.5 bg-gradient-to-r from-[rgba(187,222,242,0.25)] to-[rgba(209,170,215,0.2)] text-[var(--bg-canvas)] rounded-xl font-medium shadow-lg shadow-black/40 transition-all duration-200 hover:shadow-xl hover:shadow-iridescent-glow/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-            :disabled="!selectedRotatingMenuId || loading" @click="buildFromRotatingMenu">
+            class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 font-medium shadow-lg shadow-amber-200 hover:shadow-xl transition-all active:scale-95"
+            :disabled=" !selectedRotatingMenuId || loading " @click=" buildFromRotatingMenu ">
             <span class="flex items-center gap-2">
-              <span class="text-sm">📦</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
               Generar lista
             </span>
           </button>
         </div>
       </section>
 
-      <!-- Loading state -->
-      <div v-if="loading" class="text-center py-16">
-        <div class="animate-spin rounded-full h-12 w-12 border-2 border-[rgba(187,222,242,0.2)] border-t-[rgba(187,222,242,0.2)] mx-auto"></div>
-        <p class="mt-4 text-[var(--text-3)]">Cargando lista...</p>
+      <div v-if=" loading " class="text-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+        <p class="mt-4 text-gray-600 dark:text-slate-300">Cargando lista...</p>
       </div>
 
-      <!-- Empty state -->
-      <div v-else-if="items.length === 0" class="text-center py-16 backdrop-blur-sm bg-[var(--surface-2)] rounded-2xl border border-[var(--border-soft)]">
-        <span class="text-5xl mb-4 block">🛍️</span>
-        <p class="text-[var(--text-1)]/80 mb-4 text-lg">No hay lista de la compra generada</p>
-        <NuxtLink href="/generar" class="text-iridescent-glow hover:text-spectrum-flare transition-colors underline underline-offset-4">Generar un menú primero</NuxtLink>
+      <div v-else-if=" items.length === 0 " class="text-center py-12 bg-white dark:bg-slate-900 rounded-lg border">
+        <p class="text-gray-600 dark:text-slate-300 mb-4">No hay lista de la compra generada</p>
+        <NuxtLink href="/generar" class="text-indigo-600 hover:underline">Generar un menú primero</NuxtLink>
       </div>
 
-      <!-- Shopping list content -->
       <div v-else class="space-y-6">
-        <!-- Stats cards -->
         <section class="grid gap-4 md:grid-cols-4">
-          <div class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:border-[rgba(187,222,242,0.2)]">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-[rgba(114,206,123,0.12)] flex items-center justify-center">
-                <span class="text-lg">💰</span>
-              </div>
-              <div>
-                <p class="text-xs text-[var(--text-3)] uppercase tracking-wider">Total estimado</p>
-                <p class="text-2xl font-bold text-[var(--text-1)]">{{ totalPrice.toFixed(2) }}€</p>
-              </div>
-            </div>
+          <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-4">
+            <p class="text-sm text-gray-600 dark:text-slate-300">Total estimado</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-slate-100">
+              {{ totalPrice.toFixed( 2 ) }}€
+            </p>
           </div>
-          <div class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:border-[rgba(187,222,242,0.2)]">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-iridescent-glow/20 flex items-center justify-center">
-                <span class="text-lg">📦</span>
-              </div>
-              <div>
-                <p class="text-xs text-[var(--text-3)] uppercase tracking-wider">Artículos</p>
-                <p class="text-2xl font-bold text-[var(--text-1)]">{{ items.length }}</p>
-              </div>
-            </div>
+          <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-4">
+            <p class="text-sm text-gray-600 dark:text-slate-300">Artículos</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-slate-100">{{ items.length }}</p>
           </div>
-          <div class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:border-[rgba(187,222,242,0.2)]">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-[rgba(255,214,0,0.12)] flex items-center justify-center">
-                <span class="text-lg">⚠️</span>
-              </div>
-              <div>
-                <p class="text-xs text-[var(--text-3)] uppercase tracking-wider">Ambiguos</p>
-                <p class="text-2xl font-bold" :class="ambiguousCount ? 'text-[var(--goldenrod)]' : 'text-[var(--text-1)]'">
-                  {{ ambiguousCount }}
-                </p>
-              </div>
-            </div>
+          <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-4">
+            <p class="text-sm text-gray-600 dark:text-slate-300">Ambiguos</p>
+            <p class="text-2xl font-bold" :class=" ambiguousCount ? 'text-amber-700' : 'text-gray-900 dark:text-slate-100' ">
+              {{ ambiguousCount }}
+            </p>
           </div>
-          <div class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:border-[rgba(187,222,242,0.2)]">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg" :class="sendStatusColor">
-                <span class="text-lg">{{ sendStatusIcon }}</span>
-              </div>
-              <div>
-                <p class="text-xs text-[var(--text-3)] uppercase tracking-wider">Estado móvil</p>
-                <p class="text-lg font-semibold text-[var(--text-1)]">{{ sendStatusLabel }}</p>
-              </div>
-            </div>
+          <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-4">
+            <p class="text-sm text-gray-600 dark:text-slate-300">Estado móvil</p>
+            <p class="text-lg font-semibold text-gray-900 dark:text-slate-100">
+              {{ sendStatusLabel }}
+            </p>
           </div>
         </section>
 
-        <!-- Add extra item -->
-        <section class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] p-4">
-          <h2 class="font-semibold text-[var(--text-1)] mb-3 flex items-center gap-2">
-            <span>➕</span> Añadir artículo propio
-          </h2>
-          <form class="grid gap-2 md:grid-cols-[1fr_130px_auto]" @submit.prevent="addExtraItem">
-            <input v-model.trim="extraName" class="border border-[var(--border-soft)] rounded-lg px-3 py-2 bg-[var(--surface-2)] text-[var(--text-1)] placeholder-iron-slate focus:ring-2 focus:ring-iridescent-glow/50 focus:border-iridescent-glow/50 transition-all" placeholder="Ej. papel higiénico"
+        <section class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-4">
+          <h2 class="font-semibold text-gray-900 dark:text-slate-100 mb-3">Añadir artículo propio</h2>
+          <form class="grid gap-2 md:grid-cols-[1fr_130px_auto]" @submit.prevent=" addExtraItem ">
+            <input v-model.trim=" extraName " class="border rounded-lg px-3 py-2" placeholder="Ej. papel higiénico"
               required />
-            <input v-model.number="extraGrams" class="border border-[var(--border-soft)] rounded-lg px-3 py-2 bg-[var(--surface-2)] text-[var(--text-1)] placeholder-iron-slate focus:ring-2 focus:ring-iridescent-glow/50 focus:border-iridescent-glow/50 transition-all" type="number" min="1" step="1"
+            <input v-model.number=" extraGrams " class="border rounded-lg px-3 py-2" type="number" min="1" step="1"
               placeholder="500 g" required />
-            <button class="bg-iridescent-glow/20 text-[var(--text-1)] border border-[rgba(187,222,242,0.2)] px-4 py-2 rounded-lg hover:bg-iridescent-glow/30 hover:border-iridescent-glow/50 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
+            <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
               Añadir
             </button>
           </form>
         </section>
 
-        <!-- Share section - FREE ROUTE -->
-        <section class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] p-4">
-          <h2 class="font-semibold text-[var(--text-1)] mb-3 flex items-center gap-2">
-            <span>📤</span> Compartir lista
-          </h2>
-          <div class="flex flex-wrap gap-3">
-            <!-- WhatsApp button -->
-            <button @click="shareWhatsApp" :disabled="!canShare"
-              class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 bg-[rgba(114,206,123,0.12)] text-[var(--success)] border-[rgba(114,206,123,0.2)] hover:bg-[#25D366]/30 hover:border-[#25D366]/50 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:hover:translate-y-0">
-              <span class="text-lg">💬</span>
-              WhatsApp
-            </button>
-            <!-- Copy to clipboard -->
-            <button @click="copyToClipboard" :disabled="!canShare"
-              class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 bg-[rgba(255,255,255,0.06)] text-[var(--text-1)] border border-[var(--border-soft)] hover:bg-[rgba(255,255,255,0.1)] hover:border-ghost-white/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:hover:translate-y-0">
-              <span class="text-lg">{{ copied ? '✅' : '📋' }}</span>
-              {{ copied ? 'Copiado!' : 'Copiar' }}
-            </button>
-            <!-- Native share (mobile only) -->
-            <button v-if="canNativeShare" @click="nativeShare" :disabled="!canShare"
-              class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 bg-iridescent-glow/20 text-iridescent-glow border border-[rgba(187,222,242,0.2)] hover:bg-iridescent-glow/30 hover:border-iridescent-glow/50 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:hover:translate-y-0">
-              <span class="text-lg">📱</span>
-              Compartir
-            </button>
-            <!-- SMS native (mobile only) -->
-            <button @click="shareSMS" :disabled="!canShare || !phoneNumber"
-              class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 bg-[rgba(255,255,255,0.06)] text-[var(--text-1)] border border-[var(--border-soft)] hover:bg-[rgba(255,255,255,0.1)] hover:border-ghost-white/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:hover:translate-y-0">
-              <span class="text-lg">✉️</span>
-              SMS
+        <section class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-4">
+          <div class="flex flex-wrap items-end gap-3">
+            <label class="flex-1 min-w-[220px]">
+              <span class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Número de teléfono</span>
+              <input v-model.trim=" phoneNumber " class="w-full border rounded-lg px-3 py-2"
+                placeholder="+34600111222" />
+            </label>
+            <label>
+              <span class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Canal</span>
+              <select v-model=" mobileChannel " class="border rounded-lg px-3 py-2">
+                <option value="sms">SMS</option>
+                <option value="whatsapp">WhatsApp</option>
+              </select>
+            </label>
+            <button @click=" sendToMobile " :disabled=" sending || !phoneNumber "
+              class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50">
+              {{ sending ? "Enviando..." : "Enviar al móvil" }}
             </button>
           </div>
-          <p v-if="shareMessage" class="text-sm mt-3" :class="shareError ? 'text-[var(--danger)]' : 'text-[var(--success)]'">
-            {{ shareMessage }}
+          <p v-if=" sendMessage " class="text-sm mt-3" :class=" sendError ? 'text-red-600' : 'text-emerald-700' ">
+            {{ sendMessage }}
           </p>
         </section>
 
-        <!-- Categories -->
-        <section v-for="(categoryItems, category) in itemsByCategory" :key="category"
-          class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] overflow-hidden transition-all duration-200 hover:border-[var(--border-soft)]">
-          <div class="bg-[var(--surface-2)] px-4 py-3 border-b border-[var(--border-soft)] flex items-center justify-between">
-            <h2 class="font-semibold text-[var(--text-1)] flex items-center gap-2">
-              <span>{{ categoryEmoji(category) }}</span>
-              {{ category }}
-            </h2>
-            <span class="text-xs text-[var(--text-3)] bg-[rgba(255,255,255,0.06)] px-2 py-1 rounded-full">{{ categoryItems.length }} items</span>
+        <section v-for=" ( categoryItems, category ) in itemsByCategory " :key=" category "
+          class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border overflow-hidden">
+          <div class="bg-gray-50 dark:bg-slate-900 px-4 py-3 border-b">
+            <h2 class="font-semibold text-gray-900 dark:text-slate-100">{{ category }}</h2>
           </div>
-          <div class="divide-y divide-ghost-white/5">
-            <div v-for="item in categoryItems" :key="item.id"
-              class="grid gap-3 p-4 transition-all duration-200 hover:bg-[var(--surface-2)] md:grid-cols-[1fr_170px_110px]"
-              :class="{ 'opacity-60': item.purchased }">
+          <div class="divide-y">
+            <div v-for=" item in categoryItems " :key=" item.id "
+              class="grid gap-3 p-4 hover:bg-gray-50 dark:bg-slate-900 transition-colors md:grid-cols-[1fr_170px_110px]">
               <div class="flex items-start gap-3">
-                <label class="relative flex items-center cursor-pointer mt-1">
-                  <input type="checkbox" :checked="item.purchased" @change="togglePurchased(item)"
-                    class="sr-only peer" />
-                  <div class="w-5 h-5 rounded border-2 border-[var(--border-strong)] peer-checked:border-[var(--success)] peer-checked:bg-[var(--success)] transition-all duration-200 flex items-center justify-center hover:border-iridescent-glow/50">
-                    <svg v-if="item.purchased" class="w-3 h-3 text-[var(--bg-canvas)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                </label>
-                <div :class="{ 'line-through text-[var(--text-3)]': item.purchased }">
+                <input type="checkbox" :checked=" item.purchased " @change="togglePurchased( item )"
+                  class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 mt-1" />
+                <div :class=" { 'line-through text-gray-400': item.purchased } ">
                   <div class="flex flex-wrap items-center gap-2">
-                    <p class="font-medium text-[var(--text-1)]">
+                    <p class="font-medium text-gray-900 dark:text-slate-100">
                       {{ item.item_name || item.ingredients?.name || "Artículo" }}
                     </p>
-                    <span v-if="item.conversion_status === 'ambiguous'"
-                      class="text-xs bg-[rgba(255,214,0,0.12)] text-[var(--goldenrod)] px-2 py-0.5 rounded-full">
+                    <span v-if=" item.conversion_status === 'ambiguous' "
+                      class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
                       Revisar conversión
                     </span>
-                    <span v-else-if="item.conversion_status === 'manual'"
-                      class="text-xs bg-iridescent-glow/20 text-iridescent-glow px-2 py-0.5 rounded-full">
+                    <span v-else-if=" item.conversion_status === 'manual' "
+                      class="text-xs bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full">
                       Manual
                     </span>
                   </div>
-                  <p class="text-sm text-[var(--text-3)]">
-                    {{ item.conversion_note || originalQuantity(item) }}
+                  <p class="text-sm text-gray-500 dark:text-slate-400">
+                    {{ item.conversion_note || originalQuantity( item ) }}
                   </p>
                 </div>
               </div>
               <label>
                 <span class="sr-only">Cantidad en gramos</span>
-                <input :value="Math.round(Number(item.quantity_grams || item.quantity_needed || 0))" type="number" min="1" step="1" class="w-full border border-[var(--border-soft)] rounded-lg px-3 py-2 text-right bg-[var(--surface-2)] text-[var(--text-1)] focus:ring-2 focus:ring-iridescent-glow/50 focus:border-iridescent-glow/50 transition-all"
-                  @change="updateGrams(item, $event)" />
+                <input :value=" Math.round(
+                  Number( item.quantity_grams || item.quantity_needed || 0 ),
+                )
+                  " type="number" min="1" step="1" class="w-full border rounded-lg px-3 py-2 text-right"
+                  @change="updateGrams( item, $event )" />
               </label>
               <div class="text-right">
-                <p class="font-medium text-[var(--text-1)]">
-                  {{ item.estimated_price?.toFixed(2) || "0.00" }}€
+                <p class="font-medium text-gray-900 dark:text-slate-100">
+                  {{ item.estimated_price?.toFixed( 2 ) || "0.00" }}€
                 </p>
-                <p class="text-sm text-[var(--text-3)]">
-                  {{ Math.round(Number(item.quantity_grams || item.quantity_needed || 0)) }} g
+                <p class="text-sm text-gray-500 dark:text-slate-400">
+                  {{
+                    Math.round(
+                      Number( item.quantity_grams || item.quantity_needed || 0 ),
+                    )
+                  }}
+                  g
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        <!-- Export buttons -->
         <div class="flex flex-wrap justify-end gap-2 pt-4">
-          <button @click="markAllAsPurchased" class="px-4 py-2 text-[var(--text-1)]/80 hover:text-[var(--text-1)] hover:bg-[rgba(255,255,255,0.06)] rounded-lg transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
+          <button @click=" markAllAsPurchased " class="px-4 py-2 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:bg-slate-800 rounded-lg">
             Marcar todo como comprado
           </button>
-          <button @click="exportAsText" :disabled="exportLoading"
-            class="px-4 py-2 bg-[var(--surface-2)] text-[var(--text-1)] border border-[var(--border-soft)] rounded-lg hover:bg-[rgba(255,255,255,0.06)] hover:border-ghost-white/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0">
-            {{ exportLoading ? "Exportando..." : "📄 TXT" }}
+          <button @click=" exportAsText " :disabled=" exportLoading "
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50">
+            {{ exportLoading ? "Exportando..." : "Exportar texto" }}
           </button>
-          <button @click="exportAsCsv" :disabled="exportLoading"
-            class="px-4 py-2 bg-[var(--surface-2)] text-[var(--text-1)] border border-[var(--border-soft)] rounded-lg hover:bg-[rgba(255,255,255,0.06)] hover:border-ghost-white/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0">
-            {{ exportLoading ? "Exportando..." : "📊 CSV" }}
+          <button @click=" exportAsCsv " :disabled=" exportLoading "
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50">
+            {{ exportLoading ? "Exportando..." : "Exportar CSV" }}
           </button>
-          <button @click="downloadCsv"
-            class="px-4 py-2 bg-[var(--surface-2)] text-[var(--text-1)] border border-[var(--border-soft)] rounded-lg hover:bg-[rgba(255,255,255,0.06)] hover:border-ghost-white/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
-            ⬇️ Descargar CSV
+          <button @click=" downloadCsv " class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+            Descargar CSV
           </button>
-          <button @click="printList"
-            class="px-4 py-2 bg-[var(--surface-2)] text-[var(--text-1)] border border-[var(--border-soft)] rounded-lg hover:bg-[rgba(255,255,255,0.06)] hover:border-ghost-white/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
-            🖨️ PDF / Imprimir
+          <button @click=" printList " class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+            PDF / Imprimir
           </button>
         </div>
       </div>
@@ -268,7 +225,6 @@
 <script setup lang="ts">
 import {
   buildShoppingCsv,
-  buildShoppingListText,
   convertToGrams,
 } from "~/utils/shopping-conversions.js";
 import { logError } from "~/utils/log-error";
@@ -279,89 +235,56 @@ const supabase = useSupabase();
 const { loadCurrentUser, user } = useCurrentUser();
 const appToast = useAppToast();
 
-const items = ref<ShoppingListItem[]>([]);
-const loading = ref(true);
-const sending = ref(false);
-const shareMessage = ref("");
-const shareError = ref(false);
-const extraName = ref("");
-const extraGrams = ref<number | null>(null);
-const phoneNumber = ref("");
-const mobileChannel = ref<"sms" | "whatsapp">("sms");
-const rotatingMenus = ref<RotatingMenu[]>([]);
-const selectedRotatingMenuId = ref("");
-const exportLoading = ref(false);
-const copied = ref(false);
-const canNativeShare = ref(false);
+const items = ref<ShoppingListItem[]>( [] );
+const loading = ref( true );
+const sending = ref( false );
+const sendMessage = ref( "" );
+const sendError = ref( false );
+const extraName = ref( "" );
+const extraGrams = ref<number | null>( null );
+const phoneNumber = ref( "" );
+const mobileChannel = ref<"sms" | "whatsapp">( "sms" );
+const rotatingMenus = ref<RotatingMenu[]>( [] );
+const selectedRotatingMenuId = ref( "" );
+const exportLoading = ref( false );
 
-const itemsByCategory = computed(() => {
+const itemsByCategory = computed( () => {
   return items.value.reduce(
-    (acc, item) => {
+    ( acc, item ) => {
       const category = item.is_extra
         ? "Añadidos por ti"
         : item.ingredients?.carrefour_category || "Otros";
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(item);
+      if ( !acc[ category ] ) acc[ category ] = [];
+      acc[ category ].push( item );
       return acc;
     },
     {} as Record<string, ShoppingListItem[]>,
   );
-});
+} );
 
-const totalPrice = computed(() =>
-  items.value.reduce((sum, item) => sum + (item.estimated_price || 0), 0),
+const totalPrice = computed( () =>
+  items.value.reduce( ( sum, item ) => sum + ( item.estimated_price || 0 ), 0 ),
 );
 const ambiguousCount = computed(
   () =>
-    items.value.filter((item) => item.conversion_status === "ambiguous").length,
+    items.value.filter( ( item ) => item.conversion_status === "ambiguous" ).length,
 );
-const sendStatusLabel = computed(() => {
+const sendStatusLabel = computed( () => {
   const status =
     items.value.find(
-      (item) => item.send_status && item.send_status !== "pending",
+      ( item ) => item.send_status && item.send_status !== "pending",
     )?.send_status || "pending";
-  if (status === "delivered") return "Entregado";
-  if (status === "sent") return "Enviado";
-  if (status === "error") return "Error";
+  if ( status === "delivered" ) return "Entregado";
+  if ( status === "sent" ) return "Enviado";
+  if ( status === "error" ) return "Error";
   return "Pendiente";
-});
-const sendStatusColor = computed(() => {
-  const status = sendStatusLabel.value;
-  if (status === "Entregado") return "bg-[rgba(114,206,123,0.12)]";
-  if (status === "Enviado") return "bg-iridescent-glow/20";
-  if (status === "Error") return "bg-[rgba(255,100,103,0.12)]";
-  return "bg-[rgba(255,255,255,0.06)]";
-});
-const sendStatusIcon = computed(() => {
-  const status = sendStatusLabel.value;
-  if (status === "Entregado") return "✅";
-  if (status === "Enviado") return "📤";
-  if (status === "Error") return "❌";
-  return "⏳";
-});
-const canShare = computed(() => items.value.length > 0);
-
-const formattedListText = computed(() => {
-  const lines = ["🛒 Lista de la Compra", "─".repeat(25)];
-  const byCategory = itemsByCategory.value;
-  for (const [category, categoryItems] of Object.entries(byCategory)) {
-    lines.push(`${categoryEmoji(category)} ${category}`);
-    for (const item of categoryItems) {
-      const name = item.item_name || item.ingredients?.name || "Artículo";
-      const grams = Math.round(Number(item.quantity_grams || item.quantity_needed || 0));
-      lines.push(`• ${name} - ${grams}g`);
-    }
-  }
-  lines.push("─".repeat(25));
-  lines.push(`💰 Total estimado: ${totalPrice.value.toFixed(2)}€`);
-  return lines.join("\n");
-});
+} );
 
 const loadShoppingList = async () => {
   loading.value = true;
   const currentUser = await loadCurrentUser();
 
-  if (!currentUser) {
+  if ( !currentUser ) {
     items.value = [];
     loading.value = false;
     return;
@@ -371,17 +294,17 @@ const loadShoppingList = async () => {
   mobileChannel.value = currentUser.mobile_channel || "sms";
 
   const { data, error } = await supabase
-    .from("shopping_lists")
-    .select("*, ingredients(name, carrefour_category, unit_type)")
-    .eq("user_id", currentUser.id)
-    .order("created_at", { ascending: false })
-    .limit(120);
+    .from( "shopping_lists" )
+    .select( "*, ingredients(name, carrefour_category, unit_type)" )
+    .eq( "user_id", currentUser.id )
+    .order( "created_at", { ascending: false } )
+    .limit( 120 );
 
-  if (error) {
-    console.error("Error cargando lista:", error);
+  if ( error ) {
+    console.error( "Error cargando lista:", error );
     items.value = [];
   } else {
-    items.value = await ensureGramFields((data || []) as ShoppingListItem[]);
+    items.value = await ensureGramFields( ( data || [] ) as ShoppingListItem[] );
   }
 
   loading.value = false;
@@ -389,57 +312,57 @@ const loadShoppingList = async () => {
 
 const loadRotatingMenus = async () => {
   const currentUser = await loadCurrentUser();
-  if (!currentUser) {
+  if ( !currentUser ) {
     rotatingMenus.value = [];
     return;
   }
 
   const { data } = await supabase
-    .from("rotating_menus")
+    .from( "rotating_menus" )
     .select(
       "id, name, duration_days, user_id, created_at, updated_at, profile_id, source_weekly_menu_ids, persons_count, target_kcal, target_protein_g, target_carbs_g, target_fat_g",
     )
-    .eq("user_id", currentUser.id)
-    .order("created_at", { ascending: false });
+    .eq( "user_id", currentUser.id )
+    .order( "created_at", { ascending: false } );
 
-  rotatingMenus.value = (data || []) as RotatingMenu[];
+  rotatingMenus.value = ( data || [] ) as RotatingMenu[];
 };
 
 const buildFromRotatingMenu = async () => {
   const currentUser = await loadCurrentUser();
-  if (!currentUser || !selectedRotatingMenuId.value) return;
+  if ( !currentUser || !selectedRotatingMenuId.value ) return;
   loading.value = true;
   try {
-    await $fetch("/api/shopping-from-rotating", {
+    await $fetch( "/api/shopping-from-rotating", {
       method: "POST",
       body: {
         userId: currentUser.id,
         rotatingMenuId: selectedRotatingMenuId.value,
       },
-    });
+    } );
     await loadShoppingList();
-  } catch (err) {
-    await logError("web", err, { context: "shopping.buildFromRotatingMenu" });
-    appToast.fromError("Error generando lista", err);
+  } catch ( err ) {
+    await logError( "web", err, { context: "shopping.buildFromRotatingMenu" } );
+    appToast.fromError( "Error generando lista", err );
   } finally {
     loading.value = false;
   }
 };
 
-const ensureGramFields = async (list: ShoppingListItem[]) => {
+const ensureGramFields = async ( list: ShoppingListItem[] ) => {
   const patched: ShoppingListItem[] = [];
 
-  for (const item of list) {
-    if (item.quantity_grams && item.item_name) {
-      patched.push(item);
+  for ( const item of list ) {
+    if ( item.quantity_grams && item.item_name ) {
+      patched.push( item );
       continue;
     }
 
-    const conversion = convertToGrams({
+    const conversion = convertToGrams( {
       name: item.item_name || item.ingredients?.name || "",
       quantity: item.original_quantity || item.quantity_needed,
       unitType: item.original_unit_type || item.ingredients?.unit_type || "g",
-    });
+    } );
 
     const payload = {
       item_name: item.item_name || item.ingredients?.name || "Artículo",
@@ -451,38 +374,38 @@ const ensureGramFields = async (list: ShoppingListItem[]) => {
       conversion_note: conversion.note,
     };
 
-    await supabase.from("shopping_lists").update(payload).eq("id", item.id);
-    patched.push({ ...item, ...payload } as ShoppingListItem);
+    await supabase.from( "shopping_lists" ).update( payload ).eq( "id", item.id );
+    patched.push( { ...item, ...payload } as ShoppingListItem );
   }
 
   return patched;
 };
 
-const togglePurchased = async (item: ShoppingListItem) => {
+const togglePurchased = async ( item: ShoppingListItem ) => {
   const { error } = await supabase
-    .from("shopping_lists")
-    .update({ purchased: !item.purchased })
-    .eq("id", item.id);
+    .from( "shopping_lists" )
+    .update( { purchased: !item.purchased } )
+    .eq( "id", item.id );
 
-  if (error) return console.error("Error actualizando:", error);
+  if ( error ) return console.error( "Error actualizando:", error );
   item.purchased = !item.purchased;
 };
 
-const updateGrams = async (item: ShoppingListItem, event: Event) => {
+const updateGrams = async ( item: ShoppingListItem, event: Event ) => {
   const target = event.target as HTMLInputElement;
-  const grams = Math.max(1, Number(target.value) || 1);
+  const grams = Math.max( 1, Number( target.value ) || 1 );
   const { error } = await supabase
-    .from("shopping_lists")
-    .update({
+    .from( "shopping_lists" )
+    .update( {
       quantity_grams: grams,
       quantity_needed: grams,
       conversion_status: "manual",
       conversion_note: "Cantidad editada manualmente.",
-    })
-    .eq("id", item.id);
+    } )
+    .eq( "id", item.id );
 
-  if (error) {
-    appToast.error("Error guardando cantidad: " + error.message);
+  if ( error ) {
+    appToast.error( "Error guardando cantidad: " + error.message );
     return;
   }
 
@@ -494,11 +417,11 @@ const updateGrams = async (item: ShoppingListItem, event: Event) => {
 
 const addExtraItem = async () => {
   const currentUser = await loadCurrentUser();
-  if (!currentUser || !extraName.value || !extraGrams.value) return;
+  if ( !currentUser || !extraName.value || !extraGrams.value ) return;
 
-  const { error } = await supabase.from("shopping_lists").insert({
+  const { error } = await supabase.from( "shopping_lists" ).insert( {
     user_id: currentUser.id,
-    week_start: new Date().toISOString().split("T")[0],
+    week_start: new Date().toISOString().split( "T" )[ 0 ],
     item_name: extraName.value,
     quantity_needed: extraGrams.value,
     quantity_grams: extraGrams.value,
@@ -509,123 +432,109 @@ const addExtraItem = async () => {
     is_extra: true,
     purchased: false,
     estimated_price: 0,
-  });
+  } );
 
-  if (error) {
-    appToast.error("Error añadiendo artículo: " + error.message);
+  if ( error ) {
+    appToast.error( "Error añadiendo artículo: " + error.message );
     return;
   }
 
   extraName.value = "";
   extraGrams.value = null;
   await loadShoppingList();
-  appToast.success("Artículo añadido correctamente.");
+  appToast.success( "Artículo añadido correctamente." );
 };
 
 const markAllAsPurchased = async () => {
   const ids = items.value
-    .filter((item) => !item.purchased)
-    .map((item) => item.id);
-  if (ids.length === 0) return;
+    .filter( ( item ) => !item.purchased )
+    .map( ( item ) => item.id );
+  if ( ids.length === 0 ) return;
 
   const { error } = await supabase
-    .from("shopping_lists")
-    .update({ purchased: true })
-    .in("id", ids);
-  if (error) return console.error("Error marcando todos:", error);
-  items.value.forEach((item) => {
+    .from( "shopping_lists" )
+    .update( { purchased: true } )
+    .in( "id", ids );
+  if ( error ) return console.error( "Error marcando todos:", error );
+  items.value.forEach( ( item ) => {
     item.purchased = true;
-  });
+  } );
 };
 
-// FREE SHARE FUNCTIONS
-const shareWhatsApp = () => {
-  const encoded = encodeURIComponent(formattedListText.value);
-  const url = phoneNumber.value
-    ? `https://wa.me/${phoneNumber.value.replace(/[^0-9]/g, "")}?text=${encoded}`
-    : `https://wa.me/?text=${encoded}`;
-  window.open(url, "_blank");
-  shareMessage.value = "WhatsApp abierto";
-  shareError.value = false;
-};
+const sendToMobile = async () => {
+  const currentUser = user.value || ( await loadCurrentUser() );
+  if ( !currentUser ) return;
 
-const copyToClipboard = async () => {
+  sending.value = true;
+  sendMessage.value = "";
+  sendError.value = false;
+
   try {
-    await navigator.clipboard.writeText(formattedListText.value);
-    copied.value = true;
-    shareMessage.value = "Lista copiada al portapapeles ✓";
-    shareError.value = false;
-    setTimeout(() => { copied.value = false; }, 2000);
-  } catch {
-    shareError.value = true;
-    shareMessage.value = "No se pudo copiar la lista";
+    const result = await $fetch<{ status: string; providerStatus: string }>(
+      "/api/send-shopping-list",
+      {
+        method: "POST",
+        body: {
+          userId: currentUser.id,
+          phoneNumber: phoneNumber.value,
+          channel: mobileChannel.value,
+        },
+      },
+    );
+    sendMessage.value =
+      result.status === "delivered"
+        ? "Lista entregada en el móvil."
+        : `Lista enviada. Estado proveedor: ${ result.providerStatus }.`;
+    await loadShoppingList();
+  } catch ( error: any ) {
+    sendError.value = true;
+    sendMessage.value = error?.statusMessage || "No se pudo enviar la lista.";
+    await logError( "web", error, { context: "shopping.sendToMobile" } );
+    await loadShoppingList();
+  } finally {
+    sending.value = false;
   }
 };
 
-const nativeShare = async () => {
-  if (!navigator.share) return;
-  try {
-    await navigator.share({
-      title: "Lista de la Compra",
-      text: formattedListText.value,
-    });
-    shareMessage.value = "Lista compartida";
-    shareError.value = false;
-  } catch (err: any) {
-    if (err.name !== "AbortError") {
-      shareError.value = true;
-      shareMessage.value = "No se pudo compartir";
-    }
-  }
-};
-
-const shareSMS = () => {
-  const encoded = encodeURIComponent(formattedListText.value);
-  const url = `sms:${phoneNumber.value}?body=${encoded}`;
-  window.location.href = url;
-  shareMessage.value = "App de SMS abierta";
-  shareError.value = false;
-};
-
-const originalQuantity = (item: ShoppingListItem) => {
+const originalQuantity = ( item: ShoppingListItem ) => {
   const quantity = item.original_quantity || item.quantity_needed;
   const unit = item.original_unit_type || item.ingredients?.unit_type || "g";
-  return `Original: ${quantity} ${unit}`;
+  return `Original: ${ quantity } ${ unit }`;
 };
 
 const downloadCsv = () => {
-  const blob = new Blob([buildShoppingCsv(items.value)], {
+  const blob = new Blob( [ buildShoppingCsv( items.value ) ], {
     type: "text/csv;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+  } );
+  const url = URL.createObjectURL( blob );
+  const link = document.createElement( "a" );
   link.href = url;
   link.download = "lista-compra.csv";
   link.click();
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL( url );
 };
 
 const exportAsText = async () => {
   const currentUser = await loadCurrentUser();
-  if (!currentUser) return;
+  if ( !currentUser ) return;
 
   exportLoading.value = true;
   try {
     const response = await fetch(
-      `${useRuntimeConfig().public.supabaseUrl}/functions/v1/export-shopping-list?user_id=${currentUser.id}&format=text`
+      `${ useRuntimeConfig().public.supabaseUrl }/functions/v1/export-shopping-list?user_id=${ currentUser.id }&format=text`
     );
     const text = await response.text();
 
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const blob = new Blob( [ text ], { type: "text/plain;charset=utf-8" } );
+    const url = URL.createObjectURL( blob );
+    const link = document.createElement( "a" );
     link.href = url;
     link.download = "lista-compra.txt";
     link.click();
-    URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error("Export error:", err);
-    appToast.fromError("Error al exportar", err);
+    URL.revokeObjectURL( url );
+  } catch ( err ) {
+    console.error( "Export error:", err );
+    appToast.fromError( "Error al exportar", err );
   } finally {
     exportLoading.value = false;
   }
@@ -633,25 +542,25 @@ const exportAsText = async () => {
 
 const exportAsCsv = async () => {
   const currentUser = await loadCurrentUser();
-  if (!currentUser) return;
+  if ( !currentUser ) return;
 
   exportLoading.value = true;
   try {
     const response = await fetch(
-      `${useRuntimeConfig().public.supabaseUrl}/functions/v1/export-shopping-list?user_id=${currentUser.id}&format=csv`
+      `${ useRuntimeConfig().public.supabaseUrl }/functions/v1/export-shopping-list?user_id=${ currentUser.id }&format=csv`
     );
     const text = await response.text();
 
-    const blob = new Blob([text], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const blob = new Blob( [ text ], { type: "text/csv;charset=utf-8" } );
+    const url = URL.createObjectURL( blob );
+    const link = document.createElement( "a" );
     link.href = url;
     link.download = "lista-compra.csv";
     link.click();
-    URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error("Export error:", err);
-    appToast.fromError("Error al exportar", err);
+    URL.revokeObjectURL( url );
+  } catch ( err ) {
+    console.error( "Export error:", err );
+    appToast.fromError( "Error al exportar", err );
   } finally {
     exportLoading.value = false;
   }
@@ -659,32 +568,15 @@ const exportAsCsv = async () => {
 
 const printList = () => window.print();
 
-const categoryEmoji = (category: string) => {
-  const map: Record<string, string> = {
-    "Verduras": "🥬",
-    "Frutas": "🍎",
-    "Carnes": "🥩",
-    "Pescados": "🐟",
-    "Lácteos": "🥛",
-    "Panadería": "🍞",
-    "Bebidas": "🥤",
-    "Congelados": "❄️",
-    "Limpieza": "🧹",
-    "Añadidos por ti": "➕",
-    "Otros": "📦",
-  };
-  return map[category] || "📦";
-};
-
-onMounted(async () => {
-  canNativeShare.value = typeof navigator !== "undefined" && !!navigator.share;
+onMounted( async () => {
   await loadShoppingList();
   await loadRotatingMenus();
-});
+} );
 </script>
 
 <style scoped>
 @media print {
+
   nav,
   button,
   form,
@@ -693,18 +585,8 @@ onMounted(async () => {
     display: none !important;
   }
 
-  .bg-ghost-white\/5,
-  .backdrop-blur-sm {
-    background: white !important;
-    border-color: #e5e7eb !important;
+  .bg-white dark:bg-slate-900 {
+    break-inside: avoid;
   }
-}
-
-select {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 0.5rem center;
-  background-repeat: no-repeat;
-  background-size: 1.5em 1.5em;
-  padding-right: 2.5rem;
 }
 </style>

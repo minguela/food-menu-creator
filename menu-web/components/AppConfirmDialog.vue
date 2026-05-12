@@ -4,41 +4,26 @@
     class="fixed inset-0 z-[70] flex items-center justify-center p-4"
     @click.self="confirmCancel"
   >
-<<<<<<< Updated upstream
-    <div class="absolute inset-0 bg-[var(--bg-canvas)]/70 backdrop-blur-[1px]" />
-    <div class="relative w-full max-w-md overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-1)] shadow-2xl">
-      <div class="h-1.5" :class="state.danger ? 'bg-gradient-to-r from-[rgba(255,100,103,0.25)] to-[rgba(255,100,103,0.1)]' : 'bg-gradient-to-r from-[rgba(187,222,242,0.15)] to-sky-600'" />
-=======
-    <div class="absolute inset-0 bg-canvas/70 backdrop-blur-[1px]" />
-    <div class="relative w-full max-w-md overflow-hidden rounded-2xl border border-border-soft bg-surface-1 shadow-2xl">
+    <div class="absolute inset-0 bg-slate-950/65 backdrop-blur-[1px]" />
+    <div class="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl">
       <div class="h-1.5" :class="state.danger ? 'bg-gradient-to-r from-red-500 to-rose-600' : 'bg-gradient-to-r from-indigo-500 to-sky-600'" />
->>>>>>> Stashed changes
       <div class="p-5">
-      <h3 class="text-lg font-semibold text-text-1">
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
         {{ state.title }}
       </h3>
-      <p class="mt-2 text-sm text-text-2">
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
         {{ state.message }}
       </p>
       <div class="mt-5 flex justify-end gap-2">
         <button
-<<<<<<< Updated upstream
-          class="rounded-lg border border-[var(--border-soft)] px-3 py-2 text-sm text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] "
-=======
-          class="rounded-lg border border-border-soft px-3 py-2 text-sm text-text-2 hover:bg-slate-50 "
->>>>>>> Stashed changes
+          class="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
           @click="confirmCancel"
         >
           {{ state.cancelText }}
         </button>
         <button
-<<<<<<< Updated upstream
-          class="rounded-lg px-3 py-2 text-sm text-[var(--text-1)]"
-          :class="state.danger ? 'bg-[var(--danger)] hover:brightness-110 shadow-lg shadow-black/40' : 'bg-[var(--accent)] hover:brightness-110 shadow-lg shadow-black/40'"
-=======
-          class="rounded-lg px-3 py-2 text-sm text-text-1"
-          :class="state.danger ? 'bg-red-600 hover:bg-red-700 shadow-lg shadow-black/40' : 'bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-black/40'"
->>>>>>> Stashed changes
+          class="rounded-lg px-3 py-2 text-sm text-white"
+          :class="state.danger ? 'bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/30' : 'bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/30'"
           @click="confirmAccept"
         >
           {{ state.confirmText }}

@@ -5,49 +5,32 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div class="flex items-center gap-4">
           <div
-<<<<<<< Updated upstream
-            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[rgba(187,222,242,0.15)] to-[rgba(209,170,215,0.12)] flex items-center justify-center shadow-lg shadow-black/40">
-            <svg class="w-6 h-6 text-[var(--text-1)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-=======
-            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-black/40">
-            <svg class="w-6 h-6 text-text-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
->>>>>>> Stashed changes
+            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
           <div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-[var(--text-1)] to-[var(--text-2)] bg-clip-text text-transparent">
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
               Menús Semanales
             </h1>
-            <p class="text-text-3 text-sm mt-1">Planifica tu alimentación esta semana</p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Planifica tu alimentación esta semana</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
           <button @click="toggleSelectAllMenus"
-<<<<<<< Updated upstream
-            class="px-4 py-2.5 border border-[var(--border-soft)] text-[var(--text-2)] rounded-xl hover:bg-[var(--surface-1)] hover:border-[var(--border-soft)] transition-all text-sm font-medium"
-=======
-            class="px-4 py-2.5 border border-border-soft text-text-2 rounded-xl hover: bg-surface-1 hover:border-border-soft transition-all text-sm font-medium"
->>>>>>> Stashed changes
+            class="px-4 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:bg-slate-900 hover:border-slate-300 dark:border-slate-600 transition-all text-sm font-medium"
             :disabled="menus.length === 0">
             {{ allMenusSelected ? "Deseleccionar" : "Seleccionar" }} menús
           </button>
           <button @click="deleteSelectedMenus"
-<<<<<<< Updated upstream
-            class="px-4 py-2.5 bg-[var(--danger)] text-[var(--text-1)] rounded-xl hover:brightness-110 transition-all text-sm font-medium disabled:opacity-50"
-=======
-            class="px-4 py-2.5 bg-red-600 text-text-1 rounded-xl hover:bg-red-700 transition-all text-sm font-medium disabled:opacity-50"
->>>>>>> Stashed changes
+            class="px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all text-sm font-medium disabled:opacity-50"
             :disabled="selectedMenuIds.length === 0">
             Eliminar seleccionados ({{ selectedMenuIds.length }})
           </button>
           <button @click="showNewMenuModal = true"
-<<<<<<< Updated upstream
-            class="group bg-gradient-to-r from-[rgba(187,222,242,0.2)] to-[rgba(187,222,242,0.1)] text-[var(--text-1)] px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-lg shadow-black/40 hover:shadow-xl hover:shadow-indigo-300/30 flex items-center gap-2 active:scale-95">
-=======
-            class="group bg-gradient-to-r from-indigo-600 to-indigo-700 text-text-1 px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-lg shadow-black/40 hover:shadow-xl hover:shadow-indigo-300/30 flex items-center gap-2 active:scale-95">
->>>>>>> Stashed changes
+            class="group bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300/30 flex items-center gap-2 active:scale-95">
             <svg class="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -60,34 +43,30 @@
       <!-- Estado de carga -->
       <div v-if=" loading " class="flex flex-col items-center justify-center py-20">
         <div class="relative">
-          <div class="w-16 h-16 rounded-full border-4 border-[rgba(187,222,242,0.15)] border-t-[rgba(187,222,242,0.25)] animate-spin"></div>
+          <div class="w-16 h-16 rounded-full border-4 border-indigo-100 border-t-indigo-500 animate-spin"></div>
           <div
-            class="absolute inset-0 w-16 h-16 rounded-full border-4 border-indigo-50 border-b-[rgba(187,222,242,0.15)] animate-spin"
+            class="absolute inset-0 w-16 h-16 rounded-full border-4 border-indigo-50 border-b-indigo-200 animate-spin"
             style="animation-direction: reverse; animation-duration: 1.5s;"></div>
         </div>
-        <p class="mt-6 text-text-3 font-medium">Cargando menús...</p>
+        <p class="mt-6 text-slate-500 dark:text-slate-400 font-medium">Cargando menús...</p>
       </div>
 
       <!-- Lista de menús -->
       <div v-if=" menus.length > 0 " class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <div v-for=" ( menu, index ) in menus " :key=" menu.id "
-<<<<<<< Updated upstream
-          class="group bg-[var(--surface-1)] rounded-2xl shadow-sm border border-[var(--border-soft)] p-5 hover:shadow-xl hover:shadow-black/40/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-=======
-          class="group bg-surface-1 rounded-2xl shadow-sm border border-border-soft p-5 hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
->>>>>>> Stashed changes
+          class="group bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-5 hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
           :style=" { animationDelay: `${ index * 50 }ms` } " @click="viewMenu( menu )">
           <div class="flex items-start justify-between gap-3 mb-4">
             <label class="inline-flex items-center pt-1" @click.stop>
               <input type="checkbox" :checked="selectedMenuIds.includes(menu.id)" @change="toggleMenuSelected(menu.id)" />
             </label>
             <div class="flex-1 min-w-0">
-              <h3 class="text-lg font-bold text-text-1 truncate group-hover: transition-colors">
+              <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-indigo-600 transition-colors">
                 {{ menu.name }}
               </h3>
               <div class="flex items-center gap-2 mt-1">
                 <span
-                  class="inline-flex items-center gap-1 text-xs font-medium bg-accent/10 px-2.5 py-1 rounded-full">
+                  class="inline-flex items-center gap-1 text-xs font-medium bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -97,11 +76,7 @@
               </div>
             </div>
             <button type="button"
-<<<<<<< Updated upstream
-              class="opacity-0 group-hover:opacity-100 p-2 text-[var(--text-3)] hover:bg-[rgba(255,100,103,0.08)] rounded-lg transition-all"
-=======
-              class="opacity-0 group-hover:opacity-100 p-2 text-text-3 hover: hover:bg-danger/10 rounded-lg transition-all"
->>>>>>> Stashed changes
+              class="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
               title="Eliminar menú" @click.stop="confirmDeleteMenu( menu )">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -122,7 +97,7 @@
             </span>
           </div>
 
-          <div class="flex items-center justify-between text-xs text-text-3">
+          <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span class="flex items-center gap-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -131,7 +106,7 @@
               {{ formatDate( menu.created_at ) }}
             </span>
             <span v-if=" isMenuComplete( menu ) "
-              class="inline-flex items-center gap-1 font-medium">
+              class="inline-flex items-center gap-1 text-green-600 font-medium">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
@@ -144,26 +119,18 @@
 
     <!-- Sin menús -->
     <div v-if=" !loading && menus.length === 0 "
-<<<<<<< Updated upstream
-      class="flex flex-col items-center justify-center py-20 bg-[var(--surface-1)] rounded-2xl border border-dashed border-[var(--border-soft)]">
-=======
-      class="flex flex-col items-center justify-center py-20 bg-surface-1 rounded-2xl border border-dashed border-border-soft">
->>>>>>> Stashed changes
+      class="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
       <div
-        class="w-20 h-20 rounded-full bg-gradient-to-br from-[rgba(187,222,242,0.06)] to-[rgba(209,170,215,0.04)] flex items-center justify-center mb-6">
-        <svg class="w-10 h-10 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        class="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-6">
+        <svg class="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       </div>
-      <p class="text-text-2 font-medium text-lg mb-2">No tienes menús creados</p>
-      <p class="text-sm mb-6">Crea tu primer menú semanal para empezar</p>
+      <p class="text-slate-600 dark:text-slate-300 font-medium text-lg mb-2">No tienes menús creados</p>
+      <p class="text-slate-400 text-sm mb-6">Crea tu primer menú semanal para empezar</p>
       <button @click="showNewMenuModal = true"
-<<<<<<< Updated upstream
-        class="bg-gradient-to-r from-[rgba(187,222,242,0.2)] to-[rgba(209,170,215,0.12)] text-[var(--text-1)] px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-black/40 hover:shadow-xl flex items-center gap-2">
-=======
-        class="bg-gradient-to-r from-indigo-600 to-purple-600 text-text-1 px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-black/40 hover:shadow-xl flex items-center gap-2">
->>>>>>> Stashed changes
+        class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-200 hover:shadow-xl flex items-center gap-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
@@ -174,77 +141,62 @@
     <!-- Modal para nuevo menú -->
     <div v-if=" showNewMenuModal " class="fixed inset-0 z-50 flex items-center justify-center p-4"
       @click.self="showNewMenuModal = false">
-      <div class="absolute inset-0 /40 backdrop-blur-sm"></div>
-<<<<<<< Updated upstream
-      <div class="relative bg-[var(--surface-1)] rounded-2xl shadow-2xl shadow-black/40 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div class="bg-gradient-to-r from-[rgba(187,222,242,0.2)] to-[rgba(209,170,215,0.12)] px-6 py-4">
-          <h2 class="text-xl font-bold text-[var(--text-1)]">Crear nuevo menú semanal</h2>
-=======
-      <div class="relative bg-surface-1 rounded-2xl shadow-2xl shadow-slate-900/20 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+      <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl shadow-slate-900/20 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
-          <h2 class="text-xl font-bold text-text-1">Crear nuevo menú semanal</h2>
->>>>>>> Stashed changes
-          <p class="text-sm mt-1">Configura las opciones de tu menú</p>
+          <h2 class="text-xl font-bold text-white">Crear nuevo menú semanal</h2>
+          <p class="text-indigo-100 text-sm mt-1">Configura las opciones de tu menú</p>
         </div>
 
         <div class="p-6 space-y-6 overflow-y-auto">
           <div class="space-y-2">
-            <label class="block text-sm font-semibold text-text-2">
+            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-200">
               Nombre del menú
             </label>
             <div class="relative">
-              <div class="absolute left-3 top-1/2 -translate-y-1/2 text-text-3">
+              <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4z" />
                 </svg>
               </div>
               <input v-model=" newMenuName " type="text" placeholder="Ej: Semana 1, Menú Fitness..."
-                class="w-full pl-10 pr-4 py-3 border border-border-soft rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                class="w-full pl-10 pr-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 @keyup.enter=" createMenu " />
             </div>
           </div>
 
-          <div class="border border-border-soft rounded-xl p-5">
-            <h3 class="font-semibold text-text-1 mb-4 flex items-center gap-2">
-              <svg class="w-5 h-5 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="border border-slate-100 dark:border-slate-800 rounded-xl p-5">
+            <h3 class="font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Comidas fijas para los 7 días
-              <span class="text-xs font-normal text-text-3">(opcional)</span>
+              <span class="text-xs font-normal text-slate-400">(opcional)</span>
             </h3>
             <div class="flex flex-wrap gap-3 mb-4">
               <label v-for=" type in mealTypes " :key=" `fixed-${ type }` "
-<<<<<<< Updated upstream
-                class="inline-flex items-center gap-2 px-4 py-2 border border-[var(--border-soft)] rounded-lg text-sm cursor-pointer hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(187,222,242,0.12)] transition-all"
-                :class="fixedMealTypes.includes( type ) ? 'border-[rgba(187,222,242,0.25)] bg-[rgba(187,222,242,0.08)] ' : '' ">
-=======
-                class="inline-flex items-center gap-2 px-4 py-2 border border-border-soft rounded-lg text-sm cursor-pointer hover:border-[rgba(255,255,255,0.25)] hover:bg-accent/15 transition-all"
-                :class="fixedMealTypes.includes( type ) ? 'border-indigo-500 bg-accent/10 ' : '' ">
->>>>>>> Stashed changes
+                class="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+                :class=" fixedMealTypes.includes( type ) ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : '' ">
                 <input v-model=" fixedMealTypes " type="checkbox" :value=" type " class="sr-only" />
                 <span class="font-medium">{{ mealLabel( type ) }}</span>
               </label>
             </div>
             <article v-for=" type in fixedMealTypes " :key=" `fixed-card-${ type }` " class="border rounded-lg p-3">
-              <h4 class="font-medium text-text-1 mb-2">
+              <h4 class="font-medium text-gray-900 dark:text-slate-100 mb-2">
                 {{ mealLabel( type ) }} fija
               </h4>
               <div class="mb-3 grid gap-2 md:grid-cols-2">
-<<<<<<< Updated upstream
-                <button type="button" class="rounded-lg border px-3 py-2 text-sm text-left" :class="fixedMeals[ type ].recipe_mode === 'existing' ? 'border-[rgba(187,222,242,0.25)] bg-[rgba(187,222,242,0.08)] ' : 'border-[var(--border-soft)] text-[var(--text-2)]'
+                <button type="button" class="rounded-lg border px-3 py-2 text-sm text-left" :class=" fixedMeals[ type ].recipe_mode === 'existing'
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                    : 'border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-200'
                   " @click="fixedMeals[ type ].recipe_mode = 'existing'">
                   Usar receta existente
                 </button>
-                <button type="button" class="rounded-lg border px-3 py-2 text-sm text-left" :class="fixedMeals[ type ].recipe_mode === 'new' ? 'border-[rgba(187,222,242,0.25)] bg-[rgba(187,222,242,0.08)] ' : 'border-[var(--border-soft)] text-[var(--text-2)]'
-=======
-                <button type="button" class="rounded-lg border px-3 py-2 text-sm text-left" :class="fixedMeals[ type ].recipe_mode === 'existing' ? 'border-indigo-500 bg-accent/10 ' : 'border-border-soft  text-text-2'
-                  " @click="fixedMeals[ type ].recipe_mode = 'existing'">
-                  Usar receta existente
-                </button>
-                <button type="button" class="rounded-lg border px-3 py-2 text-sm text-left" :class="fixedMeals[ type ].recipe_mode === 'new' ? 'border-indigo-500 bg-accent/10 ' : 'border-border-soft  text-text-2'
->>>>>>> Stashed changes
+                <button type="button" class="rounded-lg border px-3 py-2 text-sm text-left" :class=" fixedMeals[ type ].recipe_mode === 'new'
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                    : 'border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-200'
                   " @click="
                     fixedMeals[ type ].recipe_mode = 'new';
                   fixedMeals[ type ].selected_recipe_id = '';
@@ -253,7 +205,7 @@
                 </button>
               </div>
               <label class="block mb-3">
-                <span class="block text-xs font-medium text-text-2 mb-1">
+                <span class="block text-xs font-medium text-gray-700 dark:text-slate-200 mb-1">
                   Elegir receta guardada
                 </span>
                 <select v-model=" fixedMeals[ type ].selected_recipe_id "
@@ -264,20 +216,20 @@
                     {{ recipe.name }}
                   </option>
                 </select>
-                <span v-if=" savedRecipes.length === 0 " class="mt-1 block text-xs text-warning">
+                <span v-if=" savedRecipes.length === 0 " class="mt-1 block text-xs text-amber-700">
                   No tienes recetas guardadas todavía.
                 </span>
               </label>
               <div class="grid gap-2 md:grid-cols-2">
                 <label class="md:col-span-2">
-                  <span class="block text-xs font-medium text-text-2 mb-1">
+                  <span class="block text-xs font-medium text-gray-700 dark:text-slate-200 mb-1">
                     Nombre del plato
                   </span>
                   <input v-model.trim=" fixedMeals[ type ].dish_name " class="w-full border rounded-lg px-3 py-2"
                     placeholder="Ej: Yogur con avena y fruta" />
                 </label>
                 <label class="md:col-span-2">
-                  <span class="block text-xs font-medium text-text-2 mb-1">
+                  <span class="block text-xs font-medium text-gray-700 dark:text-slate-200 mb-1">
                     Descripción
                   </span>
                   <input v-model.trim=" fixedMeals[ type ].dish_description " class="w-full border rounded-lg px-3 py-2"
@@ -289,21 +241,21 @@
                 <div v-for=" ( ingredient, index ) in fixedMeals[ type ].ingredients " :key=" `${ type }-ing-${ index }` "
                   class="grid grid-cols-[1fr_90px_90px_32px] gap-2">
                   <label>
-                    <span class="block text-xs font-medium text-text-2 mb-1">
+                    <span class="block text-xs font-medium text-gray-700 dark:text-slate-200 mb-1">
                       Ingrediente
                     </span>
                     <input v-model.trim=" ingredient.name " class="w-full border rounded-lg px-3 py-2"
                       placeholder="Ej: Avena" />
                   </label>
                   <label>
-                    <span class="block text-xs font-medium text-text-2 mb-1">
+                    <span class="block text-xs font-medium text-gray-700 dark:text-slate-200 mb-1">
                       Cantidad
                     </span>
                     <input v-model.number=" ingredient.quantity " type="number" min="0.01" step="0.01"
                       class="w-full border rounded-lg px-3 py-2" />
                   </label>
                   <label>
-                    <span class="block text-xs font-medium text-text-2 mb-1">
+                    <span class="block text-xs font-medium text-gray-700 dark:text-slate-200 mb-1">
                       Unidad
                     </span>
                     <select v-model=" ingredient.unit_type " class="w-full border rounded-lg px-3 py-2">
@@ -312,34 +264,24 @@
                       </option>
                     </select>
                   </label>
-                  <button type="button" class="self-end h-10" @click="removeFixedIngredient( type, index )">
+                  <button type="button" class="text-red-600 self-end h-10" @click="removeFixedIngredient( type, index )">
                     ×
                   </button>
                 </div>
-                <button type="button" class="text-sm " @click="addFixedIngredient( type )">
+                <button type="button" class="text-sm text-indigo-700" @click="addFixedIngredient( type )">
                   + Ingrediente
                 </button>
               </div>
             </article>
           </div>
         </div>
-<<<<<<< Updated upstream
-        <div class="flex gap-3 justify-end p-4 border-t border-[var(--border-soft)] bg-[var(--surface-1)] shrink-0">
+        <div class="flex gap-3 justify-end p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
           <button @click="showNewMenuModal = false"
-            class="px-5 py-2.5 border border-[var(--border-soft)] text-[var(--text-2)] rounded-xl font-medium hover:bg-[var(--surface-1)] hover:border-[var(--border-soft)] transition-all">
+            class="px-5 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-50 dark:bg-slate-900 hover:border-slate-300 dark:border-slate-600 transition-all">
             Cancelar
           </button>
           <button @click=" createMenu "
-            class="px-6 py-2.5 bg-gradient-to-r from-[rgba(187,222,242,0.2)] to-[rgba(209,170,215,0.12)] text-[var(--text-1)] rounded-xl font-medium shadow-lg shadow-black/40 hover:shadow-xl hover:shadow-indigo-300/30 transition-all active:scale-95">
-=======
-        <div class="flex gap-3 justify-end p-4 border-t border-border-soft bg-surface-1 shrink-0">
-          <button @click="showNewMenuModal = false"
-            class="px-5 py-2.5 border border-border-soft text-text-2 rounded-xl font-medium hover: bg-surface-1 hover:border-border-soft transition-all">
-            Cancelar
-          </button>
-          <button @click=" createMenu "
-            class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-text-1 rounded-xl font-medium shadow-lg shadow-black/40 hover:shadow-xl hover:shadow-indigo-300/30 transition-all active:scale-95">
->>>>>>> Stashed changes
+            class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300/30 transition-all active:scale-95">
             Crear menú
           </button>
         </div>
@@ -489,13 +431,8 @@ const menuMealCount = ( menu: WeeklyMenu, type: "desayuno" | "comida" | "cena" )
 
 const mealCountClass = ( menu: WeeklyMenu, type: "desayuno" | "comida" | "cena" ) =>
   menuMealCount( menu, type ) >= 7
-<<<<<<< Updated upstream
-    ? "border-[rgba(114,206,123,0.2)] bg-[rgba(114,206,123,0.06)] text-[var(--success)]"
-    : "border-[rgba(255,214,0,0.2)] bg-[rgba(255,214,0,0.06)] text-[var(--goldenrod)]";
-=======
-    ? "border-green-200 bg-success/8 text-success"
-    : "border-amber-200 bg-warning/8 text-warning";
->>>>>>> Stashed changes
+    ? "border-green-200 bg-green-50 text-green-700"
+    : "border-amber-200 bg-amber-50 text-amber-700";
 
 const isMenuComplete = ( menu: WeeklyMenu ) =>
   menuMealCount( menu, "desayuno" ) >= 7 &&

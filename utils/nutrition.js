@@ -13,11 +13,11 @@ export function validateMacroTargets({ fatPct, carbsPct }) {
     };
   }
 
-  if (fat < 10 || carbs < 10 || protein < 10) {
+  if (fat <= 0 || carbs <= 0 || protein <= 0) {
     return {
       valid: false,
       proteinPct: protein,
-      message: "Cada macronutriente debe tener al menos un 10%.",
+      message: "Cada macronutriente debe ser mayor que 0.",
     };
   }
 

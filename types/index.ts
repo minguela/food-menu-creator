@@ -27,6 +27,7 @@ export interface PersonProfile {
   daily_protein_target: number;
   fat_pct_target: number;
   carbs_pct_target: number;
+  protein_pct_target: number;
   tolerance_percent?: number;
   created_at: string;
   updated_at: string;

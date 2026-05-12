@@ -1,4 +1,4 @@
-﻿import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
 import { buildEnglishAliasForIngredient } from "~/server/utils/ingredient-aliases";
 
 export default defineEventHandler(async (event) => {

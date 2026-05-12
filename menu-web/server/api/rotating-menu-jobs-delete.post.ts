@@ -1,4 +1,4 @@
-﻿import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as {

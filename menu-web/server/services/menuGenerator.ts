@@ -1,4 +1,4 @@
-﻿import type { MealType, PersonProfile } from "~/types";
+import type { MealType, PersonProfile } from "~/types";
 import {
   addNutritionTotals,
   calculateRecipeMacros,

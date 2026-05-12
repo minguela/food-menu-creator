@@ -1,4 +1,4 @@
-﻿export function weeklyMeals(weeklyMenuIds) {
+export function weeklyMeals(weeklyMenuIds) {
   return weeklyMenuIds.flatMap((weeklyMenuId) =>
     Array.from({ length: 7 }, (_, index) => {
       const dayNumber = index + 1;

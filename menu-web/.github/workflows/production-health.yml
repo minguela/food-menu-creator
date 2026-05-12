@@ -1,4 +1,4 @@
-﻿name: Production Health Monitor
+name: Production Health Monitor
 
 on:
   workflow_dispatch:

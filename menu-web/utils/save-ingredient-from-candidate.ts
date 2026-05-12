@@ -1,4 +1,4 @@
-﻿export const saveIngredientFromCandidate = async (candidate: unknown) => {
+export const saveIngredientFromCandidate = async (candidate: unknown) => {
   return await $fetch<{
     success: boolean;
     ingredient_id: string;

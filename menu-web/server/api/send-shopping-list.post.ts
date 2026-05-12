@@ -1,4 +1,4 @@
-﻿import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { logError } from "~/utils/log-error";
 import { buildShoppingListText } from "~/utils/shopping-conversions.js";
 

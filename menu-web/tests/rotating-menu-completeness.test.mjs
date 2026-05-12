@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { buildRotatingWeeklyMenuBlocks } from "../utils/rotating-weekly-menu-blocks.js";
 import { validatePlannedDayCompleteness } from "../utils/rotating-menu-completeness.js";

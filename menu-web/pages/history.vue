@@ -15,7 +15,7 @@
       </NuxtLink>
     </header>
 
-    <section class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4">
+    <section class="rounded-lg border bg-[var(--surface-1)] p-4">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 class="font-semibold text-[var(--text-1)]">En creación</h2>
         <button
@@ -131,7 +131,7 @@
       </div>
     </section>
 
-    <section class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4">
+    <section class="rounded-lg border bg-[var(--surface-1)] p-4">
       <h2 class="mb-3 font-semibold text-[var(--text-1)]">Creados</h2>
       <div v-if="loadingMenus" class="text-sm text-[var(--text-3)]">Cargando menús...</div>
       <div

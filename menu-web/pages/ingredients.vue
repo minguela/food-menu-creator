@@ -14,7 +14,7 @@
 
     <section class="bg-[var(--surface-1)] rounded-lg border p-4">
       <div class="flex flex-wrap items-center gap-2">
-        <button class="px-3 py-2 text-sm bg-red-600 text-[var(--text-1)] rounded-lg hover:bg-red-700 disabled:opacity-50"
+        <button class="px-3 py-2 text-sm bg-[var(--danger)] text-[var(--text-1)] rounded-lg hover:brightness-110 disabled:opacity-50"
           :disabled=" selectedIds.length === 0 " @click=" deleteSelected ">
           Eliminar seleccionados ({{ selectedIds.length }})
         </button>
@@ -59,7 +59,7 @@
       </div>
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <button v-for=" option in filterOptions " :key=" option.value "
-          class="rounded-full border px-3 py-1.5 text-xs font-medium" :class="filterMode === option.value ? 'border-indigo-600 bg-[rgba(187,222,242,0.08)] ' : 'border-[var(--border-soft)]  text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] bg-[var(--surface-1)]'
+          class="rounded-full border px-3 py-1.5 text-xs font-medium" :class="filterMode === option.value ? 'border-[rgba(187,222,242,0.25)] bg-[rgba(187,222,242,0.08)] ' : 'border-[var(--border-soft)] text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] bg-[var(--surface-1)]'
             " @click="filterMode = option.value">
           {{ option.label }} {{ option.count }}
         </button>
@@ -71,7 +71,7 @@
     </section>
 
     <section class="space-y-3">
-      <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-transparent bg-[var(--surface-1)] p-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-[var(--surface-1)] p-4">
         <label class="inline-flex items-center gap-2 text-sm text-[var(--text-2)]">
           <input type="checkbox" :checked=" allFilteredSelected " @change=" toggleSelectAllFiltered " />
           Seleccionar visibles
@@ -94,7 +94,7 @@
         @save-next="save( row, { goNext: true } )" @toggle-selected="toggleSelected( row.id )"
         @previous="moveActive( row.id, -1 )" @next="moveActive( row.id, 1 )" @delete="deleteOne( row.id )"
         @apply-candidate=" applyCandidate " @show-candidate-debug=" showCandidateDebug " />
-      <div v-if=" filtered.length === 0 " class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4 text-sm text-[var(--text-3)]">
+      <div v-if=" filtered.length === 0 " class="rounded-lg border bg-[var(--surface-1)] p-4 text-sm text-[var(--text-3)]">
         {{ showOnlyWithoutRecipes
           ? "No se encontraron ingredientes sin recetas con los filtros actuales."
           : "No hay ingredientes que coincidan con los filtros actuales."
@@ -102,7 +102,7 @@
       </div>
     </section>
 
-    <section v-if=" selectedCandidateDebug " class="rounded-lg border border-indigo-100 bg-[rgba(187,222,242,0.08)] p-3 space-y-2">
+    <section v-if=" selectedCandidateDebug " class="rounded-lg border border-[rgba(187,222,242,0.15)] bg-[rgba(187,222,242,0.08)] p-3 space-y-2">
       <div class="flex items-center justify-between gap-2">
         <p class="text-xs font-medium ">
           Debug OFF/USDA: {{ selectedCandidateDebug.name }} · confianza {{ Number( selectedCandidateDebug.confidence || 0 ).toFixed( 2 ) }}
@@ -111,12 +111,12 @@
           Cerrar
         </button>
       </div>
-      <pre class="max-h-64 overflow-auto rounded bg-transparent bg-[var(--surface-1)] p-2 text-[11px] text-[var(--text-2)]">{{ JSON.stringify( selectedCandidateDebug.raw_payload || {}, null, 2 ) }}</pre>
+      <pre class="max-h-64 overflow-auto rounded bg-[var(--surface-1)] p-2 text-[11px] text-[var(--text-2)]">{{ JSON.stringify( selectedCandidateDebug.raw_payload || {}, null, 2 ) }}</pre>
     </section>
 
     <div v-if="showImportCsvModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showImportCsvModal = false">
       <div class="absolute inset-0 bg-[var(--bg-canvas)]/50"></div>
-      <div class="relative w-full max-w-3xl rounded-lg bg-transparent bg-[var(--surface-1)] p-4 space-y-3">
+      <div class="relative w-full max-w-3xl rounded-lg bg-[var(--surface-1)] p-4 space-y-3">
         <h3 class="text-lg font-semibold text-[var(--text-1)]">Importar CSV</h3>
         <p class="text-xs text-[var(--text-3)]">
           Cabeceras: `name,english_name,normalized_name,default_unit_type,kcal_per_100g,protein_per_100g,carbs_per_100g,fat_per_100g`
@@ -135,7 +135,7 @@
 
     <div v-if="showMergeSelectedModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showMergeSelectedModal = false">
       <div class="absolute inset-0 bg-[var(--bg-canvas)]/50"></div>
-      <div class="relative w-full max-w-xl rounded-lg bg-transparent bg-[var(--surface-1)] p-4 space-y-3">
+      <div class="relative w-full max-w-xl rounded-lg bg-[var(--surface-1)] p-4 space-y-3">
         <h3 class="text-lg font-semibold text-[var(--text-1)]">Fusionar ingredientes seleccionados</h3>
         <p class="text-sm text-[var(--text-2)]">Seleccionados: {{ selectedIds.length }}. Elige cuál se queda como destino.</p>
         <select v-model="mergeDestinationId" class="w-full border rounded-lg px-3 py-2">

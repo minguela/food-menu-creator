@@ -1,4 +1,4 @@
-import { generateNutritionMenu, type MenuPeriodType } from "~/server/services/menuGenerator";
+﻿import { generateNutritionMenu, type MenuPeriodType } from "~/server/services/menuGenerator";
 import { saveNutritionGeneratedMenu } from "~/server/services/menuGeneratorPersistence";
 import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
 

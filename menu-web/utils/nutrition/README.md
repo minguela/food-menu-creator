@@ -1,4 +1,4 @@
-# Nutrition Utilities
+﻿# Nutrition Utilities
 
 These modules are the shared calculation surface for the score-based nutrition
 menu generator:

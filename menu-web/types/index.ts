@@ -1,4 +1,4 @@
-export type MealType = "desayuno" | "comida" | "cena" | "snack";
+﻿export type MealType = "desayuno" | "comida" | "cena" | "snack";
 
 export type ScheduledMealType = Exclude<MealType, "snack">;
 

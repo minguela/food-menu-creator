@@ -2,33 +2,37 @@
   <div class="space-y-6">
     <header class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-[var(--text-1)]">Menús rotativos</h1>
-        <p class="text-sm text-[var(--text-3)]">
+        <h1 class="text-2xl font-bold text-text-1">Menús rotativos</h1>
+        <p class="text-sm text-text-3">
           Estado de generación y acceso rápido a menús creados.
         </p>
       </div>
       <NuxtLink
         href="/generar"
-        class="rounded-lg px-4 py-2 text-sm text-[var(--text-1)] hover:"
+        class="rounded-lg px-4 py-2 text-sm text-text-1 hover:"
       >
         Nuevo menú rotativo
       </NuxtLink>
     </header>
 
-    <section class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4">
+<<<<<<< Updated upstream
+    <section class="rounded-lg border bg-[var(--surface-1)] p-4">
+=======
+    <section class="rounded-lg border bg-surface-1 p-4">
+>>>>>>> Stashed changes
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 class="font-semibold text-[var(--text-1)]">En creación</h2>
+        <h2 class="font-semibold text-text-1">En creación</h2>
         <button
-          class="rounded border px-3 py-1.5 text-xs text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] bg-[var(--surface-1)]"
+          class="rounded border px-3 py-1.5 text-xs text-text-2 hover:bg-white/6 bg-surface-1"
           @click="cleanupFinishedJobs"
         >
           Limpiar completados/errores
         </button>
       </div>
-      <div v-if="loadingJobs" class="text-sm text-[var(--text-3)]">Cargando jobs...</div>
+      <div v-if="loadingJobs" class="text-sm text-text-3">Cargando jobs...</div>
       <div
         v-else-if="activeJobs.length === 0"
-        class="rounded-lg border border-dashed p-4 text-sm text-[var(--text-3)]"
+        class="rounded-lg border border-dashed p-4 text-sm text-text-3"
       >
         No hay menús en proceso ahora mismo.
       </div>
@@ -39,7 +43,7 @@
           class="rounded-lg border p-3"
         >
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <p class="font-medium text-[var(--text-1)]">
+            <p class="font-medium text-text-1">
               {{ job.input_payload?.name || "Menú rotativo" }}
             </p>
             <div class="flex items-center gap-2">
@@ -48,34 +52,34 @@
               </span>
               <button
                 v-if="job.result_menu_id"
-                class="rounded border px-2 py-1 text-xs text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] bg-[var(--surface-1)]"
+                class="rounded border px-2 py-1 text-xs text-text-2 hover:bg-white/6 bg-surface-1"
                 @click="openRotatingMenu(job.result_menu_id)"
               >
                 Abrir menú
               </button>
               <button
-                class="rounded border px-2 py-1 text-xs text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] bg-[var(--surface-1)]"
+                class="rounded border px-2 py-1 text-xs text-text-2 hover:bg-white/6 bg-surface-1"
                 @click="toggleJobLogs(job)"
               >
                 {{ expandedJobId === job.id ? "Ocultar logs" : "Ver logs" }}
               </button>
               <button
-                class="rounded border border-[rgba(255,100,103,0.2)] px-2 py-1 text-xs text-[var(--danger)] hover:bg-[rgba(255,100,103,0.08)]"
+                class="rounded border border-danger/20 px-2 py-1 text-xs text-danger hover:bg-danger/10"
                 @click="deleteJob(job)"
               >
                 Eliminar job
               </button>
             </div>
           </div>
-          <p class="mt-1 text-xs text-[var(--text-3)]">
+          <p class="mt-1 text-xs text-text-3">
             {{ formatDateTime(job.created_at) }} · progreso {{ job.progress || 0 }}%
           </p>
-          <p v-if="job.error_message" class="mt-1 text-xs text-[var(--danger)]">
+          <p v-if="job.error_message" class="mt-1 text-xs text-danger">
             {{ job.error_message }}
           </p>
           <div
             v-if="job.status === 'failed' && failedRecipes(job).length > 0"
-            class="mt-2 rounded border border-[rgba(255,100,103,0.2)] bg-[rgba(255,100,103,0.06)] p-2 text-xs "
+            class="mt-2 rounded border border-danger/20 bg-danger/6 p-2 text-xs "
           >
             <p class="font-medium">Recetas bloqueando la generación:</p>
             <ul class="mt-1 space-y-1">
@@ -92,7 +96,7 @@
               <NuxtLink href="/generar" class="underline">Volver a generar</NuxtLink>
             </div>
           </div>
-          <div class="mt-2 h-2 w-full overflow-hidden rounded bg-[var(--surface-3)]">
+          <div class="mt-2 h-2 w-full overflow-hidden rounded bg-surface-3">
             <div
               class="h-2 rounded transition-all"
               :style="{ width: `${Math.max(0, Math.min(100, job.progress || 0))}%` }"
@@ -100,7 +104,7 @@
           </div>
           <div
             v-if="expandedJobId === job.id"
-            class="mt-3 rounded-lg border bg-[var(--bg-shell)] p-3 text-xs text-[var(--text-1)]"
+            class="mt-3 rounded-lg border bg-shell p-3 text-xs text-text-1"
           >
             <div v-if="loadingLogs" class="">Cargando logs...</div>
             <div
@@ -113,16 +117,16 @@
               <li
                 v-for="log in logsByJob[job.id]"
                 :key="log.id"
-                class="rounded border border-[var(--border-soft)] bg-[var(--surface-3)] p-2"
+                class="rounded border border-border-soft bg-surface-3 p-2"
               >
                 <div class="flex flex-wrap items-center justify-between gap-2">
                   <span class="font-medium">{{ log.step }}</span>
                   <span class="">{{ formatDateTime(log.created_at) }}</span>
                 </div>
-                <p class="mt-1 text-[var(--text-2)]">{{ log.message }}</p>
-                <details v-if="log.metadata" class="mt-2 text-[var(--text-3)]">
+                <p class="mt-1 text-text-2">{{ log.message }}</p>
+                <details v-if="log.metadata" class="mt-2 text-text-3">
                   <summary class="cursor-pointer">metadata</summary>
-                  <pre class="mt-2 overflow-x-auto rounded border border-[var(--border-soft)] p-2">{{ JSON.stringify(log.metadata, null, 2) }}</pre>
+                  <pre class="mt-2 overflow-x-auto rounded border border-border-soft p-2">{{ JSON.stringify(log.metadata, null, 2) }}</pre>
                 </details>
               </li>
             </ol>
@@ -131,12 +135,18 @@
       </div>
     </section>
 
-    <section class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4">
+<<<<<<< Updated upstream
+    <section class="rounded-lg border bg-[var(--surface-1)] p-4">
       <h2 class="mb-3 font-semibold text-[var(--text-1)]">Creados</h2>
       <div v-if="loadingMenus" class="text-sm text-[var(--text-3)]">Cargando menús...</div>
+=======
+    <section class="rounded-lg border bg-surface-1 p-4">
+      <h2 class="mb-3 font-semibold text-text-1">Creados</h2>
+      <div v-if="loadingMenus" class="text-sm text-text-3">Cargando menús...</div>
+>>>>>>> Stashed changes
       <div
         v-else-if="rotatingMenus.length === 0"
-        class="rounded-lg border border-dashed p-4 text-sm text-[var(--text-3)]"
+        class="rounded-lg border border-dashed p-4 text-sm text-text-3"
       >
         Todavía no tienes menús rotativos creados.
       </div>
@@ -148,26 +158,26 @@
         >
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p class="font-medium text-[var(--text-1)]">{{ menu.name }}</p>
-              <p class="text-xs text-[var(--text-3)]">
+              <p class="font-medium text-text-1">{{ menu.name }}</p>
+              <p class="text-xs text-text-3">
                 {{ menu.duration_days }} días · {{ formatDateTime(menu.created_at) }}
               </p>
             </div>
             <div class="flex flex-wrap gap-2">
               <button
-                class="rounded border px-3 py-1.5 text-xs text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] bg-[var(--surface-1)]"
+                class="rounded border px-3 py-1.5 text-xs text-text-2 hover:bg-white/6 bg-surface-1"
                 @click="openRotatingMenu(menu.id)"
               >
                 Abrir menú
               </button>
               <button
-                class="rounded border px-3 py-1.5 text-xs text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] bg-[var(--surface-1)]"
+                class="rounded border px-3 py-1.5 text-xs text-text-2 hover:bg-white/6 bg-surface-1"
                 @click="openShoppingForMenu(menu.id)"
               >
                 Ver compra asociada
               </button>
               <button
-                class="rounded border border-[rgba(255,100,103,0.2)] px-3 py-1.5 text-xs text-[var(--danger)] hover:bg-[rgba(255,100,103,0.08)]"
+                class="rounded border border-danger/20 px-3 py-1.5 text-xs text-danger hover:bg-danger/10"
                 @click="deleteRotatingMenu(menu)"
               >
                 Eliminar
@@ -229,9 +239,9 @@ const statusLabel = (status: MenuGenerationJob["status"]) => {
 };
 
 const statusClass = (status: MenuGenerationJob["status"]) => {
-  if (status === "completed") return " text-[var(--success)]";
-  if (status === "failed") return "bg-[rgba(255,100,103,0.12)] ";
-  return " text-[var(--goldenrod)]";
+  if (status === "completed") return " text-success";
+  if (status === "failed") return "bg-danger/15 ";
+  return " text-warning";
 };
 
 const formatDateTime = (value: string) =>

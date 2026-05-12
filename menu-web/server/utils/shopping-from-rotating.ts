@@ -1,4 +1,4 @@
-import { convertToGrams } from "~/utils/shopping-conversions.js";
+﻿import { convertToGrams } from "~/utils/shopping-conversions.js";
 
 type SupabaseAdmin = {
   from: (table: string) => any;

@@ -278,6 +278,13 @@ export interface RotatingMenu {
   target_protein_g: number;
   target_carbs_g: number;
   target_fat_g: number;
+  generator_type?: "rotating" | "nutrition_scored";
+  period_type?: "daily" | "weekly" | "monthly" | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  score?: number | null;
+  meets_targets?: boolean | null;
+  diagnostics?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
@@ -301,7 +308,8 @@ export interface RotatingMenuDay {
 export interface RotatingMenuMeal {
   id: string;
   rotating_menu_day_id: string;
-  meal_type: ScheduledMealType;
+  recipe_id?: string | null;
+  meal_type: MealType;
   meal_slot?: number;
   source_weekly_meal_id?: string | null;
   dish_name: string;

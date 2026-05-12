@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <span
     class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium"
     :class="classes"
@@ -27,7 +27,7 @@ const classes = computed(() => {
   if (props.quality.status === "incomplete") {
     return "border-amber-200 bg-amber-50 text-amber-700";
   }
-  return "border-red-200 bg-red-50 text-red-700";
+  return "border-red-200 bg-[rgba(255,100,103,0.06)] text-[var(--danger)]";
 });
 </script>
 

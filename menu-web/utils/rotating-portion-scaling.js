@@ -1,4 +1,4 @@
-export function isCountBasedUnit(unitType) {
+﻿export function isCountBasedUnit(unitType) {
   const value = String(unitType || "").trim().toLowerCase();
   return value === "ud" || value === "unidad" || value === "pack";
 }

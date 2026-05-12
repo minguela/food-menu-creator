@@ -1,4 +1,4 @@
-import type { RecipeIngredientMacroInput } from "../../utils/nutrition/calculateRecipeMacros";
+﻿import type { RecipeIngredientMacroInput } from "../../utils/nutrition/calculateRecipeMacros";
 
 export const nutritionProfileFixture = {
   id: "profile-balanced",

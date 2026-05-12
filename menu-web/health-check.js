@@ -1,4 +1,4 @@
-const baseUrlArgIndex = process.argv.indexOf("--base-url");
+﻿const baseUrlArgIndex = process.argv.indexOf("--base-url");
 const baseUrl =
   (
     process.argv.find((arg) => arg.startsWith("--base-url=")) ||

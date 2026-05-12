@@ -1,4 +1,4 @@
-import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+﻿import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
 import { createMenuGenerationLogger } from "~/server/utils/menu-generation-logger";
 
 type CreateJobPayload = {

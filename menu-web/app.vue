@@ -20,7 +20,7 @@
             :href="item.path"
             class="rounded-2xl px-4 py-2 text-sm font-medium"
             :class="$route.path === item.path ? 'ui-chip'
-                : 'ui-muted hover:bg-white/10 hover:text-white'
+                : 'ui-muted hover:bg-[var(--color-surface-3)] hover:text-white'
              "
           >
             {{ item.label }}
@@ -56,7 +56,7 @@
             :href="item.path"
             class="flex flex-col items-center justify-center rounded-2xl px-2 py-2 text-[11px] font-medium"
             :class="$route.path === item.path ? 'ui-chip'
-                : 'ui-muted hover:bg-white/10 hover:text-white'
+                : 'ui-muted hover:bg-[var(--color-surface-3)] hover:text-white'
             "
           >
             <span class="text-sm">{{ item.icon }}</span>

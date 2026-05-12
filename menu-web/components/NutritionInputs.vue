@@ -5,7 +5,7 @@
       :key="field.key"
       class="space-y-1"
     >
-      <span class="text-xs font-medium text-gray-600 dark:text-slate-300">{{ field.label }}</span>
+      <span class="ui-muted text-xs font-medium">{{ field.label }}</span>
       <input
         :value="modelValue[field.key] ?? ''"
         type="number"
@@ -13,10 +13,10 @@
         max="999"
         step="0.1"
         inputmode="decimal"
-        class="w-full rounded-md border px-3 py-2 text-sm"
+        class="ui-input w-full rounded-md px-3 py-2 text-sm"
         :class="changedFields.includes(field.key)
-          ? 'border-indigo-300 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-slate-900 dark:text-slate-100'
-          : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100'"
+          ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]'
+          : ''"
         @input="updateValue(field.key, $event)"
       />
     </label>

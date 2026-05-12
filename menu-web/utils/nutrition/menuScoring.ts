@@ -1,4 +1,4 @@
-﻿import type { NutritionTotals } from "./calculateRecipeMacros";
+import type { NutritionTotals } from "./calculateRecipeMacros";
 import { roundNutrition } from "./calculateRecipeMacros";
 import type { ProfileNutritionTargets } from "./profileTargets";
 import { lowerToleranceBound, toleranceBounds } from "./profileTargets";

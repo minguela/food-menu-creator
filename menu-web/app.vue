@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="dark min-h-screen overflow-x-hidden">
     <header class="sticky top-0 z-40 border-b ui-divider bg-[var(--bg-shell)]/80 backdrop-blur-xl">
       <div

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="space-y-6">
     <header class="flex flex-wrap items-end justify-between gap-3">
       <div>

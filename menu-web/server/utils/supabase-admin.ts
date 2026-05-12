@@ -1,4 +1,4 @@
-﻿import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { resolveSupabaseServerKey } from "~/utils/enrich-runtime";
 
 export const createSupabaseAdminClient = (

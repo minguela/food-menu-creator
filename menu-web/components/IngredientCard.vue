@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <article
 <<<<<<< Updated upstream
     class="rounded-lg border bg-[var(--surface-1)] p-4 shadow-sm"

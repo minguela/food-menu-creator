@@ -1,4 +1,4 @@
-﻿import { normalizeIngredientName } from "~/utils/ingredient-normalize";
+import { normalizeIngredientName } from "~/utils/ingredient-normalize";
 import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
 import { validateIngredientNutritionQuality } from "~/utils/ingredient-nutrition-quality";
 

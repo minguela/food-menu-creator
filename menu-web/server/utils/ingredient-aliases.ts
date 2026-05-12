@@ -1,4 +1,4 @@
-﻿import { USDA_ALIASES, normalizeIngredientName } from "~/server/utils/ingredient-enrichment";
+import { USDA_ALIASES, normalizeIngredientName } from "~/server/utils/ingredient-enrichment";
 
 const TOKEN_TRANSLATIONS: Record<string, string> = {
   aceite: "oil",

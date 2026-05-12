@@ -1,4 +1,4 @@
-﻿type ErrorSource = "web" | "telegram" | "ocr";
+type ErrorSource = "web" | "telegram" | "ocr";
 
 type LogErrorOptions = {
   context?: string;

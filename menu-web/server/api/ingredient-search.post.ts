@@ -1,4 +1,4 @@
-﻿import { resolveSupabaseServerKey } from "~/utils/enrich-runtime";
+import { resolveSupabaseServerKey } from "~/utils/enrich-runtime";
 import {
   scoreIngredientCandidate,
   toNutrientNumberOrNull,

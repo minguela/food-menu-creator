@@ -4,13 +4,13 @@
 
       <!-- Notification Toast -->
       <div v-if=" notificationMessage "
-        class="fixed right-4 top-20 z-50 max-w-sm rounded-xl border bg-white dark:bg-slate-900 p-4 shadow-xl"
+        class="fixed right-4 top-20 z-50 max-w-sm rounded-xl border ui-surface p-4 shadow-xl"
         :class=" notificationLevel === 'error' ? 'border-red-200' : 'border-emerald-200' ">
         <div class="flex items-start justify-between gap-3">
           <p class="text-sm" :class=" notificationLevel === 'error' ? 'text-red-700' : 'text-emerald-700' ">
             {{ notificationMessage }}
           </p>
-          <button class="text-xs text-gray-400 hover:text-gray-600 dark:text-slate-300" @click="notificationMessage = ''">
+          <button class="text-xs text-gray-400 hover:ui-subtle ui-muted" @click="notificationMessage = ''">
             ✕
           </button>
         </div>
@@ -30,12 +30,12 @@
             <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
               Generar menú rotativo
             </h1>
-            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Mismas recetas, cantidades ajustadas por objetivos</p>
+            <p class="text-slate-500 ui-subtle text-sm mt-1">Mismas recetas, cantidades ajustadas por objetivos</p>
           </div>
         </div>
         <div class="flex gap-3">
           <NuxtLink href="/shopping"
-            class="px-4 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:bg-slate-900 hover:border-slate-300 dark:border-slate-600 transition-all text-sm font-medium">
+            class="px-4 py-2.5 border ui-divider ui-muted ui-muted rounded-xl hover:bg-[var(--color-surface-3)] bg-[var(--color-surface-2)] hover:border-[var(--color-border-strong)] border-[var(--color-border-strong)] transition-all text-sm font-medium">
             Ir a compra
           </NuxtLink>
           <button
@@ -54,54 +54,54 @@
 
       <section class="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <!-- Config Section -->
-        <article class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
+        <article class="ui-surface rounded-2xl border border-slate-100 border-slate-800 shadow-sm p-6">
           <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              <svg class="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 rounded-xl bg-[var(--color-surface-3)] bg-[var(--color-surface-3)] flex items-center justify-center">
+              <svg class="w-5 h-5 ui-muted ui-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M10.325 4.317c.83-1.14 2.423-1.14 3.253 0 .83 1.14.83 2.99 0 4.13-.83 1.14-2.423 1.14-3.253 0-.83-1.14-.83-2.99 0-4.13zM12 12h.01M19 12h.01M6 12h.01" />
               </svg>
             </div>
             <div>
-              <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Configuración</h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Ajusta los parámetros del menú</p>
+              <h2 class="text-lg font-bold ui-title ui-title">Configuración</h2>
+              <p class="text-xs text-slate-500 ui-subtle">Ajusta los parámetros del menú</p>
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <label class="space-y-2">
-              <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <span class="block text-sm font-semibold text-slate-700 ui-muted">
                 Nombre
               </span>
               <input v-model.trim=" name "
-                class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                class="w-full rounded-xl border ui-divider px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
                 placeholder="Mi menú rotativo" />
             </label>
             <label class="space-y-2">
-              <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <span class="block text-sm font-semibold text-slate-700 ui-muted">
                 Duración (días)
               </span>
               <input v-model.number=" days " type="number" min="1" max="90"
-                class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all" />
+                class="w-full rounded-xl border ui-divider px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all" />
             </label>
             <label class="space-y-2">
-              <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <span class="block text-sm font-semibold text-slate-700 ui-muted">
                 Inicio
               </span>
               <input v-model=" startDate " type="date"
-                class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all" />
+                class="w-full rounded-xl border ui-divider px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all" />
             </label>
             <label class="space-y-2">
-              <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <span class="block text-sm font-semibold text-slate-700 ui-muted">
                 kcal comida libre
               </span>
               <input v-model.number=" specialMealKcal " type="number" min="0" max="2000" step="10"
-                class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                class="w-full rounded-xl border ui-divider px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
                 placeholder="700" />
             </label>
           </div>
 
           <div class="mt-4">
-            <p class="mb-2 text-sm font-medium text-gray-700 dark:text-slate-200">Perfiles</p>
+            <p class="mb-2 text-sm font-medium ui-muted ui-muted">Perfiles</p>
             <p v-if=" profiles.length === 0 "
               class="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
               No tienes perfiles creados.
@@ -122,7 +122,7 @@
           </div>
 
           <div class="mt-4">
-            <p class="mb-2 text-sm font-medium text-gray-700 dark:text-slate-200">Menús fuente</p>
+            <p class="mb-2 text-sm font-medium ui-muted ui-muted">Menús fuente</p>
             <div class="grid gap-2 md:grid-cols-2">
               <label v-for=" menu in menus " :key=" menu.id "
                 class="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
@@ -131,17 +131,17 @@
               </label>
             </div>
             <label class="mt-4 block space-y-2">
-              <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <span class="block text-sm font-semibold text-slate-700 ui-muted">
                 Menú inicial
               </span>
               <select v-model=" initialWeeklyMenuId "
-                class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                class="w-full rounded-xl border ui-divider px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
                 <option value="">Aleatorio</option>
                 <option v-for=" menu in selectedInitialMenuOptions " :key=" menu.id " :value=" menu.id ">
                   {{ menu.name }}
                 </option>
               </select>
-              <span class="block text-xs text-slate-500 dark:text-slate-400">
+              <span class="block text-xs text-slate-500 ui-subtle">
                 Si eliges uno, ocupará los primeros 7 días. El resto se baraja sin repetir hasta usar todos.
               </span>
             </label>
@@ -159,32 +159,32 @@
               }}
             </button>
             <NuxtLink v-if=" profiles.length === 0 " href="/config"
-              class="rounded-lg border px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900">
+              class="rounded-lg border px-4 py-2 text-sm ui-muted ui-muted hover:bg-[var(--color-surface-3)]">
               Ir a crear perfiles
             </NuxtLink>
-            <button class="rounded-lg border px-4 py-2 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:bg-slate-900 disabled:opacity-50"
+            <button class="rounded-lg border px-4 py-2 ui-muted ui-muted hover:bg-[var(--color-surface-3)] disabled:opacity-50"
               :disabled=" generatedDays.length === 0 " @click=" copySummary ">
               Copiar resumen
             </button>
           </div>
         </article>
 
-        <article class="rounded-lg border bg-white dark:bg-slate-900 p-4">
-          <h2 class="mb-3 font-semibold text-gray-900 dark:text-slate-100">Flujo</h2>
-          <ol class="space-y-2 text-sm text-gray-700 dark:text-slate-200">
-            <li class="rounded-md bg-gray-50 dark:bg-slate-900 px-3 py-2">
+        <article class="rounded-lg border ui-surface p-4">
+          <h2 class="mb-3 font-semibold ui-title ui-title">Flujo</h2>
+          <ol class="space-y-2 text-sm ui-muted ui-muted">
+            <li class="rounded-md bg-[var(--color-surface-3)] px-3 py-2">
               1. Selecciona perfiles y menús fuente
             </li>
-            <li class="rounded-md bg-gray-50 dark:bg-slate-900 px-3 py-2">
+            <li class="rounded-md bg-[var(--color-surface-3)] px-3 py-2">
               2. Genera recetas comunes con cantidades por perfil
             </li>
-            <li class="rounded-md bg-gray-50 dark:bg-slate-900 px-3 py-2">
+            <li class="rounded-md bg-[var(--color-surface-3)] px-3 py-2">
               3. Revisa desviaciones de macros y kcal
             </li>
-            <li class="rounded-md bg-gray-50 dark:bg-slate-900 px-3 py-2">
+            <li class="rounded-md bg-[var(--color-surface-3)] px-3 py-2">
               4. Ajusta en recetas/ingredientes si hace falta
             </li>
-            <li class="rounded-md bg-gray-50 dark:bg-slate-900 px-3 py-2">
+            <li class="rounded-md bg-[var(--color-surface-3)] px-3 py-2">
               5. Lista de compra creada automáticamente
             </li>
           </ol>
@@ -207,7 +207,7 @@
               Estado: {{ currentJob.status }} · progreso
               {{ currentJob.progress ?? 0 }}%
             </p>
-            <div class="mt-3 h-2 w-full overflow-hidden rounded bg-white dark:bg-slate-900/70">
+            <div class="mt-3 h-2 w-full overflow-hidden rounded ui-surface/70">
               <div class="h-2 rounded bg-indigo-600 transition-all" :class=" currentJob.status === 'failed'
                 ? 'bg-red-500'
                 : currentJob.status === 'completed'
@@ -277,11 +277,11 @@
         </article>
       </section>
 
-      <section v-if=" profilesSummary.length > 0 " class="rounded-lg border bg-white dark:bg-slate-900 p-4">
-        <h2 class="mb-3 font-semibold text-gray-900 dark:text-slate-100">Objetivos por perfil</h2>
+      <section v-if=" profilesSummary.length > 0 " class="rounded-lg border ui-surface p-4">
+        <h2 class="mb-3 font-semibold ui-title ui-title">Objetivos por perfil</h2>
         <div class="overflow-x-auto">
           <table class="min-w-[760px] w-full text-sm">
-            <thead class="text-left text-gray-600 dark:text-slate-300">
+            <thead class="text-left ui-subtle ui-muted">
               <tr>
                 <th class="px-2 py-2">Perfil</th>
                 <th class="px-2 py-2">kcal</th>
@@ -304,15 +304,15 @@
       </section>
 
       <section v-if=" generatedDays.length > 0 " class="space-y-4">
-        <article v-for=" day in generatedDays " :key=" day.day_number " class="rounded-lg border bg-white dark:bg-slate-900 p-4">
-          <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-slate-100">
+        <article v-for=" day in generatedDays " :key=" day.day_number " class="rounded-lg border ui-surface p-4">
+          <h3 class="mb-3 text-lg font-semibold ui-title ui-title">
             Día {{ day.day_number }} · {{ formatDate( day.day_date ) }}
           </h3>
 
           <div class="space-y-3">
             <div v-for=" meal in day.meals " :key=" `${ day.day_number }-${ meal.meal_type }-${ meal.meal_slot || 1 }-${ meal.dish_name }` "
               class="rounded-lg border p-3">
-              <p class="font-medium text-gray-900 dark:text-slate-100">
+              <p class="font-medium ui-title ui-title">
                 {{ mealLabel( meal.meal_type ) }}: {{ meal.dish_name }}
                 <span v-if=" meal.is_special "
                   class="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] text-amber-800">
@@ -331,7 +331,7 @@
               </div>
               <div v-else class="mt-2 overflow-x-auto">
                 <table class="min-w-[880px] w-full text-xs">
-                  <thead class="text-left text-gray-600 dark:text-slate-300">
+                  <thead class="text-left ui-subtle ui-muted">
                     <tr>
                       <th class="px-2 py-1">Perfil</th>
                       <th class="px-2 py-1">x ración</th>
@@ -359,7 +359,7 @@
                         <div class="flex flex-wrap gap-1">
                           <span v-for=" ingredient in portion.ingredients "
                             :key=" `${ portion.profile_key }-${ ingredient.name }` "
-                            class="rounded bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5">
+                            class="rounded bg-[var(--color-surface-3)] bg-[var(--color-surface-3)] px-1.5 py-0.5">
                             {{ ingredient.name }}:
                             {{ ingredient.final_quantity.toFixed( 1 ) }}
                             {{ ingredient.unit_type }}
@@ -375,7 +375,7 @@
 
           <div class="mt-4 overflow-x-auto">
             <table class="min-w-[760px] w-full text-sm rounded-lg border">
-              <thead class="text-left text-gray-600 dark:text-slate-300">
+              <thead class="text-left ui-subtle ui-muted">
                 <tr>
                   <th class="px-2 py-2">Perfil</th>
                   <th class="px-2 py-2">kcal estimadas</th>

@@ -277,6 +277,149 @@
         </article>
       </section>
 
+      <section class="mt-6 rounded-2xl border border-emerald-100 bg-white dark:bg-slate-900 p-6 shadow-sm">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-600">
+              Scoring nutricional
+            </p>
+            <h2 class="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">
+              Generador nutricional por recetas reales
+            </h2>
+            <p class="mt-1 max-w-3xl text-sm text-slate-500 dark:text-slate-400">
+              Prueba combinaciones de recetas curadas, calcula macros desde ingredientes y elige la mejor opción por score.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+              :disabled=" nutritionGenerating || !selectedNutritionProfileId " @click=" generateNutritionMenu ">
+              {{ nutritionGenerating ? "Calculando..." : "Generar preview" }}
+            </button>
+            <button class="rounded-lg border px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:bg-slate-900 disabled:opacity-50"
+              :disabled=" nutritionSaving || !nutritionPreview " @click=" saveNutritionMenu ">
+              {{ nutritionSaving ? "Guardando..." : "Guardar menú" }}
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-5 grid gap-4 md:grid-cols-4">
+          <label class="space-y-2 md:col-span-2">
+            <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Perfil</span>
+            <select v-model=" selectedNutritionProfileId " class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5">
+              <option value="">Selecciona perfil</option>
+              <option v-for=" profile in profiles " :key=" profile.id " :value=" profile.id ">
+                {{ profile.name }} · {{ profile.daily_kcal_target }} kcal · {{ profile.daily_protein_target }}g P · tol {{ profile.tolerance_percent ?? 10 }}%
+              </option>
+            </select>
+          </label>
+          <label class="space-y-2">
+            <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Periodo</span>
+            <select v-model=" nutritionPeriodType " class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5">
+              <option value="daily">Diario</option>
+              <option value="weekly">Semanal</option>
+              <option value="monthly">Mensual</option>
+            </select>
+          </label>
+          <label class="space-y-2">
+            <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200">Snacks</span>
+            <span class="flex h-[42px] items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-4">
+              <input v-model=" nutritionIncludeSnack " type="checkbox" />
+              <span class="text-sm">Incluir si existen</span>
+            </span>
+          </label>
+        </div>
+
+        <p v-if=" nutritionError " class="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ nutritionError }}
+        </p>
+        <div v-if=" nutritionSavedMenuId " class="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          Menú guardado.
+          <NuxtLink :href=" `/rotating/${ nutritionSavedMenuId }` " class="font-semibold underline">
+            Abrir detalle
+          </NuxtLink>
+        </div>
+
+        <div v-if=" selectedNutritionProfile " class="mt-5 grid gap-3 md:grid-cols-5">
+          <div class="rounded-xl bg-slate-50 dark:bg-slate-800 p-3 text-sm">
+            <p class="text-xs text-slate-500">kcal objetivo</p>
+            <p class="font-bold">{{ selectedNutritionProfile.daily_kcal_target }}</p>
+          </div>
+          <div class="rounded-xl bg-slate-50 dark:bg-slate-800 p-3 text-sm">
+            <p class="text-xs text-slate-500">proteína</p>
+            <p class="font-bold">{{ selectedNutritionProfile.daily_protein_target }}g</p>
+          </div>
+          <div class="rounded-xl bg-slate-50 dark:bg-slate-800 p-3 text-sm">
+            <p class="text-xs text-slate-500">hidratos</p>
+            <p class="font-bold">{{ selectedNutritionProfile.carbs_pct_target }}%</p>
+          </div>
+          <div class="rounded-xl bg-slate-50 dark:bg-slate-800 p-3 text-sm">
+            <p class="text-xs text-slate-500">grasas</p>
+            <p class="font-bold">{{ selectedNutritionProfile.fat_pct_target }}%</p>
+          </div>
+          <div class="rounded-xl bg-slate-50 dark:bg-slate-800 p-3 text-sm">
+            <p class="text-xs text-slate-500">tolerancia</p>
+            <p class="font-bold">{{ selectedNutritionProfile.tolerance_percent ?? 10 }}%</p>
+          </div>
+        </div>
+
+        <div v-if=" nutritionPreview " class="mt-6 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
+            <div>
+              <p class="text-sm text-slate-500">Score global</p>
+              <p class="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {{ nutritionPreview.summary.globalScore.toFixed( 1 ) }}
+              </p>
+            </div>
+            <div class="text-sm text-slate-600 dark:text-slate-300">
+              {{ nutritionPreview.summary.compliantDays }} / {{ nutritionPreview.summary.daysCount }} días cumplen ·
+              media {{ Math.round( nutritionPreview.summary.averageTotals.kcal ) }} kcal
+            </div>
+          </div>
+
+          <article v-for=" day in nutritionPreview.days " :key=" day.dayIndex " class="rounded-xl border p-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <h3 class="font-semibold text-slate-900 dark:text-slate-100">
+                Día {{ day.dayIndex }} · {{ formatDate( day.dayDate ) }}
+              </h3>
+              <span class="rounded-full px-2 py-1 text-xs font-semibold" :class=" day.meetsTargets ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' ">
+                {{ day.meetsTargets ? "Cumple" : "Mejor disponible" }} · score {{ day.score.toFixed( 1 ) }}
+              </span>
+            </div>
+            <div class="mt-3 overflow-x-auto">
+              <table class="min-w-[760px] w-full text-sm">
+                <thead class="text-left text-slate-500">
+                  <tr>
+                    <th class="px-2 py-2">Macro</th>
+                    <th class="px-2 py-2">Real</th>
+                    <th class="px-2 py-2">Objetivo</th>
+                    <th class="px-2 py-2">Desviación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for=" row in nutritionDeviationRows( day ) " :key=" `${ day.dayIndex }-${ row.label }` " class="border-t">
+                    <td class="px-2 py-2 font-medium">{{ row.label }}</td>
+                    <td class="px-2 py-2">{{ row.actual }}</td>
+                    <td class="px-2 py-2">{{ row.target }}</td>
+                    <td class="px-2 py-2" :class=" row.ok ? 'text-emerald-700' : 'text-amber-700' ">
+                      {{ row.delta }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-3 grid gap-2 md:grid-cols-2 lg:grid-cols-4">
+              <div v-for=" meal in day.meals " :key=" `${ day.dayIndex }-${ meal.mealType }-${ meal.recipeId }` " class="rounded-lg bg-slate-50 dark:bg-slate-800 p-3 text-sm">
+                <p class="font-semibold">{{ mealLabel( meal.mealType ) }}</p>
+                <p>{{ meal.name }}</p>
+                <p class="mt-1 text-xs text-slate-500">
+                  x{{ meal.servingMultiplier }} · {{ Math.round( meal.totals.kcal ) }} kcal · P {{ meal.totals.proteinG.toFixed( 1 ) }}g
+                </p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <section v-if=" profilesSummary.length > 0 " class="rounded-lg border bg-white dark:bg-slate-900 p-4">
         <h2 class="mb-3 font-semibold text-gray-900 dark:text-slate-100">Objetivos por perfil</h2>
         <div class="overflow-x-auto">
@@ -488,6 +631,41 @@ type RotatingDay = {
   profile_totals: DayProfileTotal[];
 };
 
+type NutritionTotals = {
+  kcal: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+};
+
+type NutritionGeneratedDay = {
+  dayIndex: number;
+  dayDate: string;
+  meals: Array<{
+    recipeId: string;
+    name: string;
+    mealType: "desayuno" | "comida" | "cena" | "snack";
+    servingMultiplier: number;
+    totals: NutritionTotals;
+  }>;
+  totals: NutritionTotals;
+  score: number;
+  meetsTargets: boolean;
+  diagnostics: any;
+};
+
+type NutritionGeneratedMenu = {
+  periodType: "daily" | "weekly" | "monthly";
+  days: NutritionGeneratedDay[];
+  summary: {
+    daysCount: number;
+    globalScore: number;
+    averageScore: number;
+    averageTotals: NutritionTotals;
+    compliantDays: number;
+  };
+};
+
 type MenuGenerationLog = {
   id: string;
   job_id: string;
@@ -512,6 +690,14 @@ const initialWeeklyMenuId = ref( "" );
 const selectedProfileIds = ref<string[]>( [] );
 const generatedDays = ref<RotatingDay[]>( [] );
 const profilesSummary = ref<RotatingProfileTarget[]>( [] );
+const selectedNutritionProfileId = ref( "" );
+const nutritionPeriodType = ref<"daily" | "weekly" | "monthly">( "daily" );
+const nutritionIncludeSnack = ref( true );
+const nutritionGenerating = ref( false );
+const nutritionSaving = ref( false );
+const nutritionPreview = ref<NutritionGeneratedMenu | null>( null );
+const nutritionSavedMenuId = ref( "" );
+const nutritionError = ref( "" );
 const shoppingItemsCreated = ref<number | null>( null );
 const currentJob = ref<{
   id: string;
@@ -533,8 +719,18 @@ const selectedInitialMenuOptions = computed( () =>
   menus.value.filter( ( menu ) => selectedMenuIds.value.includes( menu.id ) ),
 );
 
+const selectedNutritionProfile = computed( () =>
+  profiles.value.find( ( profile ) => profile.id === selectedNutritionProfileId.value ) || null,
+);
+
 const mealLabel = ( type: string ) =>
-  type === "desayuno" ? "Desayuno" : type === "comida" ? "Comida" : "Cena";
+  type === "desayuno"
+    ? "Desayuno"
+    : type === "comida"
+      ? "Comida"
+      : type === "snack"
+        ? "Snack"
+        : "Cena";
 
 const signed = ( value: number ) => {
   const rounded = Math.round( ( Number( value ) || 0 ) * 10 ) / 10;
@@ -635,6 +831,7 @@ const loadBaseData = async () => {
   profiles.value = ( profilesData || [] ) as PersonProfile[];
   selectedMenuIds.value = ( weeklyMenus || [] ).map( ( menu ) => menu.id );
   selectedProfileIds.value = ( profilesData || [] ).map( ( profile ) => profile.id );
+  selectedNutritionProfileId.value = selectedNutritionProfileId.value || profiles.value[0]?.id || "";
 
   if ( ( profilesData || [] ).length === 0 ) {
     error.value = "Necesitas crear al menos un perfil en Config antes de generar.";
@@ -729,6 +926,95 @@ const generateRotatingMenu = async () => {
     loading.value = false;
   }
 };
+
+const generateNutritionMenu = async () => {
+  nutritionError.value = "";
+  nutritionSavedMenuId.value = "";
+  nutritionGenerating.value = true;
+
+  try {
+    const currentUser = await loadCurrentUser();
+    if ( !currentUser ) throw new Error( "Usuario no disponible" );
+    if ( !selectedNutritionProfileId.value ) throw new Error( "Selecciona un perfil" );
+
+    const response = await $fetch<{ success: boolean; generated_menu: NutritionGeneratedMenu }>(
+      "/api/nutrition-menu-generate",
+      {
+        method: "POST",
+        body: nutritionRequestBody( currentUser.id ),
+      },
+    );
+
+    nutritionPreview.value = response.generated_menu;
+  } catch ( err ) {
+    nutritionError.value = err instanceof Error ? err.message : "Error generando preview nutricional";
+    await logError( "web", err, { context: "generar.generateNutritionMenu" } );
+  } finally {
+    nutritionGenerating.value = false;
+  }
+};
+
+const saveNutritionMenu = async () => {
+  nutritionError.value = "";
+  nutritionSaving.value = true;
+
+  try {
+    const currentUser = await loadCurrentUser();
+    if ( !currentUser ) throw new Error( "Usuario no disponible" );
+    if ( !selectedNutritionProfileId.value ) throw new Error( "Selecciona un perfil" );
+
+    const response = await $fetch<{ success: boolean; rotating_menu_id: string; generated_menu: NutritionGeneratedMenu }>(
+      "/api/nutrition-menu-save",
+      {
+        method: "POST",
+        body: {
+          ...nutritionRequestBody( currentUser.id ),
+          name: `${ name.value.trim() || "Menú nutricional" } · scoring`,
+        },
+      },
+    );
+
+    nutritionPreview.value = response.generated_menu;
+    nutritionSavedMenuId.value = response.rotating_menu_id;
+  } catch ( err ) {
+    nutritionError.value = err instanceof Error ? err.message : "Error guardando menú nutricional";
+    await logError( "web", err, { context: "generar.saveNutritionMenu" } );
+  } finally {
+    nutritionSaving.value = false;
+  }
+};
+
+const nutritionRequestBody = ( userId: string ) => ( {
+  userId,
+  profileId: selectedNutritionProfileId.value,
+  periodType: nutritionPeriodType.value,
+  startDate: startDate.value,
+  days:
+    nutritionPeriodType.value === "daily"
+      ? 1
+      : nutritionPeriodType.value === "weekly"
+        ? 7
+        : Math.min( 31, Math.max( 1, Number( days.value ) || 30 ) ),
+  includeSnack: nutritionIncludeSnack.value,
+} );
+
+const nutritionDeviationRows = ( day: NutritionGeneratedDay ) => {
+  const d = day.diagnostics || {};
+  return [
+    deviationRow( "kcal", d.kcal, "" ),
+    deviationRow( "Proteína", d.proteinG, "g" ),
+    deviationRow( "Hidratos", d.carbsG, "g" ),
+    deviationRow( "Grasas", d.fatG, "g" ),
+  ];
+};
+
+const deviationRow = ( label: string, value: any, suffix: string ) => ( {
+  label,
+  actual: `${ Math.round( Number( value?.actual || 0 ) * 10 ) / 10 }${ suffix }`,
+  target: `${ Math.round( Number( value?.target || 0 ) * 10 ) / 10 }${ suffix }`,
+  delta: `${ signed( Number( value?.delta || 0 ) ) }${ suffix }`,
+  ok: Boolean( value?.withinTolerance ),
+} );
 
 const startJobPolling = ( jobId: string ) => {
   if ( jobPollingTimer ) {

@@ -11,10 +11,7 @@
   body,
   #__nuxt {
     min-height: 100%;
-    background:
-      radial-gradient(circle at 18% -10%, rgba(209, 170, 215, 0.14), transparent 42%),
-      radial-gradient(circle at 90% 8%, rgba(187, 222, 242, 0.14), transparent 36%),
-      linear-gradient(150deg, var(--color-shell), var(--color-canvas) 55%);
+    background: var(--color-deep-space);
     color: var(--color-text-1);
     font-family: "Inter", "Segoe UI", sans-serif;
   }
@@ -44,59 +41,59 @@
 
 @layer components {
   .ui-surface {
-    border: 1px solid var(--color-border-soft);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: var(--radius-2xl);
-    background: linear-gradient(160deg, rgba(13,13,13,0.94), rgba(3,3,3,0.9));
-    box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+    background: var(--color-shadow-tint);
+    box-shadow: var(--shadow-subtle);
   }
 
   .ui-card {
-    border: 1px solid var(--color-border-soft);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-2xl);
-    background: linear-gradient(160deg, rgba(8,8,8,0.96), rgba(1,1,1,0.92));
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    background: var(--color-deep-space);
+    box-shadow: var(--shadow-subtle);
   }
 
   .ui-input, .ui-select, .ui-textarea {
-    border: 1px solid var(--color-border-soft);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: var(--radius-xl);
-    background: rgba(0,0,0,0.72);
+    background: var(--color-deep-space);
     color: var(--color-text-1);
     padding: 0.625rem 0.875rem;
     font-size: var(--text-sm);
   }
 
   .ui-input:focus, .ui-select:focus, .ui-textarea:focus {
-    border-color: rgba(255,255,255,0.45);
-    box-shadow: 0 0 0 3px rgba(187,222,242,0.18);
+    border-color: rgba(255,255,255,0.22);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
     outline: none;
   }
 
   .ui-btn-primary {
-    background: linear-gradient(135deg, rgba(187,222,242,0.25), rgba(209,170,215,0.22));
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.35);
+    background: var(--color-shadow-tint);
+    color: var(--color-ghost-white);
+    border: 1px solid rgba(255,255,255,0.18);
     border-radius: var(--radius-xl);
     font-weight: 500;
     padding: 0.625rem 1.25rem;
     font-size: var(--text-sm);
   }
-  .ui-btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .ui-btn-primary:hover { background: var(--color-surface-3); border-color: rgba(255,255,255,0.24); }
 
   .ui-btn-muted {
     border-radius: var(--radius-xl);
-    border: 1px solid var(--color-border-soft);
-    background: linear-gradient(155deg, rgba(22,22,22,0.92), rgba(9,9,9,0.9));
-    color: var(--color-text-2);
+    border: 1px solid rgba(255,255,255,0.14);
+    background: var(--color-deep-space);
+    color: var(--color-iron-slate);
     padding: 0.5rem 1rem;
     font-size: var(--text-sm);
   }
-  .ui-btn-muted:hover { border-color: var(--color-border-strong); color: var(--color-text-1); }
+  .ui-btn-muted:hover { border-color: rgba(255,255,255,0.22); color: var(--color-ghost-white); background: var(--color-surface-3); }
 
   .ui-btn-danger {
     border-radius: var(--radius-xl);
-    border: 1px solid rgba(255,100,103,0.25);
-    background: rgba(255,100,103,0.08);
+    border: 1px solid rgba(255,100,103,0.3);
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
     color: var(--color-danger);
     padding: 0.5rem 1rem;
     font-size: var(--text-sm);
@@ -105,10 +102,9 @@
 
   .ui-chip {
     border-radius: 9999px;
-    border: 1px solid var(--color-border-strong);
-    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.16);
+    background: var(--color-surface-3);
     color: var(--color-text-1);
-    backdrop-filter: blur(4px);
   }
 
   .ui-badge-success {
@@ -178,6 +174,49 @@
     background: color-mix(in srgb, var(--color-danger) 12%, transparent) !important;
     color: var(--color-danger) !important;
     border: 1px solid color-mix(in srgb, var(--color-danger) 25%, transparent) !important;
+  }
+}
+
+@layer utilities {
+  .shadow-lg,
+  .shadow-xl,
+  .shadow-2xl {
+    box-shadow: var(--shadow-subtle) !important;
+  }
+
+  .bg-gradient-to-r,
+  .bg-gradient-to-l,
+  .bg-gradient-to-b,
+  .bg-gradient-to-t,
+  .bg-gradient-to-br,
+  .bg-gradient-to-bl,
+  .bg-gradient-to-tr,
+  .bg-gradient-to-tl {
+    background-image: none !important;
+    background-color: var(--color-shadow-tint) !important;
+  }
+
+  .from-indigo-500, .from-indigo-600, .from-violet-500, .from-violet-600, .from-emerald-400, .from-emerald-500, .from-amber-400, .from-amber-500,
+  .to-purple-600, .to-purple-700, .to-indigo-700, .to-teal-600, .to-orange-500, .to-orange-600 {
+    --tw-gradient-from: transparent !important;
+    --tw-gradient-to: transparent !important;
+    --tw-gradient-stops: transparent !important;
+  }
+
+  .text-indigo-700, .text-indigo-600, .text-indigo-400, .text-sky-700, .text-sky-800, .text-sky-300, .text-purple-600, .text-violet-600 {
+    color: var(--color-halo-pale) !important;
+  }
+
+  .bg-indigo-50, .bg-indigo-100, .bg-amber-50, .bg-amber-100, .bg-emerald-50, .bg-sky-50, .bg-sky-100 {
+    background: var(--color-surface-3) !important;
+  }
+
+  .border-indigo-200, .border-indigo-300, .border-indigo-500, .border-amber-200, .border-amber-300, .border-emerald-200, .border-sky-200 {
+    border-color: rgba(255, 255, 255, 0.16) !important;
+  }
+
+  .text-amber-700, .text-amber-800, .text-emerald-700, .text-emerald-800, .text-sky-800 {
+    color: var(--color-text-2) !important;
   }
 }
 

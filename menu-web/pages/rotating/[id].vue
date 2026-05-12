@@ -83,7 +83,7 @@
             class="min-w-28 rounded-lg border px-4 py-2.5 text-sm"
             :class=" selectedWeekNumber === week.weekNumber
                 ? 'border-indigo-500 bg-indigo-600 text-white'
-                : 'ui-muted ui-muted hover:bg-gray-50 hover:bg-slate-800'
+                : 'ui-muted hover:bg-[var(--color-surface-3)]'
               " @click=" selectedWeekNumber = week.weekNumber">
             <div class="font-semibold">Semana {{ week.weekNumber }}</div>
             <div class="text-xs opacity-70">Días {{ week.startDay }}-{{ week.endDay }}</div>

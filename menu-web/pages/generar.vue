@@ -4,13 +4,22 @@
 
       <!-- Notification Toast -->
       <div v-if=" notificationMessage "
+<<<<<<< Updated upstream
         class="fixed right-4 top-20 z-50 max-w-sm rounded-xl border bg-[var(--surface-1)] p-4 shadow-xl"
         :class="notificationLevel === 'error' ? 'border-[rgba(255,100,103,0.2)]' : 'border-[rgba(114,206,123,0.2)]' ">
+=======
+        class="fixed right-4 top-20 z-50 max-w-sm rounded-xl border bg-surface-1 p-4 shadow-xl"
+        :class="notificationLevel === 'error' ? 'border-red-200' : 'border-emerald-200' ">
+>>>>>>> Stashed changes
         <div class="flex items-start justify-between gap-3">
           <p class="text-sm" :class="notificationLevel === 'error' ? '' : '' ">
             {{ notificationMessage }}
           </p>
+<<<<<<< Updated upstream
           <button class="text-xs text-[var(--text-3)] hover:text-[var(--text-2)]" @click="notificationMessage = ''">
+=======
+          <button class="text-xs text-text-3 hover: text-text-2" @click="notificationMessage = ''">
+>>>>>>> Stashed changes
             ✕
           </button>
         </div>
@@ -20,8 +29,13 @@
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div class="flex items-center gap-4">
           <div
+<<<<<<< Updated upstream
             class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[rgba(114,206,123,0.25)] to-[rgba(114,206,123,0.1)] flex items-center justify-center shadow-lg shadow-black/40">
             <svg class="w-6 h-6 text-[var(--text-1)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+=======
+            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg shadow-black/40">
+            <svg class="w-6 h-6 text-text-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+>>>>>>> Stashed changes
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
             </svg>
@@ -30,16 +44,20 @@
             <h1 class="text-3xl font-bold bg-gradient-to-r from-[var(--text-1)] to-[var(--text-2)] bg-clip-text text-transparent">
               Generar menú rotativo
             </h1>
-            <p class="text-[var(--text-3)] text-sm mt-1">Mismas recetas, cantidades ajustadas por objetivos</p>
+            <p class="text-text-3 text-sm mt-1">Mismas recetas, cantidades ajustadas por objetivos</p>
           </div>
         </div>
         <div class="flex gap-3">
           <NuxtLink href="/shopping"
+<<<<<<< Updated upstream
             class="px-4 py-2.5 border border-[var(--border-soft)] text-[var(--text-2)] rounded-xl hover:bg-[var(--surface-1)] hover:border-[var(--border-soft)] transition-all text-sm font-medium">
+=======
+            class="px-4 py-2.5 border border-border-soft text-text-2 rounded-xl hover: bg-surface-1 hover:border-border-soft transition-all text-sm font-medium">
+>>>>>>> Stashed changes
             Ir a compra
           </NuxtLink>
           <button
-            class="px-5 py-2.5 text-[var(--text-1)] rounded-xl hover: disabled:opacity-50 text-sm font-medium shadow-lg shadow-black/40 hover:shadow-xl transition-all disabled:cursor-not-allowed"
+            class="px-5 py-2.5 text-text-1 rounded-xl hover: disabled:opacity-50 text-sm font-medium shadow-lg shadow-black/40 hover:shadow-xl transition-all disabled:cursor-not-allowed"
             :disabled=" generatedDays.length === 0 " @click=" printMenu ">
             <span class="flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,56 +72,56 @@
 
       <section class="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <!-- Config Section -->
-        <article class="bg-[var(--surface-1)] rounded-2xl border border-[var(--border-soft)] shadow-sm p-6">
+        <article class="ui-surface shadow-sm p-6">
           <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-xl bg-[var(--surface-3)] flex items-center justify-center">
-              <svg class="w-5 h-5 text-[var(--text-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 rounded-xl bg-surface-3 flex items-center justify-center">
+              <svg class="w-5 h-5 text-text-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M10.325 4.317c.83-1.14 2.423-1.14 3.253 0 .83 1.14.83 2.99 0 4.13-.83 1.14-2.423 1.14-3.253 0-.83-1.14-.83-2.99 0-4.13zM12 12h.01M19 12h.01M6 12h.01" />
               </svg>
             </div>
             <div>
-              <h2 class="text-lg font-bold text-[var(--text-1)]">Configuración</h2>
-              <p class="text-xs text-[var(--text-3)]">Ajusta los parámetros del menú</p>
+              <h2 class="text-lg font-bold text-text-1">Configuración</h2>
+              <p class="text-xs text-text-3">Ajusta los parámetros del menú</p>
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <label class="space-y-2">
-              <span class="block text-sm font-semibold text-[var(--text-2)]">
+              <span class="block text-sm font-semibold text-text-2">
                 Nombre
               </span>
               <input v-model.trim=" name "
-                class="w-full rounded-xl border border-[var(--border-soft)] px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                class="w-full rounded-xl border border-border-soft px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
                 placeholder="Mi menú rotativo" />
             </label>
             <label class="space-y-2">
-              <span class="block text-sm font-semibold text-[var(--text-2)]">
+              <span class="block text-sm font-semibold text-text-2">
                 Duración (días)
               </span>
               <input v-model.number=" days " type="number" min="1" max="90"
-                class="w-full rounded-xl border border-[var(--border-soft)] px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all" />
+                class="w-full rounded-xl border border-border-soft px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all" />
             </label>
             <label class="space-y-2">
-              <span class="block text-sm font-semibold text-[var(--text-2)]">
+              <span class="block text-sm font-semibold text-text-2">
                 Inicio
               </span>
               <input v-model=" startDate " type="date"
-                class="w-full rounded-xl border border-[var(--border-soft)] px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all" />
+                class="w-full rounded-xl border border-border-soft px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all" />
             </label>
             <label class="space-y-2">
-              <span class="block text-sm font-semibold text-[var(--text-2)]">
+              <span class="block text-sm font-semibold text-text-2">
                 kcal comida libre
               </span>
               <input v-model.number=" specialMealKcal " type="number" min="0" max="2000" step="10"
-                class="w-full rounded-xl border border-[var(--border-soft)] px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                class="w-full rounded-xl border border-border-soft px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
                 placeholder="700" />
             </label>
           </div>
 
           <div class="mt-4">
-            <p class="mb-2 text-sm font-medium text-[var(--text-2)]">Perfiles</p>
+            <p class="mb-2 text-sm font-medium text-text-2">Perfiles</p>
             <p v-if=" profiles.length === 0 "
-              class="mb-2 rounded-lg border border-[rgba(255,214,0,0.2)] bg-[rgba(255,214,0,0.06)] px-3 py-2 text-sm text-[var(--goldenrod)]">
+              class="mb-2 rounded-lg border border-warning/20 bg-warning/8 px-3 py-2 text-sm text-warning">
               No tienes perfiles creados.
               <NuxtLink href="/config" class="font-semibold underline">
                 Crear perfil ahora
@@ -122,7 +140,7 @@
           </div>
 
           <div class="mt-4">
-            <p class="mb-2 text-sm font-medium text-[var(--text-2)]">Menús fuente</p>
+            <p class="mb-2 text-sm font-medium text-text-2">Menús fuente</p>
             <div class="grid gap-2 md:grid-cols-2">
               <label v-for=" menu in menus " :key=" menu.id "
                 class="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
@@ -131,26 +149,26 @@
               </label>
             </div>
             <label class="mt-4 block space-y-2">
-              <span class="block text-sm font-semibold text-[var(--text-2)]">
+              <span class="block text-sm font-semibold text-text-2">
                 Menú inicial
               </span>
               <select v-model=" initialWeeklyMenuId "
-                class="w-full rounded-xl border border-[var(--border-soft)] px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                class="w-full rounded-xl border border-border-soft px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
                 <option value="">Aleatorio</option>
                 <option v-for=" menu in selectedInitialMenuOptions " :key=" menu.id " :value=" menu.id ">
                   {{ menu.name }}
                 </option>
               </select>
-              <span class="block text-xs text-[var(--text-3)]">
+              <span class="block text-xs text-text-3">
                 Si eliges uno, ocupará los primeros 7 días. El resto se baraja sin repetir hasta usar todos.
               </span>
             </label>
           </div>
 
-          <p v-if=" error " class="mt-3 text-sm text-[var(--danger)]">{{ error }}</p>
+          <p v-if=" error " class="mt-3 text-sm text-danger">{{ error }}</p>
 
           <div class="mt-4 flex flex-wrap gap-2">
-            <button class="rounded-lg px-4 py-2 text-[var(--text-1)] hover: disabled:opacity-50"
+            <button class="rounded-lg px-4 py-2 text-text-1 hover: disabled:opacity-50"
               :disabled=" loading || currentJob?.status === 'processing' " @click=" generateRotatingMenu ">
               {{
                 loading || currentJob?.status === "processing"
@@ -159,37 +177,50 @@
               }}
             </button>
             <NuxtLink v-if=" profiles.length === 0 " href="/config"
-              class="rounded-lg border px-4 py-2 text-sm text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] bg-[var(--surface-1)]">
+              class="rounded-lg border px-4 py-2 text-sm text-text-2 hover:bg-white/6 bg-surface-1">
               Ir a crear perfiles
             </NuxtLink>
-            <button class="rounded-lg border px-4 py-2 text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] bg-[var(--surface-1)] disabled:opacity-50"
+            <button class="rounded-lg border px-4 py-2 text-text-2 hover:bg-white/6 bg-surface-1 disabled:opacity-50"
               :disabled=" generatedDays.length === 0 " @click=" copySummary ">
               Copiar resumen
             </button>
           </div>
         </article>
 
+<<<<<<< Updated upstream
         <article class="rounded-lg border bg-[var(--surface-1)] p-4">
           <h2 class="mb-3 font-semibold text-[var(--text-1)]">Flujo</h2>
           <ol class="space-y-2 text-sm text-[var(--text-2)]">
             <li class="rounded-md bg-[var(--surface-2)] bg-[var(--surface-1)] px-3 py-2">
+=======
+        <article class="rounded-lg border bg-surface-1 p-4">
+          <h2 class="mb-3 font-semibold text-text-1">Flujo</h2>
+          <ol class="space-y-2 text-sm text-text-2">
+            <li class="rounded-md bg-surface-2 bg-surface-1 px-3 py-2">
+>>>>>>> Stashed changes
               1. Selecciona perfiles y menús fuente
             </li>
-            <li class="rounded-md bg-[var(--surface-2)] bg-[var(--surface-1)] px-3 py-2">
+            <li class="rounded-md bg-surface-2 bg-surface-1 px-3 py-2">
               2. Genera recetas comunes con cantidades por perfil
             </li>
-            <li class="rounded-md bg-[var(--surface-2)] bg-[var(--surface-1)] px-3 py-2">
+            <li class="rounded-md bg-surface-2 bg-surface-1 px-3 py-2">
               3. Revisa desviaciones de macros y kcal
             </li>
-            <li class="rounded-md bg-[var(--surface-2)] bg-[var(--surface-1)] px-3 py-2">
+            <li class="rounded-md bg-surface-2 bg-surface-1 px-3 py-2">
               4. Ajusta en recetas/ingredientes si hace falta
             </li>
-            <li class="rounded-md bg-[var(--surface-2)] bg-[var(--surface-1)] px-3 py-2">
+            <li class="rounded-md bg-surface-2 bg-surface-1 px-3 py-2">
               5. Lista de compra creada automáticamente
             </li>
           </ol>
+<<<<<<< Updated upstream
           <div v-if=" currentJob " class="mt-4 rounded-lg border p-3 text-sm" :class="currentJob.status === 'failed' ? 'border-[rgba(255,100,103,0.2)] bg-[rgba(255,100,103,0.06)] text-[var(--danger)]' : currentJob.status === 'completed' ? 'border-[rgba(114,206,123,0.2)] bg-[rgba(114,206,123,0.06)] text-[var(--success)]'
               : 'border-[rgba(255,214,0,0.2)] bg-[rgba(255,214,0,0.06)] text-[var(--goldenrod)]'
+=======
+          <div v-if=" currentJob " class="mt-4 rounded-lg border p-3 text-sm" :class="currentJob.status === 'failed' ? 'border-red-200 bg-danger/6 text-danger' : currentJob.status === 'completed'
+              ? 'border-emerald-200 bg-success/8 text-success'
+              : 'border-amber-200 bg-warning/8 text-warning'
+>>>>>>> Stashed changes
             ">
             <p class="font-medium">
               {{
@@ -204,8 +235,14 @@
               Estado: {{ currentJob.status }} · progreso
               {{ currentJob.progress ?? 0 }}%
             </p>
+<<<<<<< Updated upstream
             <div class="mt-3 h-2 w-full overflow-hidden rounded bg-[var(--surface-1)]/70">
               <div class="h-2 rounded transition-all" :class="currentJob.status === 'failed' ? 'bg-[var(--danger)]' : currentJob.status === 'completed' ? ''
+=======
+            <div class="mt-3 h-2 w-full overflow-hidden rounded bg-surface-1/70">
+              <div class="h-2 rounded transition-all" :class="currentJob.status === 'failed' ? 'bg-red-500' : currentJob.status === 'completed'
+                  ? ''
+>>>>>>> Stashed changes
                   : ''
                 " :style=" { width: `${ Math.max( 0, Math.min( 100, currentJob.progress || 0 ) ) }%` } " />
             </div>
@@ -221,11 +258,11 @@
               Abrir menú generado
             </NuxtLink>
           </div>
-          <div v-if=" currentJob " class="mt-4 rounded-lg border bg-[var(--bg-shell)] p-3 text-sm text-[var(--text-1)]">
+          <div v-if=" currentJob " class="mt-4 rounded-lg border bg-shell p-3 text-sm text-text-1">
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
                 <h3 class="font-semibold">Debug del job</h3>
-                <p class="text-xs text-[var(--text-3)]">
+                <p class="text-xs text-text-3">
                   Logs persistidos en Supabase · {{ generationLogs.length }} eventos
                 </p>
               </div>
@@ -233,63 +270,71 @@
                 {{ statusLabel( currentJob.status ) }}
               </span>
             </div>
-            <div v-if=" generationLogs.length === 0 " class="rounded border border-[var(--border-soft)] p-3 text-xs text-[var(--text-3)]">
+            <div v-if=" generationLogs.length === 0 " class="rounded border border-border-soft p-3 text-xs text-text-3">
               Esperando eventos del proceso...
             </div>
             <ol v-else class="max-h-80 space-y-2 overflow-y-auto pr-1">
               <li v-for=" log in generationLogs " :key=" log.id "
-                class="rounded border border-[var(--border-soft)] bg-[var(--surface-3)] p-2">
+                class="rounded border border-border-soft bg-surface-3 p-2">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span class="rounded px-1.5 py-0.5 text-[10px] uppercase" :class="levelClass( log.level ) ">
                       {{ log.level }}
                     </span>
-                    <span class="text-xs font-medium text-[var(--text-1)]">
+                    <span class="text-xs font-medium text-text-1">
                       {{ stepLabel( log.step ) }}
                     </span>
-                    <span class="text-[11px] text-[var(--text-3)]">
+                    <span class="text-[11px] text-text-3">
                       {{ log.metadata?.status || "running" }}
                     </span>
                   </div>
-                  <time class="text-[11px] text-[var(--text-3)]">
+                  <time class="text-[11px] text-text-3">
                     {{ formatTime( log.created_at ) }}
                   </time>
                 </div>
-                <p class="mt-1 text-xs text-[var(--text-2)]">{{ log.message }}</p>
-                <details v-if=" hasLogMetadata( log ) " class="mt-2 text-[11px] text-[var(--text-3)]">
+                <p class="mt-1 text-xs text-text-2">{{ log.message }}</p>
+                <details v-if=" hasLogMetadata( log ) " class="mt-2 text-[11px] text-text-3">
                   <summary class="cursor-pointer select-none">metadata</summary>
                   <pre
-                    class="mt-2 overflow-x-auto rounded border border-[var(--border-soft)] p-2">{{ JSON.stringify( log.metadata, null, 2 ) }}</pre>
+                    class="mt-2 overflow-x-auto rounded border border-border-soft p-2">{{ JSON.stringify( log.metadata, null, 2 ) }}</pre>
                 </details>
               </li>
             </ol>
           </div>
           <div v-if=" shoppingItemsCreated !== null "
-            class="mt-4 rounded-lg border border-[rgba(114,206,123,0.2)] bg-[rgba(114,206,123,0.06)] p-3 text-sm text-[var(--success)]">
+            class="mt-4 rounded-lg border border-success/20 bg-success/8 p-3 text-sm text-success">
             Lista de compra generada con {{ shoppingItemsCreated }} líneas.
           </div>
         </article>
       </section>
 
+<<<<<<< Updated upstream
       <section class="mt-6 rounded-2xl border border-[rgba(114,206,123,0.15)] bg-[var(--surface-1)] p-6 shadow-sm">
+=======
+      <section class="mt-6 rounded-2xl border border-emerald-100 bg-surface-1 p-6 shadow-sm">
+>>>>>>> Stashed changes
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--success)]">
+            <p class="text-xs font-semibold uppercase tracking-[0.25em] text-success">
               Scoring nutricional
             </p>
-            <h2 class="mt-1 text-xl font-bold text-[var(--text-1)]">
+            <h2 class="mt-1 text-xl font-bold text-text-1">
               Generador nutricional por recetas reales
             </h2>
-            <p class="mt-1 max-w-3xl text-sm text-[var(--text-3)]">
+            <p class="mt-1 max-w-3xl text-sm text-text-3">
               Prueba combinaciones de recetas curadas, calcula macros desde ingredientes y elige la mejor opción por score.
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button class="rounded-lg px-4 py-2 text-sm font-medium text-[var(--text-1)] hover: disabled:opacity-50"
+            <button class="rounded-lg px-4 py-2 text-sm font-medium text-text-1 hover: disabled:opacity-50"
               :disabled=" nutritionGenerating || !selectedNutritionProfileId " @click=" generateNutritionMenu ">
               {{ nutritionGenerating ? "Calculando..." : "Generar preview" }}
             </button>
+<<<<<<< Updated upstream
             <button class="rounded-lg border px-4 py-2 text-sm font-medium text-[var(--text-2)] hover:text-[var(--text-2)] bg-[var(--surface-1)] disabled:opacity-50"
+=======
+            <button class="rounded-lg border px-4 py-2 text-sm font-medium text-text-2 hover: text-text-2 bg-surface-1 disabled:opacity-50"
+>>>>>>> Stashed changes
               :disabled=" nutritionSaving || !nutritionPreview " @click=" saveNutritionMenu ">
               {{ nutritionSaving ? "Guardando..." : "Guardar menú" }}
             </button>
@@ -298,8 +343,8 @@
 
         <div class="mt-5 grid gap-4 md:grid-cols-4">
           <label class="space-y-2 md:col-span-2">
-            <span class="block text-sm font-semibold text-[var(--text-2)]">Perfil</span>
-            <select v-model=" selectedNutritionProfileId " class="w-full rounded-xl border border-[var(--border-soft)] px-4 py-2.5">
+            <span class="block text-sm font-semibold text-text-2">Perfil</span>
+            <select v-model=" selectedNutritionProfileId " class="w-full rounded-xl border border-border-soft px-4 py-2.5">
               <option value="">Selecciona perfil</option>
               <option v-for=" profile in profiles " :key=" profile.id " :value=" profile.id ">
                 {{ profile.name }} · {{ profile.daily_kcal_target }} kcal · {{ profile.daily_protein_target }}g P · tol {{ profile.tolerance_percent ?? 10 }}%
@@ -307,26 +352,26 @@
             </select>
           </label>
           <label class="space-y-2">
-            <span class="block text-sm font-semibold text-[var(--text-2)]">Periodo</span>
-            <select v-model=" nutritionPeriodType " class="w-full rounded-xl border border-[var(--border-soft)] px-4 py-2.5">
+            <span class="block text-sm font-semibold text-text-2">Periodo</span>
+            <select v-model=" nutritionPeriodType " class="w-full rounded-xl border border-border-soft px-4 py-2.5">
               <option value="daily">Diario</option>
               <option value="weekly">Semanal</option>
               <option value="monthly">Mensual</option>
             </select>
           </label>
           <label class="space-y-2">
-            <span class="block text-sm font-semibold text-[var(--text-2)]">Snacks</span>
-            <span class="flex h-[42px] items-center gap-2 rounded-xl border border-[var(--border-soft)] px-4">
+            <span class="block text-sm font-semibold text-text-2">Snacks</span>
+            <span class="flex h-[42px] items-center gap-2 rounded-xl border border-border-soft px-4">
               <input v-model=" nutritionIncludeSnack " type="checkbox" />
               <span class="text-sm">Incluir si existen</span>
             </span>
           </label>
         </div>
 
-        <p v-if=" nutritionError " class="mt-3 rounded-lg border border-[rgba(255,100,103,0.2)] bg-[rgba(255,100,103,0.06)] px-3 py-2 text-sm text-[var(--danger)]">
+        <p v-if=" nutritionError " class="mt-3 rounded-lg border border-danger/20 bg-danger/6 px-3 py-2 text-sm text-danger">
           {{ nutritionError }}
         </p>
-        <div v-if=" nutritionSavedMenuId " class="mt-3 rounded-lg border border-[rgba(114,206,123,0.2)] bg-[rgba(114,206,123,0.06)] px-3 py-2 text-sm text-[var(--success)]">
+        <div v-if=" nutritionSavedMenuId " class="mt-3 rounded-lg border border-success/20 bg-success/8 px-3 py-2 text-sm text-success">
           Menú guardado.
           <NuxtLink :href=" `/rotating/${ nutritionSavedMenuId }` " class="font-semibold underline">
             Abrir detalle
@@ -334,24 +379,24 @@
         </div>
 
         <div v-if=" selectedNutritionProfile " class="mt-5 grid gap-3 md:grid-cols-5">
-          <div class="rounded-xl bg-[rgba(255,255,255,0.03)] bg-[var(--surface-3)] p-3 text-sm">
-            <p class="text-xs text-[var(--text-3)]">kcal objetivo</p>
+          <div class="rounded-xl bg-white/3 bg-surface-3 p-3 text-sm">
+            <p class="text-xs text-text-3">kcal objetivo</p>
             <p class="font-bold">{{ selectedNutritionProfile.daily_kcal_target }}</p>
           </div>
-          <div class="rounded-xl bg-[rgba(255,255,255,0.03)] bg-[var(--surface-3)] p-3 text-sm">
-            <p class="text-xs text-[var(--text-3)]">proteína</p>
+          <div class="rounded-xl bg-white/3 bg-surface-3 p-3 text-sm">
+            <p class="text-xs text-text-3">proteína</p>
             <p class="font-bold">{{ selectedNutritionProfile.daily_protein_target }}g</p>
           </div>
-          <div class="rounded-xl bg-[rgba(255,255,255,0.03)] bg-[var(--surface-3)] p-3 text-sm">
-            <p class="text-xs text-[var(--text-3)]">hidratos</p>
+          <div class="rounded-xl bg-white/3 bg-surface-3 p-3 text-sm">
+            <p class="text-xs text-text-3">hidratos</p>
             <p class="font-bold">{{ selectedNutritionProfile.carbs_pct_target }}%</p>
           </div>
-          <div class="rounded-xl bg-[rgba(255,255,255,0.03)] bg-[var(--surface-3)] p-3 text-sm">
-            <p class="text-xs text-[var(--text-3)]">grasas</p>
+          <div class="rounded-xl bg-white/3 bg-surface-3 p-3 text-sm">
+            <p class="text-xs text-text-3">grasas</p>
             <p class="font-bold">{{ selectedNutritionProfile.fat_pct_target }}%</p>
           </div>
-          <div class="rounded-xl bg-[rgba(255,255,255,0.03)] bg-[var(--surface-3)] p-3 text-sm">
-            <p class="text-xs text-[var(--text-3)]">tolerancia</p>
+          <div class="rounded-xl bg-white/3 bg-surface-3 p-3 text-sm">
+            <p class="text-xs text-text-3">tolerancia</p>
             <p class="font-bold">{{ selectedNutritionProfile.tolerance_percent ?? 10 }}%</p>
           </div>
         </div>
@@ -359,12 +404,12 @@
         <div v-if=" nutritionPreview " class="mt-6 space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
             <div>
-              <p class="text-sm text-[var(--text-3)]">Score global</p>
-              <p class="text-2xl font-bold text-[var(--text-1)]">
+              <p class="text-sm text-text-3">Score global</p>
+              <p class="text-2xl font-bold text-text-1">
                 {{ nutritionPreview.summary.globalScore.toFixed( 1 ) }}
               </p>
             </div>
-            <div class="text-sm text-[var(--text-2)]">
+            <div class="text-sm text-text-2">
               {{ nutritionPreview.summary.compliantDays }} / {{ nutritionPreview.summary.daysCount }} días cumplen ·
               media {{ Math.round( nutritionPreview.summary.averageTotals.kcal ) }} kcal
             </div>
@@ -372,16 +417,16 @@
 
           <article v-for=" day in nutritionPreview.days " :key=" day.dayIndex " class="rounded-xl border p-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
-              <h3 class="font-semibold text-[var(--text-1)]">
+              <h3 class="font-semibold text-text-1">
                 Día {{ day.dayIndex }} · {{ formatDate( day.dayDate ) }}
               </h3>
-              <span class="rounded-full px-2 py-1 text-xs font-semibold" :class="day.meetsTargets ? ' text-[var(--success)]' : ' text-[var(--goldenrod)]' ">
+              <span class="rounded-full px-2 py-1 text-xs font-semibold" :class="day.meetsTargets ? ' text-success' : ' text-warning' ">
                 {{ day.meetsTargets ? "Cumple" : "Mejor disponible" }} · score {{ day.score.toFixed( 1 ) }}
               </span>
             </div>
             <div class="mt-3 overflow-x-auto">
               <table class="min-w-[760px] w-full text-sm">
-                <thead class="text-left text-[var(--text-3)]">
+                <thead class="text-left text-text-3">
                   <tr>
                     <th class="px-2 py-2">Macro</th>
                     <th class="px-2 py-2">Real</th>
@@ -402,10 +447,10 @@
               </table>
             </div>
             <div class="mt-3 grid gap-2 md:grid-cols-2 lg:grid-cols-4">
-              <div v-for=" meal in day.meals " :key=" `${ day.dayIndex }-${ meal.mealType }-${ meal.recipeId }` " class="rounded-lg bg-[rgba(255,255,255,0.03)] bg-[var(--surface-3)] p-3 text-sm">
+              <div v-for=" meal in day.meals " :key=" `${ day.dayIndex }-${ meal.mealType }-${ meal.recipeId }` " class="rounded-lg bg-white/3 bg-surface-3 p-3 text-sm">
                 <p class="font-semibold">{{ mealLabel( meal.mealType ) }}</p>
                 <p>{{ meal.name }}</p>
-                <p class="mt-1 text-xs text-[var(--text-3)]">
+                <p class="mt-1 text-xs text-text-3">
                   x{{ meal.servingMultiplier }} · {{ Math.round( meal.totals.kcal ) }} kcal · P {{ meal.totals.proteinG.toFixed( 1 ) }}g
                 </p>
               </div>
@@ -414,11 +459,16 @@
         </div>
       </section>
 
+<<<<<<< Updated upstream
       <section v-if=" profilesSummary.length > 0 " class="rounded-lg border bg-[var(--surface-1)] p-4">
         <h2 class="mb-3 font-semibold text-[var(--text-1)]">Objetivos por perfil</h2>
+=======
+      <section v-if=" profilesSummary.length > 0 " class="rounded-lg border bg-surface-1 p-4">
+        <h2 class="mb-3 font-semibold text-text-1">Objetivos por perfil</h2>
+>>>>>>> Stashed changes
         <div class="overflow-x-auto">
           <table class="min-w-[760px] w-full text-sm">
-            <thead class="text-left text-[var(--text-2)]">
+            <thead class="text-left text-text-2">
               <tr>
                 <th class="px-2 py-2">Perfil</th>
                 <th class="px-2 py-2">kcal</th>
@@ -441,23 +491,28 @@
       </section>
 
       <section v-if=" generatedDays.length > 0 " class="space-y-4">
+<<<<<<< Updated upstream
         <article v-for=" day in generatedDays " :key=" day.day_number " class="rounded-lg border bg-[var(--surface-1)] p-4">
           <h3 class="mb-3 text-lg font-semibold text-[var(--text-1)]">
+=======
+        <article v-for=" day in generatedDays " :key=" day.day_number " class="rounded-lg border bg-surface-1 p-4">
+          <h3 class="mb-3 text-lg font-semibold text-text-1">
+>>>>>>> Stashed changes
             Día {{ day.day_number }} · {{ formatDate( day.day_date ) }}
           </h3>
 
           <div class="space-y-3">
             <div v-for=" meal in day.meals " :key=" `${ day.day_number }-${ meal.meal_type }-${ meal.meal_slot || 1 }-${ meal.dish_name }` "
               class="rounded-lg border p-3">
-              <p class="font-medium text-[var(--text-1)]">
+              <p class="font-medium text-text-1">
                 {{ mealLabel( meal.meal_type ) }}: {{ meal.dish_name }}
                 <span v-if=" meal.is_special "
-                  class="ml-2 rounded-full bg-[rgba(255,214,0,0.12)] px-2 py-0.5 text-[11px] text-[var(--goldenrod)]">
+                  class="ml-2 rounded-full bg-warning/15 px-2 py-0.5 text-[11px] text-warning">
                   Comida libre · {{ meal.special_kcal_reserved ?? specialMealKcal }} kcal
                 </span>
               </p>
               <div v-if=" meal.is_special "
-                class="mt-2 rounded-lg border border-[rgba(255,214,0,0.2)] bg-[rgba(255,214,0,0.06)] p-3 text-xs text-[var(--goldenrod)]">
+                class="mt-2 rounded-lg border border-warning/20 bg-warning/8 p-3 text-xs text-warning">
                 <p class="font-medium">
                   {{ meal.special_kcal_reserved ?? specialMealKcal }} kcal reservadas
                 </p>
@@ -468,7 +523,7 @@
               </div>
               <div v-else class="mt-2 overflow-x-auto">
                 <table class="min-w-[880px] w-full text-xs">
-                  <thead class="text-left text-[var(--text-2)]">
+                  <thead class="text-left text-text-2">
                     <tr>
                       <th class="px-2 py-1">Perfil</th>
                       <th class="px-2 py-1">x ración</th>
@@ -496,7 +551,7 @@
                         <div class="flex flex-wrap gap-1">
                           <span v-for=" ingredient in portion.ingredients "
                             :key=" `${ portion.profile_key }-${ ingredient.name }` "
-                            class="rounded bg-[var(--surface-3)] px-1.5 py-0.5">
+                            class="rounded bg-surface-3 px-1.5 py-0.5">
                             {{ ingredient.name }}:
                             {{ ingredient.final_quantity.toFixed( 1 ) }}
                             {{ ingredient.unit_type }}
@@ -512,7 +567,7 @@
 
           <div class="mt-4 overflow-x-auto">
             <table class="min-w-[760px] w-full text-sm rounded-lg border">
-              <thead class="text-left text-[var(--text-2)]">
+              <thead class="text-left text-text-2">
                 <tr>
                   <th class="px-2 py-2">Perfil</th>
                   <th class="px-2 py-2">kcal estimadas</th>
@@ -529,11 +584,11 @@
                   <td class="px-2 py-2 font-medium">
                     {{ total.profile_name }}
                     <span v-if=" total.all_special_day "
-                      class="ml-2 rounded bg-[rgba(255,214,0,0.12)] px-1.5 py-0.5 text-[10px] text-[var(--goldenrod)]">
+                      class="ml-2 rounded bg-warning/15 px-1.5 py-0.5 text-[10px] text-warning">
                       Día libre completo
                     </span>
                     <span v-if=" total.low_regular_budget_warning "
-                      class="ml-2 rounded bg-[rgba(255,100,103,0.12)] px-1.5 py-0.5 text-[10px] ">
+                      class="ml-2 rounded bg-danger/15 px-1.5 py-0.5 text-[10px] ">
                       Poco margen
                     </span>
                   </td>
@@ -778,8 +833,8 @@ const statusPillClass = ( status: string ) => {
 const levelClass = ( level: string ) => {
   if ( level === "error" ) return "bg-red-900 ";
   if ( level === "warn" ) return " ";
-  if ( level === "debug" ) return " text-[var(--text-1)]";
-  return " text-[var(--accent)]";
+  if ( level === "debug" ) return " text-text-1";
+  return " text-accent";
 };
 
 const stepLabel = ( step: string ) =>

@@ -1,4 +1,4 @@
-export type IngredientNutritionValues = {
+﻿export type IngredientNutritionValues = {
   kcal_per_100g?: number | null;
   protein_per_100g?: number | null;
   carbs_per_100g?: number | null;

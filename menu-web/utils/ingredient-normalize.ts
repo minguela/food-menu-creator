@@ -1,4 +1,4 @@
-export const normalizeIngredientName = (name: string) => {
+﻿export const normalizeIngredientName = (name: string) => {
   return name
     .toLowerCase()
     .normalize("NFD")

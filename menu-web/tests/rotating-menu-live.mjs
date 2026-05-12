@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
 import { buildRotatingWeeklyMenuBlocks } from "../utils/rotating-weekly-menu-blocks.js";
 import { validatePlannedDayCompleteness } from "../utils/rotating-menu-completeness.js";

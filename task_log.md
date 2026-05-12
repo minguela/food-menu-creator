@@ -18,6 +18,8 @@
   - Nota: `pages/config.vue` permite editar/ver tolerancia por perfil; `pages/generar.vue` añade bloque independiente de scoring nutricional con selección de perfil, periodo, snacks, preview, desviaciones, cumplimiento, score y guardado; `pages/rotating/[id].vue` muestra marca/score de menús `nutrition_scored`. OpenSpec queda en progreso `29/33`.
 - [x] Tarea #174: Completar fase 7 de verificación y cierre OpenSpec
   - Nota: ejecutados `npm run test:nutrition` (9 OK), `npm run test:rotating` (12 OK), `node --test tests/shopping-conversions.test.mjs` (6 OK), `npm run build` OK y `openspec validate "score-based-nutrition-menu-generator"` OK. Verificación manual limitada al flujo compilado/UI/rutas en entorno local sin datos live de Supabase; OpenSpec archivado en `openspec/changes/archive/2026-05-12-score-based-nutrition-menu-generator` y spec sincronizada en `openspec/specs/nutrition-menu-generator/spec.md`.
+- [x] Tarea #175: Trazar OpenSpec para porcentajes macro por perfil
+  - Nota: creado `openspec/changes/profile-macro-percent-targets` para mover hidratos/grasas/proteína a perfiles, deducir proteína como `100 - hidratos - grasas`, mantener `daily_protein_target` calculado por compatibilidad, ocultar objetivos globales y exigir suma exacta 100%. Validado con `openspec validate "profile-macro-percent-targets"`.
 
 ## Sesión actual: 2026-05-11 - Escalado rotativo, cantidades relativas y warnings nutricionales
 

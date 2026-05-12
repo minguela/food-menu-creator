@@ -20,6 +20,8 @@
   - Nota: ejecutados `npm run test:nutrition` (9 OK), `npm run test:rotating` (12 OK), `node --test tests/shopping-conversions.test.mjs` (6 OK), `npm run build` OK y `openspec validate "score-based-nutrition-menu-generator"` OK. Verificación manual limitada al flujo compilado/UI/rutas en entorno local sin datos live de Supabase; OpenSpec archivado en `openspec/changes/archive/2026-05-12-score-based-nutrition-menu-generator` y spec sincronizada en `openspec/specs/nutrition-menu-generator/spec.md`.
 - [x] Tarea #175: Trazar OpenSpec para porcentajes macro por perfil
   - Nota: creado `openspec/changes/profile-macro-percent-targets` para mover hidratos/grasas/proteína a perfiles, deducir proteína como `100 - hidratos - grasas`, mantener `daily_protein_target` calculado por compatibilidad, ocultar objetivos globales y exigir suma exacta 100%. Validado con `openspec validate "profile-macro-percent-targets"`.
+- [x] Tarea #176: Implementar porcentajes macro por perfil en DB, tipos, utilidades y UI
+  - Nota: añadida migración `20260512125100_profile_macro_percent_targets.sql` con `protein_pct_target`, backfill y constraint de suma = 100; actualizados `types/index.ts`; `utils/nutrition/profileTargets.ts` lee proteína desde porcentaje con fallback a `daily_protein_target`; `utils/nutrition.js` relaja validación a floor >0; `pages/config.vue` reescrita: quita panel de objetivos globales, formulario por perfil edita HC % y grasa %, deduce proteína, muestra gramos por perfil y guarda `protein_pct_target` + `daily_protein_target` calculado. Validado: `test:nutrition` 9 OK, `test:rotating` 12 OK, `tests/nutrition.test.mjs` 5 OK, `build` OK.
 
 ## Sesión actual: 2026-05-11 - Escalado rotativo, cantidades relativas y warnings nutricionales
 

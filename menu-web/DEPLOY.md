@@ -1,4 +1,4 @@
-# 🚀 Despliegue en Vercel
+﻿# 🚀 Despliegue en Vercel
 
 ## Opción 1: Vercel Dashboard (Recomendada)
 

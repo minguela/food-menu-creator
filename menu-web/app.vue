@@ -1,12 +1,12 @@
-<template>
+﻿<template>
   <div class="dark min-h-screen overflow-x-hidden">
-    <header class="sticky top-0 z-40 border-b ui-divider bg-black/80 backdrop-blur-xl">
+    <header class="sticky top-0 z-40 border-b ui-divider bg-[var(--bg-shell)]/80 backdrop-blur-xl">
       <div
         class="mx-auto flex h-16 w-full max-w-7xl items-center px-4 sm:px-6 lg:px-8"
       >
         <NuxtLink
           href="/"
-          class="ui-title text-xl tracking-tight text-white"
+          class="ui-title text-xl tracking-[-0.01em] text-white"
         >
           MenuPlanner
         </NuxtLink>
@@ -19,9 +19,7 @@
             :key="item.path"
             :href="item.path"
             class="rounded-2xl px-4 py-2 text-sm font-medium"
-            :class="
-              $route.path === item.path
-                ? 'ui-chip'
+            :class="$route.path === item.path ? 'ui-chip'
                 : 'ui-muted hover:bg-white/10 hover:text-white'
              "
           >
@@ -46,7 +44,7 @@
 
     <nav
       aria-label="Navegación móvil"
-      class="fixed inset-x-0 bottom-0 z-50 border-t ui-divider bg-black/90 p-2 backdrop-blur-xl md:hidden"
+      class="fixed inset-x-0 bottom-0 z-50 border-t ui-divider bg-[var(--bg-shell)]/90 p-2 backdrop-blur-xl md:hidden"
     >
       <div class="mb-2 text-center text-[10px] ui-subtle">
         v{{ appVersion
@@ -57,9 +55,7 @@
           <NuxtLink
             :href="item.path"
             class="flex flex-col items-center justify-center rounded-2xl px-2 py-2 text-[11px] font-medium"
-            :class="
-              $route.path === item.path
-                ? 'ui-chip'
+            :class="$route.path === item.path ? 'ui-chip'
                 : 'ui-muted hover:bg-white/10 hover:text-white'
             "
           >

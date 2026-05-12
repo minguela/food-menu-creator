@@ -22,6 +22,8 @@
   - Nota: creado `openspec/changes/profile-macro-percent-targets` para mover hidratos/grasas/proteína a perfiles, deducir proteína como `100 - hidratos - grasas`, mantener `daily_protein_target` calculado por compatibilidad, ocultar objetivos globales y exigir suma exacta 100%. Validado con `openspec validate "profile-macro-percent-targets"`.
 - [x] Tarea #176: Implementar porcentajes macro por perfil en DB, tipos, utilidades y UI
   - Nota: añadida migración `20260512125100_profile_macro_percent_targets.sql` con `protein_pct_target`, backfill y constraint de suma = 100; actualizados `types/index.ts`; `utils/nutrition/profileTargets.ts` lee proteína desde porcentaje con fallback a `daily_protein_target`; `utils/nutrition.js` relaja validación a floor >0; `pages/config.vue` reescrita: quita panel de objetivos globales, formulario por perfil edita HC % y grasa %, deduce proteína, muestra gramos por perfil y guarda `protein_pct_target` + `daily_protein_target` calculado. Validado: `test:nutrition` 9 OK, `test:rotating` 12 OK, `tests/nutrition.test.mjs` 5 OK, `build` OK.
+- [x] Tarea #177: Unificar tema oscuro en toda la app web
+  - Nota: auditoría completa de 15 archivos Vue; OpenSpec `unified-dark-theme` creado y validado; reemplazo masivo de ~200 clases claras/obsoletas en páginas y componentes: eliminados `bg-white`, `text-gray-*`, `text-slate-*`, `border-slate-*`, `dark:*`, gradientes personalizados, sombras light-mode, `bg-red-600`/`bg-indigo-600` hardcodeados; reparados `hover:` y `placeholder:` rotos; unificado `shopping.vue` a tokens `main.css`; arreglado `menu/[id].vue` fragmentos malformados. CSS bundle: 56.88 kB → 42.63 kB (-25%). Build OK.
 
 ## Sesión actual: 2026-05-11 - Escalado rotativo, cantidades relativas y warnings nutricionales
 

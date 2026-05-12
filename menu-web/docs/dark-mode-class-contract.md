@@ -1,24 +1,28 @@
-# Dark Mode Class Contract
+# Dark-Only Theme Contract
 
 Use this contract when styling pages and shared components.
 
 ## Core patterns
 
-- Surface card: `bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700`
-- Elevated panel: `bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700`
-- Primary text: `text-slate-900 dark:text-slate-100`
-- Secondary text: `text-slate-600 dark:text-slate-300`
-- Muted text: `text-slate-500 dark:text-slate-400`
+- Surface card: `ui-surface`
+- Elevated panel: `ui-card`
+- Inputs/selects/textarea: `ui-input`, `ui-select`, `ui-textarea`
+- Primary action: `ui-btn-primary`
+- Secondary action: `ui-btn-muted`
+- Primary text: `ui-title` or tokenized `var(--color-text-1)`
+- Secondary text: `ui-muted`
+- Muted text: `ui-subtle`
 
 ## Common blocks
 
-- Modal shell: `bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700`
-- Table header text: `text-slate-600 dark:text-slate-300`
-- Empty state: `bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400`
-- Neutral button: `border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800`
+- Modal shell: `ui-surface` + optional accent strip
+- Table header text: `ui-muted`
+- Empty state: `ui-surface` + `ui-subtle`
+- Neutral button: `ui-btn-muted`
 
 ## Rules
 
-- Never rely on global CSS to reinterpret Tailwind utility classes.
-- If an element uses a light-only utility (`bg-white`, `text-gray-900`, `border-gray-200`, etc.), add explicit `dark:*` variants.
-- If a light-only style is intentional, annotate with `dark-check-ignore` in the same line so automated checks can skip it intentionally.
+- Treat the app as dark-only. Do not use `dark:*` variants.
+- Do not use legacy light/surface utility tokens in templates (`bg-white`, `bg-slate-50`, `text-gray-*`, `border-slate-200`, etc.).
+- Use `ui-*` classes and `theme.css` variables for surfaces, borders, text, and states.
+- If an exception is required, annotate with `dark-check-ignore` in the same line and document the reason.

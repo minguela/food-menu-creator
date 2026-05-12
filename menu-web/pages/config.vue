@@ -4,7 +4,7 @@
 
       <!-- Status Message -->
       <div v-if=" statusMessage " class="fixed right-4 top-4 z-50 px-4 py-2 rounded-xl shadow-lg"
-        :class=" statusType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200' ">
+        :class=" statusType === 'error' ? 'ui-btn-danger' : 'ui-badge-success' ">
         <span class="text-sm font-medium">{{ statusMessage }}</span>
       </div>
 
@@ -19,67 +19,67 @@
             </svg>
           </div>
           <div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+            <h1 class="ui-title text-3xl font-bold">
               Configuración
             </h1>
-            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Personaliza tus objetivos nutricionales</p>
+            <p class="ui-subtle text-sm mt-1">Personaliza tus objetivos nutricionales</p>
           </div>
         </div>
       </header>
 
       <div class="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
         <!-- Global Objectives -->
-        <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
+        <section class="ui-surface p-6">
           <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
-              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 rounded-xl bg-[var(--color-accent-muted)] flex items-center justify-center">
+              <svg class="w-5 h-5 ui-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Objetivos globales</h2>
+            <h2 class="ui-title text-lg font-bold">Objetivos globales</h2>
           </div>
 
           <div class="space-y-5">
             <label class="block">
-              <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Calorías diarias</span>
+              <span class="block ui-muted text-sm font-semibold mb-2">Calorías diarias</span>
               <input v-model.number=" config.daily_kcal_target " type="number" min="1000" max="5000" step="50"
-                class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" />
+                class="ui-input w-full" />
             </label>
 
             <label class="block">
-              <span class="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Proteína objetivo (g/día)</span>
+              <span class="block ui-muted text-sm font-semibold mb-2">Proteína objetivo (g/día)</span>
               <input v-model.number=" config.daily_protein_target " type="number" min="20" max="400" step="1"
-                class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                class="ui-input w-full" />
             </label>
 
             <label class="block">
-              <span class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Personas para cantidades</span>
+              <span class="block ui-muted text-sm font-medium mb-1">Personas para cantidades</span>
               <input v-model.number=" config.persons_count " type="number" min="1" max="10"
-                class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                class="ui-input w-full" />
             </label>
 
             <div class="grid grid-cols-2 gap-3">
               <label class="block">
-                <span class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Grasas objetivo (%)</span>
+                <span class="block ui-muted text-sm font-medium mb-1">Grasas objetivo (%)</span>
                 <input v-model.number=" config.fat_pct_target " type="number" min="10" max="70"
-                  class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                  class="ui-input w-full" />
               </label>
               <label class="block">
-                <span class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Hidratos objetivo (%)</span>
+                <span class="block ui-muted text-sm font-medium mb-1">Hidratos objetivo (%)</span>
                 <input v-model.number=" config.carbs_pct_target " type="number" min="10" max="80"
-                  class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                  class="ui-input w-full" />
               </label>
             </div>
 
             <div class="rounded-lg border p-4" :class=" macroValidation.valid
-              ? 'bg-green-50 border-green-200'
-              : 'bg-red-50 border-red-200'
+              ? 'bg-[var(--color-success-muted)] border-[var(--color-success)]'
+              : 'bg-[var(--color-danger-muted)] border-[var(--color-danger)]'
               ">
               <div class="flex justify-between text-sm">
-                <span class="text-gray-700 dark:text-slate-200">Proteína deducida</span>
+                <span class="ui-muted">Proteína deducida</span>
                 <span class="font-semibold">{{ macroValidation.proteinPct }}%</span>
               </div>
-              <p class="text-xs mt-2" :class=" macroValidation.valid ? 'text-green-700' : 'text-red-700' ">
+              <p class="text-xs mt-2" :class=" macroValidation.valid ? 'ui-success' : 'ui-danger' ">
                 {{
                   macroValidation.valid
                     ? macroSummaryText
@@ -89,51 +89,51 @@
             </div>
 
             <button @click=" saveConfig " :disabled=" saving || !isDirty || !macroValidation.valid "
-              class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">
+              class="ui-btn-primary w-full px-4 py-3 disabled:opacity-50 disabled:cursor-not-allowed font-medium">
               {{ saving ? "Guardando..." : "Guardar objetivos" }}
             </button>
           </div>
         </section>
 
         <!-- Personas -->
-        <section class="bg-white dark:bg-slate-900 rounded-lg shadow-sm border p-6">
+        <section class="ui-surface p-6">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold">Personas</h2>
+            <h2 class="ui-title text-lg font-semibold">Personas</h2>
             <button @click=" resetProfileForm "
-              class="px-3 py-2 text-sm text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100">
+              class="ui-btn-muted px-3 py-2 text-sm">
               Nuevo perfil
             </button>
           </div>
 
           <form class="grid gap-3 md:grid-cols-6 mb-5" @submit.prevent=" saveProfile ">
-            <input v-model.trim=" profileForm.name " class="md:col-span-2 border rounded-lg px-3 py-2"
+            <input v-model.trim=" profileForm.name " class="ui-input md:col-span-2"
               placeholder="Nombre" required />
-            <select v-model=" profileForm.sex " class="border rounded-lg px-3 py-2">
+            <select v-model=" profileForm.sex " class="ui-select">
               <option value="female">Mujer</option>
               <option value="male">Hombre</option>
               <option value="other">Otro</option>
             </select>
-            <input v-model.number=" profileForm.age " type="number" min="1" max="120" class="border rounded-lg px-3 py-2"
+            <input v-model.number=" profileForm.age " type="number" min="1" max="120" class="ui-input"
               placeholder="Edad" required />
             <input v-model.number=" profileForm.daily_kcal_target " type="number" min="800" max="6000" step="50"
-              class="border rounded-lg px-3 py-2" placeholder="kcal" required />
+              class="ui-input" placeholder="kcal" required />
             <input v-model.number=" profileForm.daily_protein_target " type="number" min="20" max="400" step="1"
-              class="border rounded-lg px-3 py-2" placeholder="proteína g" required />
+              class="ui-input" placeholder="proteína g" required />
             <button type="submit" :disabled=" !profileFormValid || profileSaving "
-              class="bg-gray-900 text-white rounded-lg px-3 py-2 disabled:opacity-50">
+              class="ui-btn-primary rounded-lg px-3 py-2 disabled:opacity-50">
               {{ profileForm.id ? "Actualizar" : "Añadir" }}
             </button>
           </form>
 
-          <div v-if=" profiles.length === 0 " class="text-sm text-gray-500 dark:text-slate-400 border rounded-lg p-4">
+          <div v-if=" profiles.length === 0 " class="ui-subtle text-sm border rounded-lg p-4">
             Añade al menos un perfil para adaptar objetivos por persona.
           </div>
           <div v-else class="divide-y border rounded-lg">
             <div v-for=" profile in profiles " :key=" profile.id "
               class="flex flex-wrap items-center justify-between gap-3 p-4">
               <div>
-                <p class="font-medium text-gray-900 dark:text-slate-100">{{ profile.name }}</p>
-                <p class="text-sm text-gray-500 dark:text-slate-400">
+                <p class="ui-title font-medium">{{ profile.name }}</p>
+                <p class="ui-subtle text-sm">
                   {{ sexLabel( profile.sex ) }} · {{ profile.age }} años ·
                   {{ profile.daily_kcal_target }} kcal ·
                   {{ profile.daily_protein_target }}g proteína
@@ -141,11 +141,11 @@
               </div>
               <div class="flex gap-2">
                 <button @click="editProfile( profile )"
-                  class="px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded">
+                  class="ui-btn-muted px-3 py-1.5 text-sm rounded">
                   Editar
                 </button>
                 <button @click="deleteProfile( profile.id )"
-                  class="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded">
+                  class="ui-btn-danger px-3 py-1.5 text-sm rounded">
                   Eliminar
                 </button>
               </div>

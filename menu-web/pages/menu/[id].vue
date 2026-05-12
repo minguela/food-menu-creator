@@ -80,7 +80,7 @@
               Día inicial
             </span>
             <input v-model.number=" blockStartDay " type="number" min="1" max="7"
-              class="w-full border border-slate-600 rounded-lg px-3 py-2 text-white bg-slate-800" />
+              class="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-white bg-slate-800" />
           </label>
 
           <label>
@@ -88,7 +88,7 @@
               Días incluidos
             </span>
             <input v-model.number=" blockDayCount " type="number" min="1" :max=" 8 - blockStartDay "
-              class="w-full border border-slate-600 rounded-lg px-3 py-2 text-white bg-slate-800" />
+              class="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-white bg-slate-800" />
           </label>
 
           <label class="self-end">
@@ -220,7 +220,7 @@
                     </button>
 
                     <button type="button"
-                      class="w-full rounded-lg border border-dashed border-slate-600 bg-slate-950/40 px-3 py-2 text-left text-xs text-slate-300 hover:border-indigo-400 hover:text-indigo-300"
+                      class="w-full rounded-lg border border-dashed border-[var(--color-border-strong)] bg-slate-950/40 px-3 py-2 text-left text-xs text-slate-300 hover:border-indigo-400 hover:text-indigo-300"
                       @click="openMealModal( day, type )">
                       + Añadir plato {{ mealLabel( type ).toLowerCase() }}
                     </button>
@@ -280,7 +280,7 @@
               Usar receta existente o día compuesto
             </span>
             <select v-model=" selectedRecipeId "
-              class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800"
+              class="w-full border border-[var(--color-border-strong)] rounded-lg px-4 py-2 text-white bg-slate-800"
               @change=" applySavedRecipeToModal ">
               <option value="">Editar manualmente...</option>
               <optgroup label="Días compuestos" v-if=" compoundDays.length > 0 ">
@@ -302,7 +302,7 @@
                 Plato o platos unidos
               </span>
               <textarea v-model.trim=" newMeal.dish_name " rows="3"
-                class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800 placeholder:text-slate-500 dark:text-slate-400"
+                class="w-full border border-[var(--color-border-strong)] rounded-lg px-4 py-2 text-white bg-slate-800 placeholder:text-slate-500 ui-subtle"
                 placeholder="Ej: Crema de calabacín + Pescado a elegir" required />
             </label>
 
@@ -311,7 +311,7 @@
                 Descripción
               </span>
               <input v-model.trim=" newMeal.dish_description "
-                class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800 placeholder:text-slate-500 dark:text-slate-400" />
+                class="w-full border border-[var(--color-border-strong)] rounded-lg px-4 py-2 text-white bg-slate-800 placeholder:text-slate-500 ui-subtle" />
             </label>
 
             <label class="md:col-span-2">
@@ -326,7 +326,7 @@
                 kcal reservadas para comida libre
               </span>
               <input v-model.number=" newMeal.special_kcal_reserved " type="number" min="0" max="2000" step="10"
-                class="w-full border border-slate-600 rounded-lg px-4 py-2 text-white bg-slate-800" />
+                class="w-full border border-[var(--color-border-strong)] rounded-lg px-4 py-2 text-white bg-slate-800" />
             </label>
           </div>
 
@@ -361,12 +361,12 @@
               <div v-for=" ( ingredient, index ) in ingredientRows " :key=" index "
                 class="grid grid-cols-[1fr_90px_90px_32px] gap-2">
                 <input v-model.trim=" ingredient.name "
-                  class="border border-slate-600 rounded-lg px-3 py-2 text-white bg-slate-800 placeholder:text-slate-500 dark:text-slate-400"
+                  class="border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-white bg-slate-800 placeholder:text-slate-500 ui-subtle"
                   placeholder="Nombre" />
                 <input v-model.number=" ingredient.quantity " type="number" min="0.01" step="0.01"
-                  class="border border-slate-600 rounded-lg px-3 py-2 text-white bg-slate-800" />
+                  class="border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-white bg-slate-800" />
                 <select v-model=" ingredient.unit_type "
-                  class="border border-slate-600 rounded-lg px-3 py-2 text-white bg-slate-800">
+                  class="border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-white bg-slate-800">
                   <option v-for=" unit in unitTypes " :key=" unit " :value=" unit ">
                     {{ unit }}
                   </option>
@@ -1362,14 +1362,14 @@ const ocrStatusLabel = ( status?: WeeklyDayImage[ "ocr_status" ] ) => {
 
 const cellClass = ( meal?: WeeklyMeal | null ) => {
   if ( !meal ) {
-    return "border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400";
+    return "border-dashed border-[var(--color-border-strong)] border-[var(--color-border-strong)] bg-[var(--color-surface-3)] bg-[var(--color-surface-2)] text-slate-500 ui-subtle";
   }
 
   if ( meal.is_special || isFreeMealName( meal.dish_name ) ) {
     return "border-amber-200 bg-amber-50";
   }
 
-  return "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900";
+  return "ui-divider ui-surface";
 };
 
 const recipeStatusText = ( meal?: WeeklyMeal | null ) => {

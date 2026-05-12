@@ -6,8 +6,7 @@
       <div
         v-if="statusMessage"
         class="fixed right-4 top-4 z-50 px-5 py-3 rounded-2xl text-sm font-medium border shadow-lg backdrop-blur-lg"
-        :class="statusType === 'error' ? 'bg-[rgba(255,100,103,0.12)] text-[var(--danger)] border-[rgba(255,100,103,0.25)]'
-          : 'bg-[rgba(114,206,123,0.12)] text-[var(--success)] border-[rgba(114,206,123,0.25)]'"
+        :class="statusType === 'error' ? 'bg-[rgba(255,100,103,0.12)] text-[var(--danger)] border-[rgba(255,100,103,0.25)]' : 'bg-[rgba(114,206,123,0.12)] text-[var(--success)] border-[rgba(114,206,123,0.25)]'"
       >
         {{ statusMessage }}
       </div>
@@ -124,8 +123,7 @@
                 <span class="block text-xs text-[var(--text-3)]">Proteína</span>
                 <div
                   class="rounded-xl px-4 py-2.5 text-sm border"
-                  :class="profileMacroValidation.valid ? 'bg-[rgba(114,206,123,0.06)] border-[rgba(114,206,123,0.2)] text-[var(--success)]'
-                    : 'bg-[rgba(255,100,103,0.06)] border-[rgba(255,100,103,0.2)] text-[var(--danger)]'"
+                  :class="profileMacroValidation.valid ? 'bg-[rgba(114,206,123,0.06)] border-[rgba(114,206,123,0.2)] text-[var(--success)]' : 'bg-[rgba(255,100,103,0.06)] border-[rgba(255,100,103,0.2)] text-[var(--danger)]'"
                 >
                   <span class="font-semibold">{{ profileForm.protein_pct_target }}%</span>
                   <span class="ml-1 text-xs opacity-60">deducida</span>

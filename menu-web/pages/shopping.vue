@@ -1,23 +1,23 @@
 ﻿<template>
-  <div class="min-h-screen bg-gradient-to-br from-deep-space via-ghost-white/5 to-deep-space">
+  <div class="min-h-screen bg-gradient-to-br from-[var(--bg-canvas)] via-[rgba(255,255,255,0.03)] to-[var(--bg-canvas)]">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div class="flex items-center gap-4">
           <div
-            class="w-14 h-14 rounded-2xl bg-gradient-to-br from-iridescent-glow to-spectrum-flare flex items-center justify-center shadow-lg shadow-iridescent-glow/20 backdrop-blur-sm border border-ghost-white/10">
+            class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[rgba(187,222,242,0.25)] to-[rgba(209,170,215,0.2)] flex items-center justify-center shadow-lg shadow-black/40 backdrop-blur-sm border border-[var(--border-soft)]">
             <span class="text-2xl">🛒</span>
           </div>
           <div>
-            <h1 class="text-3xl font-bold text-ghost-white tracking-tight">
+            <h1 class="text-3xl font-bold text-[var(--text-1)] tracking-[-0.01em]">
               Lista de la Compra
             </h1>
-            <p class="text-iron-slate text-sm mt-1">Cantidades normalizadas a gramos</p>
+            <p class="text-[var(--text-3)] text-sm mt-1">Cantidades normalizadas a gramos</p>
           </div>
         </div>
         <button @click="loadShoppingList" :disabled="loading"
-          class="group flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all duration-200 bg-ghost-white/10 text-ghost-white border border-ghost-white/20 hover:bg-ghost-white/20 hover:border-iridescent-glow/50 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none">
+          class="group flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all duration-200 bg-[rgba(255,255,255,0.06)] text-[var(--text-1)] border border-[var(--border-soft)] hover:bg-[rgba(255,255,255,0.1)] hover:border-iridescent-glow/50 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none">
           <svg class="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" fill="none" stroke="currentColor"
             viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -28,30 +28,30 @@
       </div>
 
       <!-- Generate from menu section -->
-      <section class="backdrop-blur-sm bg-ghost-white/5 rounded-2xl border border-ghost-white/10 p-6 mb-6 transition-all duration-200 hover:border-iridescent-glow/30 hover:shadow-lg hover:shadow-iridescent-glow/5">
+      <section class="backdrop-blur-sm bg-[var(--surface-2)] rounded-2xl border border-[var(--border-soft)] p-6 mb-6 transition-all duration-200 hover:border-[rgba(187,222,242,0.2)] hover:shadow-lg hover:shadow-iridescent-glow/5">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-10 h-10 rounded-xl bg-iridescent-glow/20 flex items-center justify-center">
             <span class="text-lg">📋</span>
           </div>
           <div>
-            <h2 class="text-lg font-bold text-ghost-white">Generar desde menú rotativo</h2>
-            <p class="text-xs text-iron-slate">Selecciona un menú para generar la lista</p>
+            <h2 class="text-lg font-bold text-[var(--text-1)]">Generar desde menú rotativo</h2>
+            <p class="text-xs text-[var(--text-3)]">Selecciona un menú para generar la lista</p>
           </div>
         </div>
 
         <div class="flex flex-wrap gap-4 items-end">
           <label class="flex-1 min-w-[280px]">
-            <span class="block text-sm font-semibold text-ghost-white/90 mb-2">Menú rotativo</span>
+            <span class="block text-sm font-semibold text-[var(--text-1)]/90 mb-2">Menú rotativo</span>
             <select v-model="selectedRotatingMenuId"
-              class="w-full rounded-xl border border-ghost-white/20 bg-ghost-white/5 px-4 py-2.5 text-ghost-white focus:ring-2 focus:ring-iridescent-glow/50 focus:border-iridescent-glow/50 transition-all appearance-none cursor-pointer hover:bg-ghost-white/10">
-              <option value="" class="bg-deep-space text-ghost-white">Selecciona un menú...</option>
-              <option v-for="menu in rotatingMenus" :key="menu.id" :value="menu.id" class="bg-deep-space text-ghost-white">
+              class="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--surface-2)] px-4 py-2.5 text-[var(--text-1)] focus:ring-2 focus:ring-iridescent-glow/50 focus:border-iridescent-glow/50 transition-all appearance-none cursor-pointer hover:bg-[rgba(255,255,255,0.06)]">
+              <option value="" class="bg-[var(--bg-canvas)] text-[var(--text-1)]">Selecciona un menú...</option>
+              <option v-for="menu in rotatingMenus" :key="menu.id" :value="menu.id" class="bg-[var(--bg-canvas)] text-[var(--text-1)]">
                 {{ menu.name }} ({{ menu.duration_days }} días)
               </option>
             </select>
           </label>
           <button
-            class="px-6 py-2.5 bg-gradient-to-r from-iridescent-glow to-spectrum-flare text-deep-space rounded-xl font-medium shadow-lg shadow-iridescent-glow/20 transition-all duration-200 hover:shadow-xl hover:shadow-iridescent-glow/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+            class="px-6 py-2.5 bg-gradient-to-r from-[rgba(187,222,242,0.25)] to-[rgba(209,170,215,0.2)] text-[var(--bg-canvas)] rounded-xl font-medium shadow-lg shadow-black/40 transition-all duration-200 hover:shadow-xl hover:shadow-iridescent-glow/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
             :disabled="!selectedRotatingMenuId || loading" @click="buildFromRotatingMenu">
             <span class="flex items-center gap-2">
               <span class="text-sm">📦</span>
@@ -63,14 +63,14 @@
 
       <!-- Loading state -->
       <div v-if="loading" class="text-center py-16">
-        <div class="animate-spin rounded-full h-12 w-12 border-2 border-iridescent-glow/30 border-t-iridescent-glow mx-auto"></div>
-        <p class="mt-4 text-iron-slate">Cargando lista...</p>
+        <div class="animate-spin rounded-full h-12 w-12 border-2 border-[rgba(187,222,242,0.2)] border-t-[rgba(187,222,242,0.2)] mx-auto"></div>
+        <p class="mt-4 text-[var(--text-3)]">Cargando lista...</p>
       </div>
 
       <!-- Empty state -->
-      <div v-else-if="items.length === 0" class="text-center py-16 backdrop-blur-sm bg-ghost-white/5 rounded-2xl border border-ghost-white/10">
+      <div v-else-if="items.length === 0" class="text-center py-16 backdrop-blur-sm bg-[var(--surface-2)] rounded-2xl border border-[var(--border-soft)]">
         <span class="text-5xl mb-4 block">🛍️</span>
-        <p class="text-ghost-white/80 mb-4 text-lg">No hay lista de la compra generada</p>
+        <p class="text-[var(--text-1)]/80 mb-4 text-lg">No hay lista de la compra generada</p>
         <NuxtLink href="/generar" class="text-iridescent-glow hover:text-spectrum-flare transition-colors underline underline-offset-4">Generar un menú primero</NuxtLink>
       </div>
 
@@ -78,137 +78,137 @@
       <div v-else class="space-y-6">
         <!-- Stats cards -->
         <section class="grid gap-4 md:grid-cols-4">
-          <div class="backdrop-blur-sm bg-ghost-white/5 rounded-xl border border-ghost-white/10 p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:border-iridescent-glow/30">
+          <div class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:border-[rgba(187,222,242,0.2)]">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-emerald-green/20 flex items-center justify-center">
+              <div class="w-10 h-10 rounded-lg bg-[rgba(114,206,123,0.12)] flex items-center justify-center">
                 <span class="text-lg">💰</span>
               </div>
               <div>
-                <p class="text-xs text-iron-slate uppercase tracking-wider">Total estimado</p>
-                <p class="text-2xl font-bold text-ghost-white">{{ totalPrice.toFixed(2) }}€</p>
+                <p class="text-xs text-[var(--text-3)] uppercase tracking-wider">Total estimado</p>
+                <p class="text-2xl font-bold text-[var(--text-1)]">{{ totalPrice.toFixed(2) }}€</p>
               </div>
             </div>
           </div>
-          <div class="backdrop-blur-sm bg-ghost-white/5 rounded-xl border border-ghost-white/10 p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:border-iridescent-glow/30">
+          <div class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:border-[rgba(187,222,242,0.2)]">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-lg bg-iridescent-glow/20 flex items-center justify-center">
                 <span class="text-lg">📦</span>
               </div>
               <div>
-                <p class="text-xs text-iron-slate uppercase tracking-wider">Artículos</p>
-                <p class="text-2xl font-bold text-ghost-white">{{ items.length }}</p>
+                <p class="text-xs text-[var(--text-3)] uppercase tracking-wider">Artículos</p>
+                <p class="text-2xl font-bold text-[var(--text-1)]">{{ items.length }}</p>
               </div>
             </div>
           </div>
-          <div class="backdrop-blur-sm bg-ghost-white/5 rounded-xl border border-ghost-white/10 p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:border-iridescent-glow/30">
+          <div class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:border-[rgba(187,222,242,0.2)]">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-goldenrod/20 flex items-center justify-center">
+              <div class="w-10 h-10 rounded-lg bg-[rgba(255,214,0,0.12)] flex items-center justify-center">
                 <span class="text-lg">⚠️</span>
               </div>
               <div>
-                <p class="text-xs text-iron-slate uppercase tracking-wider">Ambiguos</p>
-                <p class="text-2xl font-bold" :class="ambiguousCount ? 'text-goldenrod' : 'text-ghost-white'">
+                <p class="text-xs text-[var(--text-3)] uppercase tracking-wider">Ambiguos</p>
+                <p class="text-2xl font-bold" :class="ambiguousCount ? 'text-[var(--goldenrod)]' : 'text-[var(--text-1)]'">
                   {{ ambiguousCount }}
                 </p>
               </div>
             </div>
           </div>
-          <div class="backdrop-blur-sm bg-ghost-white/5 rounded-xl border border-ghost-white/10 p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:border-iridescent-glow/30">
+          <div class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-iridescent-glow/10 hover:border-[rgba(187,222,242,0.2)]">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-lg" :class="sendStatusColor">
                 <span class="text-lg">{{ sendStatusIcon }}</span>
               </div>
               <div>
-                <p class="text-xs text-iron-slate uppercase tracking-wider">Estado móvil</p>
-                <p class="text-lg font-semibold text-ghost-white">{{ sendStatusLabel }}</p>
+                <p class="text-xs text-[var(--text-3)] uppercase tracking-wider">Estado móvil</p>
+                <p class="text-lg font-semibold text-[var(--text-1)]">{{ sendStatusLabel }}</p>
               </div>
             </div>
           </div>
         </section>
 
         <!-- Add extra item -->
-        <section class="backdrop-blur-sm bg-ghost-white/5 rounded-xl border border-ghost-white/10 p-4">
-          <h2 class="font-semibold text-ghost-white mb-3 flex items-center gap-2">
+        <section class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] p-4">
+          <h2 class="font-semibold text-[var(--text-1)] mb-3 flex items-center gap-2">
             <span>➕</span> Añadir artículo propio
           </h2>
           <form class="grid gap-2 md:grid-cols-[1fr_130px_auto]" @submit.prevent="addExtraItem">
-            <input v-model.trim="extraName" class="border border-ghost-white/20 rounded-lg px-3 py-2 bg-ghost-white/5 text-ghost-white placeholder-iron-slate focus:ring-2 focus:ring-iridescent-glow/50 focus:border-iridescent-glow/50 transition-all" placeholder="Ej. papel higiénico"
+            <input v-model.trim="extraName" class="border border-[var(--border-soft)] rounded-lg px-3 py-2 bg-[var(--surface-2)] text-[var(--text-1)] placeholder-iron-slate focus:ring-2 focus:ring-iridescent-glow/50 focus:border-iridescent-glow/50 transition-all" placeholder="Ej. papel higiénico"
               required />
-            <input v-model.number="extraGrams" class="border border-ghost-white/20 rounded-lg px-3 py-2 bg-ghost-white/5 text-ghost-white placeholder-iron-slate focus:ring-2 focus:ring-iridescent-glow/50 focus:border-iridescent-glow/50 transition-all" type="number" min="1" step="1"
+            <input v-model.number="extraGrams" class="border border-[var(--border-soft)] rounded-lg px-3 py-2 bg-[var(--surface-2)] text-[var(--text-1)] placeholder-iron-slate focus:ring-2 focus:ring-iridescent-glow/50 focus:border-iridescent-glow/50 transition-all" type="number" min="1" step="1"
               placeholder="500 g" required />
-            <button class="bg-iridescent-glow/20 text-ghost-white border border-iridescent-glow/30 px-4 py-2 rounded-lg hover:bg-iridescent-glow/30 hover:border-iridescent-glow/50 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
+            <button class="bg-iridescent-glow/20 text-[var(--text-1)] border border-[rgba(187,222,242,0.2)] px-4 py-2 rounded-lg hover:bg-iridescent-glow/30 hover:border-iridescent-glow/50 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
               Añadir
             </button>
           </form>
         </section>
 
         <!-- Share section - FREE ROUTE -->
-        <section class="backdrop-blur-sm bg-ghost-white/5 rounded-xl border border-ghost-white/10 p-4">
-          <h2 class="font-semibold text-ghost-white mb-3 flex items-center gap-2">
+        <section class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] p-4">
+          <h2 class="font-semibold text-[var(--text-1)] mb-3 flex items-center gap-2">
             <span>📤</span> Compartir lista
           </h2>
           <div class="flex flex-wrap gap-3">
             <!-- WhatsApp button -->
             <button @click="shareWhatsApp" :disabled="!canShare"
-              class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30 hover:bg-[#25D366]/30 hover:border-[#25D366]/50 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:hover:translate-y-0">
+              class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 bg-[rgba(114,206,123,0.12)] text-[var(--success)] border-[rgba(114,206,123,0.2)] hover:bg-[#25D366]/30 hover:border-[#25D366]/50 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:hover:translate-y-0">
               <span class="text-lg">💬</span>
               WhatsApp
             </button>
             <!-- Copy to clipboard -->
             <button @click="copyToClipboard" :disabled="!canShare"
-              class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 bg-ghost-white/10 text-ghost-white border border-ghost-white/20 hover:bg-ghost-white/20 hover:border-ghost-white/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:hover:translate-y-0">
+              class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 bg-[rgba(255,255,255,0.06)] text-[var(--text-1)] border border-[var(--border-soft)] hover:bg-[rgba(255,255,255,0.1)] hover:border-ghost-white/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:hover:translate-y-0">
               <span class="text-lg">{{ copied ? '✅' : '📋' }}</span>
               {{ copied ? 'Copiado!' : 'Copiar' }}
             </button>
             <!-- Native share (mobile only) -->
             <button v-if="canNativeShare" @click="nativeShare" :disabled="!canShare"
-              class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 bg-iridescent-glow/20 text-iridescent-glow border border-iridescent-glow/30 hover:bg-iridescent-glow/30 hover:border-iridescent-glow/50 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:hover:translate-y-0">
+              class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 bg-iridescent-glow/20 text-iridescent-glow border border-[rgba(187,222,242,0.2)] hover:bg-iridescent-glow/30 hover:border-iridescent-glow/50 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:hover:translate-y-0">
               <span class="text-lg">📱</span>
               Compartir
             </button>
             <!-- SMS native (mobile only) -->
             <button @click="shareSMS" :disabled="!canShare || !phoneNumber"
-              class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 bg-ghost-white/10 text-ghost-white border border-ghost-white/20 hover:bg-ghost-white/20 hover:border-ghost-white/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:hover:translate-y-0">
+              class="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 bg-[rgba(255,255,255,0.06)] text-[var(--text-1)] border border-[var(--border-soft)] hover:bg-[rgba(255,255,255,0.1)] hover:border-ghost-white/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:hover:translate-y-0">
               <span class="text-lg">✉️</span>
               SMS
             </button>
           </div>
-          <p v-if="shareMessage" class="text-sm mt-3" :class="shareError ? 'text-vivid-crimson' : 'text-emerald-green'">
+          <p v-if="shareMessage" class="text-sm mt-3" :class="shareError ? 'text-[var(--danger)]' : 'text-[var(--success)]'">
             {{ shareMessage }}
           </p>
         </section>
 
         <!-- Categories -->
         <section v-for="(categoryItems, category) in itemsByCategory" :key="category"
-          class="backdrop-blur-sm bg-ghost-white/5 rounded-xl border border-ghost-white/10 overflow-hidden transition-all duration-200 hover:border-ghost-white/20">
-          <div class="bg-ghost-white/5 px-4 py-3 border-b border-ghost-white/10 flex items-center justify-between">
-            <h2 class="font-semibold text-ghost-white flex items-center gap-2">
+          class="backdrop-blur-sm bg-[var(--surface-2)] rounded-xl border border-[var(--border-soft)] overflow-hidden transition-all duration-200 hover:border-[var(--border-soft)]">
+          <div class="bg-[var(--surface-2)] px-4 py-3 border-b border-[var(--border-soft)] flex items-center justify-between">
+            <h2 class="font-semibold text-[var(--text-1)] flex items-center gap-2">
               <span>{{ categoryEmoji(category) }}</span>
               {{ category }}
             </h2>
-            <span class="text-xs text-iron-slate bg-ghost-white/10 px-2 py-1 rounded-full">{{ categoryItems.length }} items</span>
+            <span class="text-xs text-[var(--text-3)] bg-[rgba(255,255,255,0.06)] px-2 py-1 rounded-full">{{ categoryItems.length }} items</span>
           </div>
           <div class="divide-y divide-ghost-white/5">
             <div v-for="item in categoryItems" :key="item.id"
-              class="grid gap-3 p-4 transition-all duration-200 hover:bg-ghost-white/5 md:grid-cols-[1fr_170px_110px]"
+              class="grid gap-3 p-4 transition-all duration-200 hover:bg-[var(--surface-2)] md:grid-cols-[1fr_170px_110px]"
               :class="{ 'opacity-60': item.purchased }">
               <div class="flex items-start gap-3">
                 <label class="relative flex items-center cursor-pointer mt-1">
                   <input type="checkbox" :checked="item.purchased" @change="togglePurchased(item)"
                     class="sr-only peer" />
-                  <div class="w-5 h-5 rounded border-2 border-ghost-white/30 peer-checked:border-emerald-green peer-checked:bg-emerald-green transition-all duration-200 flex items-center justify-center hover:border-iridescent-glow/50">
-                    <svg v-if="item.purchased" class="w-3 h-3 text-deep-space" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="w-5 h-5 rounded border-2 border-[var(--border-strong)] peer-checked:border-[var(--success)] peer-checked:bg-[var(--success)] transition-all duration-200 flex items-center justify-center hover:border-iridescent-glow/50">
+                    <svg v-if="item.purchased" class="w-3 h-3 text-[var(--bg-canvas)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
                 </label>
-                <div :class="{ 'line-through text-iron-slate': item.purchased }">
+                <div :class="{ 'line-through text-[var(--text-3)]': item.purchased }">
                   <div class="flex flex-wrap items-center gap-2">
-                    <p class="font-medium text-ghost-white">
+                    <p class="font-medium text-[var(--text-1)]">
                       {{ item.item_name || item.ingredients?.name || "Artículo" }}
                     </p>
                     <span v-if="item.conversion_status === 'ambiguous'"
-                      class="text-xs bg-goldenrod/20 text-goldenrod px-2 py-0.5 rounded-full">
+                      class="text-xs bg-[rgba(255,214,0,0.12)] text-[var(--goldenrod)] px-2 py-0.5 rounded-full">
                       Revisar conversión
                     </span>
                     <span v-else-if="item.conversion_status === 'manual'"
@@ -216,21 +216,21 @@
                       Manual
                     </span>
                   </div>
-                  <p class="text-sm text-iron-slate">
+                  <p class="text-sm text-[var(--text-3)]">
                     {{ item.conversion_note || originalQuantity(item) }}
                   </p>
                 </div>
               </div>
               <label>
                 <span class="sr-only">Cantidad en gramos</span>
-                <input :value="Math.round(Number(item.quantity_grams || item.quantity_needed || 0))" type="number" min="1" step="1" class="w-full border border-ghost-white/20 rounded-lg px-3 py-2 text-right bg-ghost-white/5 text-ghost-white focus:ring-2 focus:ring-iridescent-glow/50 focus:border-iridescent-glow/50 transition-all"
+                <input :value="Math.round(Number(item.quantity_grams || item.quantity_needed || 0))" type="number" min="1" step="1" class="w-full border border-[var(--border-soft)] rounded-lg px-3 py-2 text-right bg-[var(--surface-2)] text-[var(--text-1)] focus:ring-2 focus:ring-iridescent-glow/50 focus:border-iridescent-glow/50 transition-all"
                   @change="updateGrams(item, $event)" />
               </label>
               <div class="text-right">
-                <p class="font-medium text-ghost-white">
+                <p class="font-medium text-[var(--text-1)]">
                   {{ item.estimated_price?.toFixed(2) || "0.00" }}€
                 </p>
-                <p class="text-sm text-iron-slate">
+                <p class="text-sm text-[var(--text-3)]">
                   {{ Math.round(Number(item.quantity_grams || item.quantity_needed || 0)) }} g
                 </p>
               </div>
@@ -240,23 +240,23 @@
 
         <!-- Export buttons -->
         <div class="flex flex-wrap justify-end gap-2 pt-4">
-          <button @click="markAllAsPurchased" class="px-4 py-2 text-ghost-white/80 hover:text-ghost-white hover:bg-ghost-white/10 rounded-lg transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
+          <button @click="markAllAsPurchased" class="px-4 py-2 text-[var(--text-1)]/80 hover:text-[var(--text-1)] hover:bg-[rgba(255,255,255,0.06)] rounded-lg transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
             Marcar todo como comprado
           </button>
           <button @click="exportAsText" :disabled="exportLoading"
-            class="px-4 py-2 bg-ghost-white/5 text-ghost-white border border-ghost-white/20 rounded-lg hover:bg-ghost-white/10 hover:border-ghost-white/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0">
+            class="px-4 py-2 bg-[var(--surface-2)] text-[var(--text-1)] border border-[var(--border-soft)] rounded-lg hover:bg-[rgba(255,255,255,0.06)] hover:border-ghost-white/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0">
             {{ exportLoading ? "Exportando..." : "📄 TXT" }}
           </button>
           <button @click="exportAsCsv" :disabled="exportLoading"
-            class="px-4 py-2 bg-ghost-white/5 text-ghost-white border border-ghost-white/20 rounded-lg hover:bg-ghost-white/10 hover:border-ghost-white/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0">
+            class="px-4 py-2 bg-[var(--surface-2)] text-[var(--text-1)] border border-[var(--border-soft)] rounded-lg hover:bg-[rgba(255,255,255,0.06)] hover:border-ghost-white/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0">
             {{ exportLoading ? "Exportando..." : "📊 CSV" }}
           </button>
           <button @click="downloadCsv"
-            class="px-4 py-2 bg-ghost-white/5 text-ghost-white border border-ghost-white/20 rounded-lg hover:bg-ghost-white/10 hover:border-ghost-white/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
+            class="px-4 py-2 bg-[var(--surface-2)] text-[var(--text-1)] border border-[var(--border-soft)] rounded-lg hover:bg-[rgba(255,255,255,0.06)] hover:border-ghost-white/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
             ⬇️ Descargar CSV
           </button>
           <button @click="printList"
-            class="px-4 py-2 bg-ghost-white/5 text-ghost-white border border-ghost-white/20 rounded-lg hover:bg-ghost-white/10 hover:border-ghost-white/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
+            class="px-4 py-2 bg-[var(--surface-2)] text-[var(--text-1)] border border-[var(--border-soft)] rounded-lg hover:bg-[rgba(255,255,255,0.06)] hover:border-ghost-white/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
             🖨️ PDF / Imprimir
           </button>
         </div>
@@ -327,10 +327,10 @@ const sendStatusLabel = computed(() => {
 });
 const sendStatusColor = computed(() => {
   const status = sendStatusLabel.value;
-  if (status === "Entregado") return "bg-emerald-green/20";
+  if (status === "Entregado") return "bg-[rgba(114,206,123,0.12)]";
   if (status === "Enviado") return "bg-iridescent-glow/20";
-  if (status === "Error") return "bg-vivid-crimson/20";
-  return "bg-ghost-white/10";
+  if (status === "Error") return "bg-[rgba(255,100,103,0.12)]";
+  return "bg-[rgba(255,255,255,0.06)]";
 });
 const sendStatusIcon = computed(() => {
   const status = sendStatusLabel.value;

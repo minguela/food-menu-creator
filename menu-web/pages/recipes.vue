@@ -6,14 +6,14 @@
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div class="flex items-center gap-4">
           <div
-            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-200">
+            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[rgba(187,222,242,0.2)] to-[rgba(209,170,215,0.12)] flex items-center justify-center shadow-lg shadow-black/40">
             <svg class="w-6 h-6 text-[var(--text-1)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
           <div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-[var(--text-1)] to-[var(--text-2)] bg-clip-text text-transparent">
               Biblioteca de recetas
             </h1>
             <p class="text-[var(--text-3)] text-sm mt-1">Curación de platos detectados por OCR</p>
@@ -21,16 +21,16 @@
         </div>
         <div class="flex gap-3">
           <button
-            class="px-5 py-2.5 text-[var(--text-1)] rounded-xl hover: font-medium shadow-lg shadow-emerald-200 hover:shadow-xl transition-all"
+            class="px-5 py-2.5 text-[var(--text-1)] rounded-xl hover: font-medium shadow-lg shadow-black/40 hover:shadow-xl transition-all"
             @click="showCreateRecipeModal = true">
             Nueva receta
           </button>
           <NuxtLink href="/ingredients"
-            class="px-4 py-2.5 border border-[var(--border-soft)] text-[var(--text-2)] rounded-xl hover: bg-[var(--surface-1)] hover:border-[var(--border-soft)] transition-all text-sm font-medium">
+            class="px-4 py-2.5 border border-[var(--border-soft)] text-[var(--text-2)] rounded-xl hover:bg-[var(--surface-1)] hover:border-[var(--border-soft)] transition-all text-sm font-medium">
             Ingredientes
           </NuxtLink>
           <button
-            class="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-[var(--text-1)] rounded-xl hover:from-violet-700 hover:to-purple-700 font-medium shadow-lg shadow-purple-200 hover:shadow-xl transition-all flex items-center gap-2"
+            class="px-5 py-2.5 bg-gradient-to-r from-[rgba(187,222,242,0.25)] to-[rgba(209,170,215,0.12)] text-[var(--text-1)] rounded-xl hover:from-violet-700 hover:to-purple-700 font-medium shadow-lg shadow-black/40 hover:shadow-xl transition-all flex items-center gap-2"
             @click=" loadRecipes ">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -57,18 +57,17 @@
                 placeholder="Buscar receta por nombre..." />
             </div>
           </label>
-          <label class="inline-flex items-center gap-2 text-sm text-[var(--text-2)] cursor-pointer hover: text-[var(--text-1)]">
+          <label class="inline-flex items-center gap-2 text-sm text-[var(--text-2)] cursor-pointer hover:text-[var(--text-1)]">
             <input type="checkbox" :checked=" allFilteredSelected " @change=" toggleSelectAllFiltered "
               class="w-4 h-4 rounded border-[var(--border-soft)] text-[var(--accent)] focus:ring-[var(--accent)]" />
             <span class="font-medium">Seleccionar visibles</span>
           </label>
-          <label class="inline-flex items-center gap-2 text-sm text-[var(--text-2)] cursor-pointer hover: text-[var(--text-1)]">
+          <label class="inline-flex items-center gap-2 text-sm text-[var(--text-2)] cursor-pointer hover:text-[var(--text-1)]">
             <input v-model=" showOnlyWithoutIngredients " type="checkbox"
               class="w-4 h-4 rounded border-[var(--border-soft)] text-[var(--accent)] focus:ring-[var(--accent)]" />
             <span class="font-medium">Solo sin ingredientes</span>
           </label>
-          <button v-for=" item in filterItems " :key=" item.value " class="px-3 py-1.5 rounded-lg border text-sm" :class="filter === item.value ? ' text-[var(--text-1)] border-indigo-600' : ' text-[var(--text-2)]'
-            " @click="filter = item.value">
+          <button v-for=" item in filterItems " :key=" item.value " class="px-3 py-1.5 rounded-lg border text-sm" :class="filter === item.value ? ' text-[var(--text-1)] border-[rgba(187,222,242,0.25)]' : ' text-[var(--text-2)]' " @click="filter = item.value">
             {{ item.label }}
           </button>
           <button class="px-3 py-1.5 rounded-lg border text-sm text-[var(--text-2)] disabled:opacity-50"
@@ -83,7 +82,7 @@
                 : `Guardar seleccionadas (${ selectedDishIds.length })`
             }}
           </button>
-          <button class="ml-auto px-3 py-1.5 rounded-lg bg-red-600 text-[var(--text-1)] text-sm disabled:opacity-50"
+          <button class="ml-auto px-3 py-1.5 rounded-lg bg-[var(--danger)] text-[var(--text-1)] text-sm disabled:opacity-50"
             :disabled=" selectedDishIds.length === 0 " @click=" deleteSelectedRecipes ">
             Eliminar recetas ({{ selectedDishIds.length }})
           </button>
@@ -204,7 +203,7 @@
               </div>
               <div class="flex justify-end">
                 <button
-                  class="text-xs px-3 py-1.5 rounded border border-indigo-200 bg-[rgba(187,222,242,0.08)] hover:bg-[rgba(187,222,242,0.16)]"
+                  class="text-xs px-3 py-1.5 rounded border border-[rgba(187,222,242,0.2)] bg-[rgba(187,222,242,0.08)] hover:bg-[rgba(187,222,242,0.16)]"
                   @click="saveRecipeForm( dish.id )">
                   Guardar formulario
                 </button>
@@ -218,7 +217,7 @@
 
             <div
               v-if="recipeBlockers( dish ).length > 0"
-              class="rounded-lg border border-[rgba(255,100,103,0.2)] bg-[rgba(255,100,103,0.06)]  p-3 space-y-2"
+              class="rounded-lg border border-[rgba(255,100,103,0.2)] bg-[rgba(255,100,103,0.06)] p-3 space-y-2"
             >
               <p class="text-xs font-semibold dark:">
                 Ingredientes que bloquean la generación
@@ -382,7 +381,7 @@
             </div>
 
             <button
-              class="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-transparent bg-[var(--surface-1)] px-3 py-1.5 text-sm font-medium hover:bg-[rgba(187,222,242,0.12)]"
+              class="inline-flex items-center gap-2 rounded-lg border border-[rgba(187,222,242,0.2)] bg-[var(--surface-1)] px-3 py-1.5 text-sm font-medium hover:bg-[rgba(187,222,242,0.12)]"
               @click="addManualConfirmed( dish.id )">
               + Añadir ingrediente manual
             </button>
@@ -397,7 +396,7 @@
                   class="min-w-[260px] flex-1 border rounded-lg px-3 py-2 text-sm"
                   placeholder="Busca: aceite, pollo, arroz..." />
                 <button
-                  class="text-xs px-3 py-2 rounded border border-sky-200 bg-transparent bg-[var(--surface-1)] hover:"
+                  class="text-xs px-3 py-2 rounded border border-[rgba(187,222,242,0.2)] bg-[var(--surface-1)] hover:"
                   :disabled="!existingIngredientQuery.trim()"
                   @click="addExistingIngredientByQuery( dish.id )">
                   Añadir desde catálogo
@@ -448,7 +447,7 @@ aceite de oliva" />
       </section>
       <div v-if=" showSplitPanel " class="fixed inset-0 bg-[var(--bg-canvas)]/50 z-50 flex items-center justify-center p-4"
         @click.self=" closeSplitPanel ">
-        <div class="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-lg bg-transparent bg-[var(--surface-1)] flex flex-col">
+        <div class="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-lg bg-[var(--surface-1)] flex flex-col">
           <div class="p-4 space-y-3 overflow-y-auto">
           <h3 class="text-lg font-semibold text-[var(--text-1)]">Dividir receta</h3>
           <p class="text-sm text-[var(--text-2)]">
@@ -471,7 +470,7 @@ aceite de oliva" />
             </div>
           </div>
           </div>
-          <div class="flex justify-end gap-2 p-4 border-t bg-transparent bg-[var(--surface-1)] shrink-0">
+          <div class="flex justify-end gap-2 p-4 border-t bg-[var(--surface-1)] shrink-0">
             <button class="px-3 py-1.5 rounded-lg border" @click=" closeSplitPanel ">
               Cancelar
             </button>
@@ -486,7 +485,7 @@ aceite de oliva" />
       <div v-if=" showCreateRecipeModal " class="fixed inset-0 z-50 flex items-center justify-center p-4"
         @click.self="showCreateRecipeModal = false">
         <div class="absolute inset-0 bg-[var(--bg-canvas)]/50"></div>
-        <div class="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-lg bg-transparent bg-[var(--surface-1)] flex flex-col">
+        <div class="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-lg bg-[var(--surface-1)] flex flex-col">
           <div class="p-4 space-y-3 overflow-y-auto">
           <h3 class="text-lg font-semibold text-[var(--text-1)]">Crear receta nueva</h3>
           <label class="block">
@@ -509,7 +508,7 @@ aceite de oliva" />
             Marcar receta como comida libre/especial
           </label>
           </div>
-          <div class="flex justify-end gap-2 p-4 border-t bg-transparent bg-[var(--surface-1)] shrink-0">
+          <div class="flex justify-end gap-2 p-4 border-t bg-[var(--surface-1)] shrink-0">
             <button class="px-3 py-1.5 rounded-lg border" @click=" showCreateRecipeModal = false ">
               Cancelar
             </button>
@@ -625,7 +624,7 @@ const statusMeta = ( dish: DishRow ) => {
   if ( status === "not_required" )
     return { label: "No requiere ingredientes", color: " text-[var(--text-3)]" };
   if ( status === "incomplete_nutrition" )
-    return { label: "Nutrición incompleta", color: "text-orange-600" };
+    return { label: "Nutrición incompleta", color: "text-[var(--goldenrod)]" };
   return { label: "Sugerida", color: "" };
 };
 

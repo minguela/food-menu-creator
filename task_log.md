@@ -14,6 +14,8 @@
   - Nota: creado `server/services/menuGenerator.ts` con carga de recetas candidatas desde `dishes`/`recipe_ingredients`/`ingredients`, exclusión diagnóstica de recetas incompletas, separación por `meal_type`, búsqueda diaria acotada con multiplicadores `[0.75, 1, 1.25, 1.5]`, penalización por repetición, resumen de periodo diario/semanal/mensual y logs de candidatos/periodo. OpenSpec queda en progreso `19/33`.
 - [x] Tarea #172: Completar fase 5 de API y persistencia del generador nutricional
   - Nota: añadida migración `20260512120000_nutrition_menu_api_persistence.sql` para persistencia `nutrition_scored`, `recipe_id` en comidas y soporte de `snack`; creadas rutas `/api/nutrition-menu-generate`, `/api/nutrition-menu-save`, `/api/nutrition-menu-detail` y `/api/nutrition-menu-shopping-list`; añadido `server/services/menuGeneratorPersistence.ts` para guardar menús, leer detalle y agregar compra en g/kg. OpenSpec queda en progreso `24/33`.
+- [x] Tarea #173: Completar fase 6 de integración UI del generador nutricional
+  - Nota: `pages/config.vue` permite editar/ver tolerancia por perfil; `pages/generar.vue` añade bloque independiente de scoring nutricional con selección de perfil, periodo, snacks, preview, desviaciones, cumplimiento, score y guardado; `pages/rotating/[id].vue` muestra marca/score de menús `nutrition_scored`. OpenSpec queda en progreso `29/33`.
 
 ## Sesión actual: 2026-05-11 - Escalado rotativo, cantidades relativas y warnings nutricionales
 

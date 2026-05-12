@@ -1,5 +1,14 @@
 # Registro de Tareas
 
+## Sesión actual: 2026-05-12 - Generador nutricional por scoring
+
+### Checklist de tareas
+
+- [x] Tarea #168: Crear OpenSpec del generador nutricional por scoring
+  - Nota: creado `openspec/changes/score-based-nutrition-menu-generator` con propuesta, diseño, spec `nutrition-menu-generator` y checklist. Validado con `openspec validate "score-based-nutrition-menu-generator"`.
+- [x] Tarea #169: Completar fases 1 y 2 del generador nutricional
+  - Nota: añadida migración `20260512103000_nutrition_menu_generator_foundation.sql` para tolerancia por perfil, metadatos de receta y scoring diario; actualizados tipos en `types/index.ts`; creadas utilidades compartidas `utils/nutrition/calculateRecipeMacros.ts`, `profileTargets.ts` y `menuScoring.ts`. OpenSpec queda en progreso `8/33`.
+
 ## Sesión actual: 2026-05-11 - Escalado rotativo, cantidades relativas y warnings nutricionales
 
 ### Checklist de tareas

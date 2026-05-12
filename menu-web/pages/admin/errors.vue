@@ -2,8 +2,8 @@
   <div class="space-y-6">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100">Error Logs</h1>
-        <p class="text-sm text-gray-500 dark:text-slate-400">
+        <h1 class="ui-title text-2xl font-bold">Error Logs</h1>
+        <p class="ui-subtle text-sm">
           Registro centralizado de errores de web, Telegram y OCR.
         </p>
       </div>
@@ -27,12 +27,12 @@
       <div
         class="mx-auto h-10 w-10 animate-spin rounded-full border-b-2 border-sky-400"
       ></div>
-      <p class="mt-3 text-sm text-gray-500 dark:text-slate-400">Cargando registros...</p>
+      <p class="ui-subtle mt-3 text-sm">Cargando registros...</p>
     </div>
 
     <div
       v-else-if="logs.length === 0"
-      class="ui-surface p-5 text-sm text-gray-500 dark:text-slate-400"
+      class="ui-surface ui-subtle p-5 text-sm"
     >
       No hay errores registrados.
     </div>
@@ -43,14 +43,14 @@
           <span class="ui-chip px-2 py-0.5 text-xs uppercase tracking-wide">{{
             item.source
           }}</span>
-          <span class="text-xs text-gray-500 dark:text-slate-400">{{
+          <span class="ui-subtle text-xs">{{
             formatDate(item.created_at)
           }}</span>
         </div>
-        <p class="text-sm text-gray-100 whitespace-pre-wrap">
+        <p class="ui-muted text-sm whitespace-pre-wrap">
           {{ item.message }}
         </p>
-        <details v-if="item.stack_trace" class="mt-3 text-xs text-gray-400">
+        <details v-if="item.stack_trace" class="ui-subtle mt-3 text-xs">
           <summary class="cursor-pointer select-none">Ver stack trace</summary>
           <pre
             class="mt-2 overflow-x-auto rounded-xl border border-zinc-700 p-3"

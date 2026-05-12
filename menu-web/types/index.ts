@@ -1,3 +1,7 @@
+export type MealType = "desayuno" | "comida" | "cena" | "snack";
+
+export type ScheduledMealType = Exclude<MealType, "snack">;
+
 export interface User {
   id: string;
   telegram_id?: number;
@@ -23,6 +27,8 @@ export interface PersonProfile {
   daily_protein_target: number;
   fat_pct_target: number;
   carbs_pct_target: number;
+  protein_pct_target: number;
+  tolerance_percent?: number;
   created_at: string;
   updated_at: string;
 }
@@ -40,7 +46,7 @@ export interface WeeklyMeal {
   id: string;
   weekly_menu_id: string;
   day_number: number;
-  meal_type: "desayuno" | "comida" | "cena";
+  meal_type: ScheduledMealType;
   meal_slot?: 1 | 2;
   dish_name: string;
   dish_description?: string;
@@ -86,6 +92,7 @@ export interface Dish {
   english_name?: string | null;
   normalized_name?: string;
   description?: string;
+  meal_type?: MealType | null;
   recipe_status?:
     | "pending_ingredients"
     | "suggested_ingredients"
@@ -100,7 +107,10 @@ export interface Dish {
   is_special?: boolean;
   special_kcal_reserved?: number;
   servings_base: number;
+  servings?: number;
+  tags?: string[];
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Ingredient {
@@ -160,7 +170,7 @@ export interface MealPlan {
   id: string;
   user_id: string;
   plan_date: string;
-  meal_type: "desayuno" | "comida" | "cena";
+  meal_type: ScheduledMealType;
   dish_id?: string;
   day_original?: number;
   kcal?: number;
@@ -208,6 +218,7 @@ export interface GeneratedMenu {
   comida: string;
   cena: string;
   desayuno?: string;
+  snack?: string;
 }
 
 export interface MonthlyMenu {
@@ -236,7 +247,7 @@ export interface ErrorLog {
 export interface SavedFixedMeal {
   id: string;
   user_id: string;
-  meal_type: "desayuno" | "comida" | "cena";
+  meal_type: ScheduledMealType;
   dish_name: string;
   dish_description?: string;
   kcal: number;
@@ -268,8 +279,51 @@ export interface RotatingMenu {
   target_protein_g: number;
   target_carbs_g: number;
   target_fat_g: number;
+  generator_type?: "rotating" | "nutrition_scored";
+  period_type?: "daily" | "weekly" | "monthly" | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  score?: number | null;
+  meets_targets?: boolean | null;
+  diagnostics?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface RotatingMenuDay {
+  id: string;
+  rotating_menu_id: string;
+  day_number: number;
+  day_date?: string | null;
+  source_weekly_menu_id?: string | null;
+  total_kcal: number;
+  total_protein_g: number;
+  total_carbs_g: number;
+  total_fat_g: number;
+  score?: number | null;
+  meets_targets?: boolean | null;
+  diagnostics?: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface RotatingMenuMeal {
+  id: string;
+  rotating_menu_day_id: string;
+  recipe_id?: string | null;
+  meal_type: MealType;
+  meal_slot?: number;
+  source_weekly_meal_id?: string | null;
+  dish_name: string;
+  dish_description?: string | null;
+  base_servings: number;
+  serving_multiplier: number;
+  final_kcal: number;
+  final_protein_g: number;
+  final_carbs_g: number;
+  final_fat_g: number;
+  is_special?: boolean;
+  special_kcal_reserved?: number;
+  created_at: string;
 }
 
 export interface RotatingProfileTarget {

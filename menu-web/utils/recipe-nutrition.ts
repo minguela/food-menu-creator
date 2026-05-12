@@ -1,4 +1,4 @@
-import type { Ingredient, RecipeIngredient } from "~/types";
+﻿import type { Ingredient, RecipeIngredient } from "~/types";
 
 export type NutritionTotals = {
   kcal: number;

@@ -4,14 +4,21 @@
       <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p class="ui-kicker">Ingredientes</p>
-          <h1 class="mt-1 text-2xl font-semibold text-[var(--text-1)]">Expansiones</h1>
+          <h1 class="mt-1 text-2xl font-semibold text-text-1">Expansiones</h1>
           <p class="mt-1 text-sm ui-muted">Reglas para anadir ingredientes automaticamente en platos OCR.</p>
         </div>
         <div class="flex items-center gap-2">
+<<<<<<< Updated upstream
           <NuxtLink href="/ingredients" class="rounded-2xl border border-[var(--border-soft)] px-4 py-2 text-sm text-[var(--text-1)] hover:bg-[rgba(255,255,255,0.08)]">
             Volver a ingredientes
           </NuxtLink>
           <button class="rounded-2xl border border-[var(--border-strong)] bg-[rgba(255,255,255,0.06)] px-4 py-2 text-sm font-medium text-[var(--text-1)] hover:bg-white/20" @click="openExpansionModal()">
+=======
+          <NuxtLink href="/ingredients" class="rounded-2xl border border-white/25 px-4 py-2 text-sm text-text-1 hover:bg-white/8">
+            Volver a ingredientes
+          </NuxtLink>
+          <button class="rounded-2xl border border-white/40 bg-transparent/10 px-4 py-2 text-sm font-medium text-text-1 hover:bg-white/20" @click="openExpansionModal()">
+>>>>>>> Stashed changes
             Nueva expansion
           </button>
         </div>
@@ -21,7 +28,7 @@
     <section class="ui-surface rounded-2xl p-5">
       <div v-if="loadingExpansions" class="py-12 text-center ui-muted">Cargando expansiones...</div>
       <div v-else-if="expansionMappings.length === 0" class="py-12 text-center">
-        <p class="text-base text-[var(--text-1)]">No hay expansiones definidas</p>
+        <p class="text-base text-text-1">No hay expansiones definidas</p>
         <p class="mt-1 text-sm ui-muted">Crea tu primera regla para automatizar ingredientes.</p>
       </div>
       <div v-else class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -29,18 +36,27 @@
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">
               <div class="flex items-center gap-2">
-                <h2 class="truncate text-base font-semibold text-[var(--text-1)]">{{ m.dish_name }}</h2>
-                <span v-if="m.is_global" class="rounded-full border border-white/30 px-2 py-0.5 text-[11px] text-[var(--text-1)]/90">Global</span>
+                <h2 class="truncate text-base font-semibold text-text-1">{{ m.dish_name }}</h2>
+                <span v-if="m.is_global" class="rounded-full border border-white/30 px-2 py-0.5 text-[11px] text-text-1/90">Global</span>
               </div>
               <p class="mt-1 truncate text-xs ui-subtle">{{ m.aliases?.length ? m.aliases.join(', ') : 'Sin alias' }}</p>
             </div>
             <div class="flex items-center gap-1">
+<<<<<<< Updated upstream
               <button class="rounded-lg border border-[var(--border-soft)] px-2 py-1 text-xs text-[var(--text-1)] hover:bg-[rgba(255,255,255,0.08)]" @click="openExpansionModal(m)">Editar</button>
               <button class="rounded-lg border border-[rgba(255,100,103,0.25)] px-2 py-1 text-xs hover:bg-[var(--danger)]/10" @click="deleteExpansion(m.id)">Borrar</button>
             </div>
           </div>
           <div class="mt-3 flex flex-wrap gap-1.5">
             <span v-for="(ing, i) in (m.ingredients || []).slice(0, 5)" :key="i" class="rounded-md border border-[var(--border-soft)] px-2 py-1 text-xs text-[var(--text-1)]/90">
+=======
+              <button class="rounded-lg border border-white/20 px-2 py-1 text-xs text-text-1 hover:bg-white/8" @click="openExpansionModal(m)">Editar</button>
+              <button class="rounded-lg border border-red-400/50 px-2 py-1 text-xs hover:bg-red-500/10" @click="deleteExpansion(m.id)">Borrar</button>
+            </div>
+          </div>
+          <div class="mt-3 flex flex-wrap gap-1.5">
+            <span v-for="(ing, i) in (m.ingredients || []).slice(0, 5)" :key="i" class="rounded-md border border-white/20 px-2 py-1 text-xs text-text-1/90">
+>>>>>>> Stashed changes
               {{ ing.name }}
             </span>
             <span v-if="(m.ingredients?.length || 0) > 5" class="px-2 py-1 text-xs ui-muted">+{{ m.ingredients.length - 5 }} mas</span>
@@ -50,9 +66,9 @@
     </section>
 
     <div v-if="showExpansionModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showExpansionModal = false">
-      <div class="absolute inset-0 bg-[var(--bg-canvas)]/70"></div>
-      <div class="relative w-full max-w-xl rounded-2xl border border-white/15 bg-[var(--bg-canvas)] p-5">
-        <h2 class="text-lg font-semibold text-[var(--text-1)]">{{ editingExpansion ? "Editar" : "Nueva" }} expansion</h2>
+      <div class="absolute inset-0 bg-canvas/70"></div>
+      <div class="relative w-full max-w-xl rounded-2xl border border-white/15 bg-canvas p-5">
+        <h2 class="text-lg font-semibold text-text-1">{{ editingExpansion ? "Editar" : "Nueva" }} expansion</h2>
         <p class="mt-1 text-xs ui-muted">Configura nombre, alias e ingredientes en formato JSON.</p>
 
         <div class="mt-4 space-y-3">

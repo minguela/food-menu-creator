@@ -59,6 +59,11 @@ export type MenuScoreResult = MenuCompliance & {
   };
 };
 
+export type ScoredMenuOption<T> = T & {
+  score: number;
+  tieBreaker?: string | number | null;
+};
+
 export const DEFAULT_MENU_SCORE_WEIGHTS: MenuScoreWeights = {
   kcal: 1,
   proteinG: 4,
@@ -161,6 +166,20 @@ export function buildDeviation(
     max: max === Number.POSITIVE_INFINITY ? max : roundNutrition(max),
     withinTolerance: Number(actual || 0) >= min && Number(actual || 0) <= max,
   };
+}
+
+export function selectBestScoredOption<T>(
+  options: Array<ScoredMenuOption<T>>,
+): ScoredMenuOption<T> | null {
+  if (options.length === 0) return null;
+
+  return [...options].sort((left, right) => {
+    const scoreDelta = Number(left.score || 0) - Number(right.score || 0);
+    if (scoreDelta !== 0) return scoreDelta;
+    return String(left.tieBreaker ?? "").localeCompare(
+      String(right.tieBreaker ?? ""),
+    );
+  })[0];
 }
 
 function uniqueCount(values: string[]): number {

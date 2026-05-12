@@ -5,7 +5,7 @@
       :key="field.key"
       class="space-y-1"
     >
-      <span class="text-xs font-medium text-text-2">{{ field.label }}</span>
+      <span class="text-xs font-medium text-gray-600 dark:text-slate-300">{{ field.label }}</span>
       <input
         :value="modelValue[field.key] ?? ''"
         type="number"
@@ -14,13 +14,9 @@
         step="0.1"
         inputmode="decimal"
         class="w-full rounded-md border px-3 py-2 text-sm"
-<<<<<<< Updated upstream
-        :class="changedFields.includes(field.key) ? 'border-[rgba(255,255,255,0.25)] bg-[rgba(187,222,242,0.08)] bg-[var(--surface-3)] text-[var(--text-1)]'
-          : 'border-[var(--border-soft)] bg-transparent  text-[var(--text-1)]'"
-=======
-        :class="changedFields.includes(field.key) ? 'border-[rgba(255,255,255,0.25)]  bg-accent/10 dark:bg-indigo-950/40 text-text-1'
-          : 'border-border-soft bg-transparent  text-text-1'"
->>>>>>> Stashed changes
+        :class="changedFields.includes(field.key)
+          ? 'border-indigo-300 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-slate-900 dark:text-slate-100'
+          : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100'"
         @input="updateValue(field.key, $event)"
       />
     </label>

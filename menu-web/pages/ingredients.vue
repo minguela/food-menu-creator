@@ -7,26 +7,26 @@
           Base nutricional por 100g para cálculos del menú rotativo.
         </p>
       </div>
-      <button class="px-4 py-2 text-white rounded-lg hover:" @click=" addIngredient ">
+      <button class="px-4 py-2 text-[var(--text-1)] rounded-lg hover:" @click=" addIngredient ">
         Nuevo ingrediente
       </button>
     </header>
 
-    <section class="bg-white bg-[var(--surface-1)] rounded-lg border p-4">
+    <section class="bg-[var(--surface-1)] rounded-lg border p-4">
       <div class="flex flex-wrap items-center gap-2">
-        <button class="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+        <button class="px-3 py-2 text-sm bg-red-600 text-[var(--text-1)] rounded-lg hover:bg-red-700 disabled:opacity-50"
           :disabled=" selectedIds.length === 0 " @click=" deleteSelected ">
           Eliminar seleccionados ({{ selectedIds.length }})
         </button>
-        <button class="px-3 py-2 text-sm text-white rounded-lg hover:"
+        <button class="px-3 py-2 text-sm text-[var(--text-1)] rounded-lg hover:"
           @click="showImportCsvModal = true">
           Importar CSV
         </button>
-        <button class="px-3 py-2 text-sm text-white rounded-lg hover:"
+        <button class="px-3 py-2 text-sm text-[var(--text-1)] rounded-lg hover:"
           :disabled="exportingCsv" @click="exportCsv">
           {{ exportingCsv ? "Exportando..." : "Exportar CSV" }}
         </button>
-        <button class="px-3 py-2 text-sm text-white rounded-lg hover: disabled:opacity-50"
+        <button class="px-3 py-2 text-sm text-[var(--text-1)] rounded-lg hover: disabled:opacity-50"
           :disabled="selectedIds.length < 2" @click="openMergeSelectedModal">
           Fusionar seleccionados
         </button>
@@ -39,32 +39,31 @@
     <section class="ui-surface rounded-xl p-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 class="text-lg font-semibold text-white">Expansiones de ingredientes</h2>
+          <h2 class="text-lg font-semibold text-[var(--text-1)]">Expansiones de ingredientes</h2>
           <p class="text-sm ui-muted">
             Gestiona reglas de expansion en una pagina dedicada.
           </p>
         </div>
         <NuxtLink
           href="/ingredients/expansions"
-          class="rounded-2xl border border-white/30 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
+          class="rounded-2xl border border-white/30 px-4 py-2 text-sm font-medium text-[var(--text-1)] hover:bg-[rgba(255,255,255,0.08)]"
         >
           Abrir expansiones
         </NuxtLink>
       </div>
     </section>
 
-    <section class="bg-white bg-[var(--surface-1)] rounded-lg border p-4">
+    <section class="bg-[var(--surface-1)] rounded-lg border p-4">
       <div class="grid gap-2 md:grid-cols-1">
         <input v-model.trim=" query " class="w-full border rounded-lg px-3 py-2" placeholder="Buscar ingrediente..." />
       </div>
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <button v-for=" option in filterOptions " :key=" option.value "
-          class="rounded-full border px-3 py-1.5 text-xs font-medium" :class="filterMode === option.value ? 'border-indigo-600 bg-[rgba(187,222,242,0.08)] '
-            : 'border-gray-200 border-[var(--border-soft)]  text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] bg-[var(--surface-1)]'
+          class="rounded-full border px-3 py-1.5 text-xs font-medium" :class="filterMode === option.value ? 'border-indigo-600 bg-[rgba(187,222,242,0.08)] ' : 'border-[var(--border-soft)]  text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] bg-[var(--surface-1)]'
             " @click="filterMode = option.value">
           {{ option.label }} {{ option.count }}
         </button>
-        <label class="inline-flex items-center gap-2 rounded-full border border-gray-200 border-[var(--border-soft)] px-3 py-1.5 text-xs font-medium text-[var(--text-2)]">
+        <label class="inline-flex items-center gap-2 rounded-full border border-[var(--border-soft)] px-3 py-1.5 text-xs font-medium text-[var(--text-2)]">
           <input v-model=" showOnlyWithoutRecipes " type="checkbox" class="h-3.5 w-3.5" />
           Solo sin recetas
         </label>
@@ -116,7 +115,7 @@
     </section>
 
     <div v-if="showImportCsvModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showImportCsvModal = false">
-      <div class="absolute inset-0 bg-black/50"></div>
+      <div class="absolute inset-0 bg-[var(--bg-canvas)]/50"></div>
       <div class="relative w-full max-w-3xl rounded-lg bg-transparent bg-[var(--surface-1)] p-4 space-y-3">
         <h3 class="text-lg font-semibold text-[var(--text-1)]">Importar CSV</h3>
         <p class="text-xs text-[var(--text-3)]">
@@ -126,7 +125,7 @@
           placeholder="Pega aquí el CSV completo" />
         <div class="flex justify-end gap-2">
           <button class="px-3 py-2 border rounded-lg" @click="showImportCsvModal = false">Cancelar</button>
-          <button class="px-3 py-2 text-white rounded-lg disabled:opacity-50"
+          <button class="px-3 py-2 text-[var(--text-1)] rounded-lg disabled:opacity-50"
             :disabled="importingCsv || !csvInput.trim()" @click="importCsv">
             {{ importingCsv ? "Importando..." : "Importar" }}
           </button>
@@ -135,7 +134,7 @@
     </div>
 
     <div v-if="showMergeSelectedModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showMergeSelectedModal = false">
-      <div class="absolute inset-0 bg-black/50"></div>
+      <div class="absolute inset-0 bg-[var(--bg-canvas)]/50"></div>
       <div class="relative w-full max-w-xl rounded-lg bg-transparent bg-[var(--surface-1)] p-4 space-y-3">
         <h3 class="text-lg font-semibold text-[var(--text-1)]">Fusionar ingredientes seleccionados</h3>
         <p class="text-sm text-[var(--text-2)]">Seleccionados: {{ selectedIds.length }}. Elige cuál se queda como destino.</p>
@@ -145,7 +144,7 @@
         </select>
         <div class="flex justify-end gap-2">
           <button class="px-3 py-2 border rounded-lg" @click="showMergeSelectedModal = false">Cancelar</button>
-          <button class="px-3 py-2 text-white rounded-lg disabled:opacity-50"
+          <button class="px-3 py-2 text-[var(--text-1)] rounded-lg disabled:opacity-50"
             :disabled="mergingSelected || !mergeDestinationId" @click="mergeSelectedIngredients">
             {{ mergingSelected ? "Fusionando..." : "Confirmar fusión" }}
           </button>

@@ -1,4 +1,4 @@
-# Scale — Style Reference
+﻿# Scale — Style Reference
 > Midnight Command Center: An expanse of polished dark surfaces, illuminated by precise white text and the occasional shimmer of an iridescent, almost holographic, light.
 
 **Theme:** dark

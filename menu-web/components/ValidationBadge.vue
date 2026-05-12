@@ -27,7 +27,11 @@ const classes = computed(() => {
   if (props.quality.status === "incomplete") {
     return "border-[rgba(255,214,0,0.2)] bg-[rgba(255,214,0,0.06)] text-[var(--goldenrod)]";
   }
+<<<<<<< Updated upstream
   return "border-[rgba(255,100,103,0.2)] bg-[rgba(255,100,103,0.06)] text-[var(--danger)]";
+=======
+  return "border-red-200 bg-danger/6 text-danger";
+>>>>>>> Stashed changes
 });
 </script>
 

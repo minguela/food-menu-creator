@@ -39,11 +39,11 @@
 
 ## 6. UI Integration
 
-- [ ] 6.1 Update `pages/config.vue` to edit/display profile tolerance without breaking existing profile creation.
-- [ ] 6.2 Update `pages/generar.vue` to support the scored generator flow while preserving the existing rotating-menu flow.
-- [ ] 6.3 Display selected profile targets, tolerance, generated days, meals, multipliers, macro deviations, compliance state, and score.
-- [ ] 6.4 Add save action for generated previews and navigation to generated menu detail.
-- [ ] 6.5 Update detail/shopping UI as needed to show generated menu scores and aggregated shopping quantities.
+- [x] 6.1 Update `pages/config.vue` to edit/display profile tolerance without breaking existing profile creation.
+- [x] 6.2 Update `pages/generar.vue` to support the scored generator flow while preserving the existing rotating-menu flow.
+- [x] 6.3 Display selected profile targets, tolerance, generated days, meals, multipliers, macro deviations, compliance state, and score.
+- [x] 6.4 Add save action for generated previews and navigation to generated menu detail.
+- [x] 6.5 Update detail/shopping UI as needed to show generated menu scores and aggregated shopping quantities.
 
 ## 7. Verification
 

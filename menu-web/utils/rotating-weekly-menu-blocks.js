@@ -1,4 +1,4 @@
-const MEAL_TYPE_ORDER = new Map([
+﻿const MEAL_TYPE_ORDER = new Map([
   ["desayuno", 0],
   ["comida", 1],
   ["cena", 2],

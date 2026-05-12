@@ -1,4 +1,4 @@
-export function validatePlannedDayCompleteness({
+﻿export function validatePlannedDayCompleteness({
   plannedDayBlocks,
   sourceMeals,
   discardedMealOptions = [],

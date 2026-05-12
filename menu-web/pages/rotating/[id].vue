@@ -90,7 +90,7 @@
         <div class="mt-3 flex gap-2 overflow-x-auto pb-1">
           <button v-for=" week in weeks " :key=" `nav-week-${ week.weekNumber }` "
             class="min-w-28 rounded-lg border px-4 py-2.5 text-sm"
-            :class="selectedWeekNumber === week.weekNumber ? 'border-indigo-500  text-white'
+            :class="selectedWeekNumber === week.weekNumber ? 'border-indigo-500 text-[var(--text-1)]'
                 : ' text-[var(--text-2)] hover:bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.06)]'
               " @click=" selectedWeekNumber = week.weekNumber">
             <div class="font-semibold">Semana {{ week.weekNumber }}</div>
@@ -153,13 +153,13 @@
                         {{ meal.dish_description }}
                       </p>
                     </div>
-                    <span v-if=" meal.is_special " class="rounded-full bg-[var(--surface-3)] px-2 py-1 text-xs  text-[var(--text-2)]">
+                    <span v-if=" meal.is_special " class="rounded-full bg-[var(--surface-3)] px-2 py-1 text-xs text-[var(--text-2)]">
                       Comida libre · {{ meal.special_kcal_reserved ?? 700 }} kcal reservadas
                     </span>
                   </div>
 
                   <div v-if=" meal.is_special "
-                    class="mt-3 rounded border border-gray-200 border-[var(--border-soft)] bg-[var(--surface-2)] bg-[var(--surface-3)]/50 p-3 text-xs text-[var(--text-3)]">
+                    class="mt-3 rounded border border-[var(--border-soft)] bg-[var(--surface-2)]/50 p-3 text-xs text-[var(--text-3)]">
                     Esta comida no tiene ingredientes calculados, no fuerza macros y
                     no se incluye en la lista de la compra.
                   </div>

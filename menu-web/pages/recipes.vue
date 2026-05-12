@@ -7,7 +7,7 @@
         <div class="flex items-center gap-4">
           <div
             class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-200">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-6 h-6 text-[var(--text-1)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
@@ -21,16 +21,16 @@
         </div>
         <div class="flex gap-3">
           <button
-            class="px-5 py-2.5 text-white rounded-xl hover: font-medium shadow-lg shadow-emerald-200 hover:shadow-xl transition-all"
+            class="px-5 py-2.5 text-[var(--text-1)] rounded-xl hover: font-medium shadow-lg shadow-emerald-200 hover:shadow-xl transition-all"
             @click="showCreateRecipeModal = true">
             Nueva receta
           </button>
           <NuxtLink href="/ingredients"
-            class="px-4 py-2.5 border border-[var(--border-soft)] text-[var(--text-2)] rounded-xl hover: bg-[var(--surface-1)] hover:border-slate-300  transition-all text-sm font-medium">
+            class="px-4 py-2.5 border border-[var(--border-soft)] text-[var(--text-2)] rounded-xl hover: bg-[var(--surface-1)] hover:border-[var(--border-soft)] transition-all text-sm font-medium">
             Ingredientes
           </NuxtLink>
           <button
-            class="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl hover:from-violet-700 hover:to-purple-700 font-medium shadow-lg shadow-purple-200 hover:shadow-xl transition-all flex items-center gap-2"
+            class="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-[var(--text-1)] rounded-xl hover:from-violet-700 hover:to-purple-700 font-medium shadow-lg shadow-purple-200 hover:shadow-xl transition-all flex items-center gap-2"
             @click=" loadRecipes ">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -42,7 +42,7 @@
       </header>
 
       <!-- Search & Filters -->
-      <section class="bg-white bg-[var(--surface-1)] rounded-2xl border border-[var(--border-soft)] shadow-sm p-5 mb-6">
+      <section class="bg-[var(--surface-1)] rounded-2xl border border-[var(--border-soft)] shadow-sm p-5 mb-6">
         <div class="flex flex-wrap items-center gap-4">
           <label class="flex-1 min-w-[240px]">
             <div class="relative">
@@ -53,22 +53,21 @@
                 </svg>
               </div>
               <input v-model.trim=" searchTerm "
-                class="w-full pl-10 pr-4 py-2.5 border border-[var(--border-soft)] rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                class="w-full pl-10 pr-4 py-2.5 border border-[var(--border-soft)] rounded-xl focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
                 placeholder="Buscar receta por nombre..." />
             </div>
           </label>
           <label class="inline-flex items-center gap-2 text-sm text-[var(--text-2)] cursor-pointer hover: text-[var(--text-1)]">
             <input type="checkbox" :checked=" allFilteredSelected " @change=" toggleSelectAllFiltered "
-              class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500" />
+              class="w-4 h-4 rounded border-[var(--border-soft)] text-[var(--accent)] focus:ring-[var(--accent)]" />
             <span class="font-medium">Seleccionar visibles</span>
           </label>
           <label class="inline-flex items-center gap-2 text-sm text-[var(--text-2)] cursor-pointer hover: text-[var(--text-1)]">
             <input v-model=" showOnlyWithoutIngredients " type="checkbox"
-              class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500" />
+              class="w-4 h-4 rounded border-[var(--border-soft)] text-[var(--accent)] focus:ring-[var(--accent)]" />
             <span class="font-medium">Solo sin ingredientes</span>
           </label>
-          <button v-for=" item in filterItems " :key=" item.value " class="px-3 py-1.5 rounded-lg border text-sm" :class="filter === item.value ? ' text-white border-indigo-600'
-              : ' text-[var(--text-2)]'
+          <button v-for=" item in filterItems " :key=" item.value " class="px-3 py-1.5 rounded-lg border text-sm" :class="filter === item.value ? ' text-[var(--text-1)] border-indigo-600' : ' text-[var(--text-2)]'
             " @click="filter = item.value">
             {{ item.label }}
           </button>
@@ -76,7 +75,7 @@
             :disabled=" selectedDishIds.length === 0 " @click=" clearSelection ">
             Limpiar selección
           </button>
-          <button class="px-3 py-1.5 rounded-lg text-white text-sm disabled:opacity-50"
+          <button class="px-3 py-1.5 rounded-lg text-[var(--text-1)] text-sm disabled:opacity-50"
             :disabled=" selectedDishIds.length === 0 || savingSelectedRecipes " @click=" saveSelectedRecipes ">
             {{
               savingSelectedRecipes
@@ -84,11 +83,11 @@
                 : `Guardar seleccionadas (${ selectedDishIds.length })`
             }}
           </button>
-          <button class="ml-auto px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm disabled:opacity-50"
+          <button class="ml-auto px-3 py-1.5 rounded-lg bg-red-600 text-[var(--text-1)] text-sm disabled:opacity-50"
             :disabled=" selectedDishIds.length === 0 " @click=" deleteSelectedRecipes ">
             Eliminar recetas ({{ selectedDishIds.length }})
           </button>
-          <button class="px-3 py-1.5 rounded-lg text-white text-sm disabled:opacity-50"
+          <button class="px-3 py-1.5 rounded-lg text-[var(--text-1)] text-sm disabled:opacity-50"
             :disabled=" selectedDishIds.length < 2 || mergingRecipes " @click=" openMergePanel ">
             {{ mergingRecipes ? "Fusionando..." : "Fusionar seleccionadas" }}
           </button>
@@ -114,7 +113,7 @@
             <button class="px-3 py-1.5 rounded-lg border text-sm" @click=" cancelMergePanel ">
               Cancelar
             </button>
-            <button class="px-3 py-1.5 rounded-lg text-white text-sm disabled:opacity-50"
+            <button class="px-3 py-1.5 rounded-lg text-[var(--text-1)] text-sm disabled:opacity-50"
               :disabled=" !mergeTargetId || mergingRecipes " @click=" mergeSelectedRecipes ">
               Confirmar fusión
             </button>
@@ -123,13 +122,13 @@
       </section>
 
       <section class="space-y-3">
-        <article v-if=" filteredDishes.length === 0 " class="bg-white bg-[var(--surface-1)] rounded-lg border p-5 text-sm text-[var(--text-3)]">
+        <article v-if=" filteredDishes.length === 0 " class="bg-[var(--surface-1)] rounded-lg border p-5 text-sm text-[var(--text-3)]">
           {{ showOnlyWithoutIngredients
             ? "No se encontraron recetas sin ingredientes con los filtros actuales."
             : "No hay recetas que coincidan con los filtros actuales."
           }}
         </article>
-        <article v-for=" dish in filteredDishes " :key=" dish.id " class="bg-white bg-[var(--surface-1)] rounded-lg border p-4">
+        <article v-for=" dish in filteredDishes " :key=" dish.id " class="bg-[var(--surface-1)] rounded-lg border p-4">
           <div class="flex flex-wrap justify-between gap-3">
             <div class="flex items-start gap-3">
               <label class="mt-1 inline-flex items-center">
@@ -143,7 +142,7 @@
                   </span>
                   <span
                     v-if="recipeBlockersCount( dish ) > 0"
-                    class="rounded-full bg-red-100 dark:bg-red-900/40 px-2 py-0.5 text-[11px] font-medium text-[var(--danger)] dark:"
+                    class="rounded-full bg-[rgba(255,100,103,0.12)] px-2 py-0.5 text-[11px] font-medium text-[var(--danger)] dark:"
                   >
                     {{ recipeBlockersCount( dish ) }} bloqueos
                   </span>
@@ -219,7 +218,7 @@
 
             <div
               v-if="recipeBlockers( dish ).length > 0"
-              class="rounded-lg border border-[rgba(255,100,103,0.2)] dark:border-red-900/60 bg-[rgba(255,100,103,0.06)] dark:bg-red-950/30 p-3 space-y-2"
+              class="rounded-lg border border-[rgba(255,100,103,0.2)] bg-[rgba(255,100,103,0.06)]  p-3 space-y-2"
             >
               <p class="text-xs font-semibold dark:">
                 Ingredientes que bloquean la generación
@@ -233,14 +232,14 @@
                   <span>- {{ blocker.name }} ({{ blocker.reason }})</span>
                   <button
                     v-if="blocker.reason === 'missing_ingredient_link'"
-                    class="rounded border border-red-300 dark:border-red-700 px-2 py-0.5 text-[11px] font-medium hover:bg-red-100/60 dark:hover:bg-red-900/50"
+                    class="rounded border border-[rgba(255,100,103,0.25)] px-2 py-0.5 text-[11px] font-medium hover:bg-[rgba(255,100,103,0.18)] "
                     @click="linkMissingIngredientInRecipe( dish.id, blocker.name )"
                   >
                     Vincular ahora
                   </button>
                   <button
                     v-else
-                    class="rounded border border-red-300 dark:border-red-700 px-2 py-0.5 text-[11px] font-medium hover:bg-red-100/60 dark:hover:bg-red-900/50"
+                    class="rounded border border-[rgba(255,100,103,0.25)] px-2 py-0.5 text-[11px] font-medium hover:bg-[rgba(255,100,103,0.18)] "
                     @click="goToIngredientsWithSearch( blocker.name )"
                   >
                     Abrir en ingredientes
@@ -387,7 +386,7 @@
               @click="addManualConfirmed( dish.id )">
               + Añadir ingrediente manual
             </button>
-            <div class="rounded-lg border border-sky-100 /60 p-3 space-y-2">
+            <div class="rounded-lg border border-[rgba(187,222,242,0.2)] /60 p-3 space-y-2">
               <p class="text-xs font-medium ">
                 Añadir ingrediente existente (catálogo)
               </p>
@@ -447,7 +446,7 @@ aceite de oliva" />
           </div>
         </article>
       </section>
-      <div v-if=" showSplitPanel " class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      <div v-if=" showSplitPanel " class="fixed inset-0 bg-[var(--bg-canvas)]/50 z-50 flex items-center justify-center p-4"
         @click.self=" closeSplitPanel ">
         <div class="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-lg bg-transparent bg-[var(--surface-1)] flex flex-col">
           <div class="p-4 space-y-3 overflow-y-auto">
@@ -476,7 +475,7 @@ aceite de oliva" />
             <button class="px-3 py-1.5 rounded-lg border" @click=" closeSplitPanel ">
               Cancelar
             </button>
-            <button class="px-3 py-1.5 rounded-lg text-white disabled:opacity-50"
+            <button class="px-3 py-1.5 rounded-lg text-[var(--text-1)] disabled:opacity-50"
               :disabled=" splitCandidates.length < 2 || splittingRecipe " @click=" splitRecipe ">
               {{ splittingRecipe ? "Dividiendo..." : "Crear recetas separadas" }}
             </button>
@@ -486,7 +485,7 @@ aceite de oliva" />
 
       <div v-if=" showCreateRecipeModal " class="fixed inset-0 z-50 flex items-center justify-center p-4"
         @click.self="showCreateRecipeModal = false">
-        <div class="absolute inset-0 bg-black/50"></div>
+        <div class="absolute inset-0 bg-[var(--bg-canvas)]/50"></div>
         <div class="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-lg bg-transparent bg-[var(--surface-1)] flex flex-col">
           <div class="p-4 space-y-3 overflow-y-auto">
           <h3 class="text-lg font-semibold text-[var(--text-1)]">Crear receta nueva</h3>
@@ -514,7 +513,7 @@ aceite de oliva" />
             <button class="px-3 py-1.5 rounded-lg border" @click=" showCreateRecipeModal = false ">
               Cancelar
             </button>
-            <button class="px-3 py-1.5 rounded-lg text-white disabled:opacity-50"
+            <button class="px-3 py-1.5 rounded-lg text-[var(--text-1)] disabled:opacity-50"
               :disabled=" creatingRecipe || !newRecipeForm.name " @click=" createRecipeManual ">
               {{ creatingRecipe ? "Creando..." : "Crear receta" }}
             </button>

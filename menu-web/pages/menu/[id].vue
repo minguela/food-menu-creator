@@ -1,426 +1,426 @@
 ﻿<template>
-  <div class="space-y-6 ">
-    <div v-if=" loading " class="text-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400 mx-auto"></div>
-      <p class="mt-4 ">Cargando menú...</p>
-    </div>
+ <div class="space-y-6 ">
+ <div v-if=" loading " class="text-center py-12">
+ <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[rgba(187,222,242,0.25)] mx-auto"></div>
+ <p class="mt-4 ">Cargando menú...</p>
+ </div>
 
-    <div v-else-if=" menu " class="space-y-6">
-      <header class="flex flex-wrap justify-between gap-4">
-        <div>
-          <button @click="$router.back()" class="hover:text-[var(--text-1)] mb-2">
-            ← Volver
-          </button>
+ <div v-else-if=" menu " class="space-y-6">
+ <header class="flex flex-wrap justify-between gap-4">
+ <div>
+ <button @click="$router.back()" class="hover:text-[var(--text-1)] mb-2">
+ ← Volver
+ </button>
 
-          <div class="flex items-center gap-3">
-            <h1 class="text-2xl font-bold text-[var(--text-1)]">{{ menu.name }}</h1>
-            <span class="text-xs /20 px-2 py-1 rounded-full border border-indigo-400/30">
-              Semana {{ menu.week_number }}
-            </span>
-          </div>
+ <div class="flex items-center gap-3">
+ <h1 class="text-2xl font-bold text-[var(--text-1)]">{{ menu.name }}</h1>
+ <span class="text-xs px-2 py-1 rounded-full border border-[rgba(187,222,242,0.2)]">
+ Semana {{ menu.week_number }}
+ </span>
+ </div>
 
-          <p class="text-sm text-[var(--text-3)] mt-1">
-            {{ mealsCount }}/14 comidas y cenas · {{ formatDate( menu.created_at ) }}
-          </p>
-        </div>
+ <p class="text-sm text-[var(--text-3)] mt-1">
+ {{ mealsCount }}/14 comidas y cenas · {{ formatDate( menu.created_at ) }}
+ </p>
+ </div>
 
-        <div class="text-right flex flex-col items-end gap-3">
-          <button type="button" class="text-sm hover:" @click=" deleteMenu ">
-            Eliminar menú
-          </button>
+ <div class="text-right flex flex-col items-end gap-3">
+ <button type="button" class="text-sm hover:" @click=" deleteMenu ">
+ Eliminar menú
+ </button>
 
-          <div>
-            <p class="text-sm text-[var(--text-3)]">Ingredientes únicos</p>
-            <p class="text-2xl font-semibold text-[var(--text-1)]">
-              {{ consolidatedIngredients.length }}
-            </p>
-          </div>
-        </div>
-      </header>
+ <div>
+ <p class="text-sm text-[var(--text-3)]">Ingredientes únicos</p>
+ <p class="text-2xl font-semibold text-[var(--text-1)]">
+ {{ consolidatedIngredients.length }}
+ </p>
+ </div>
+ </div>
+ </header>
 
-      <section class="rounded-xl shadow-sm border border-[var(--border-soft)] p-4">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 class="font-semibold text-[var(--text-1)]">Crear desde imagen</h2>
-            <p class="text-sm text-[var(--text-3)] mt-1">
-              Sube una foto del menú. El OCR solo extraerá comida y cena,
-              manteniendo cada día completo.
-            </p>
-          </div>
+ <section class="rounded-xl shadow-sm border border-[var(--border-soft)] p-4">
+ <div class="flex flex-wrap items-start justify-between gap-4">
+ <div>
+ <h2 class="font-semibold text-[var(--text-1)]">Crear desde imagen</h2>
+ <p class="text-sm text-[var(--text-3)] mt-1">
+ Sube una foto del menú. El OCR solo extraerá comida y cena,
+ manteniendo cada día completo.
+ </p>
+ </div>
 
-          <div class="inline-flex rounded-lg border border-[var(--border-soft)] overflow-hidden">
-            <button type="button" @click="creationMode = 'daily'" class="px-3 py-2 text-sm font-medium" :class="creationMode === 'daily' ? ' text-[var(--text-1)]' : '  hover:'
-              ">
-              Día a día
-            </button>
-            <button type="button" @click="creationMode = 'block'"
-              class="px-3 py-2 text-sm font-medium border-l border-[var(--border-soft)]" :class="creationMode === 'block' ? ' text-[var(--text-1)]' : '  hover:'
-                ">
-              Por bloque
-            </button>
-          </div>
-        </div>
+ <div class="inline-flex rounded-lg border border-[var(--border-soft)] overflow-hidden">
+ <button type="button" @click="creationMode = 'daily'" class="px-3 py-2 text-sm font-medium" :class="creationMode === 'daily' ? ' text-[var(--text-1)]' : ' hover:'
+ ">
+ Día a día
+ </button>
+ <button type="button" @click="creationMode = 'block'"
+ class="px-3 py-2 text-sm font-medium border-l border-[var(--border-soft)]" :class="creationMode === 'block' ? ' text-[var(--text-1)]' : ' hover:'
+ ">
+ Por bloque
+ </button>
+ </div>
+ </div>
 
-        <div class="mt-4 rounded-lg /10 border border-indigo-400/20 p-3">
-          <p class="text-sm font-medium ">
-            El OCR extrae únicamente Comida y Cena
-          </p>
-          <p class="text-xs /80 mt-1">
-            Desayuno y merienda se omiten porque el desayuno se elegirá como fijo.
-          </p>
-        </div>
+ <div class="mt-4 rounded-lg border border-[rgba(187,222,242,0.15)] p-3">
+ <p class="text-sm font-medium ">
+ El OCR extrae únicamente Comida y Cena
+ </p>
+ <p class="text-xs mt-1">
+ Desayuno y merienda se omiten porque el desayuno se elegirá como fijo.
+ </p>
+ </div>
 
-        <div v-if=" creationMode === 'block' " class="mt-4 grid gap-3 md:grid-cols-[140px_140px_1fr]">
-          <label>
-            <span class="block text-sm font-medium mb-1">
-              Día inicial
-            </span>
-            <input v-model.number=" blockStartDay " type="number" min="1" max="7"
-              class="w-full border border-[var(--border-soft)] rounded-lg px-3 py-2 text-[var(--text-1)] " />
-          </label>
+ <div v-if=" creationMode === 'block' " class="mt-4 grid gap-3 md:grid-cols-[140px_140px_1fr]">
+ <label>
+ <span class="block text-sm font-medium mb-1">
+ Día inicial
+ </span>
+ <input v-model.number=" blockStartDay " type="number" min="1" max="7"
+ class="w-full border border-[var(--border-soft)] rounded-lg px-3 py-2 text-[var(--text-1)] " />
+ </label>
 
-          <label>
-            <span class="block text-sm font-medium mb-1">
-              Días incluidos
-            </span>
-            <input v-model.number=" blockDayCount " type="number" min="1" :max=" 8 - blockStartDay "
-              class="w-full border border-[var(--border-soft)] rounded-lg px-3 py-2 text-[var(--text-1)] " />
-          </label>
+ <label>
+ <span class="block text-sm font-medium mb-1">
+ Días incluidos
+ </span>
+ <input v-model.number=" blockDayCount " type="number" min="1" :max=" 8 - blockStartDay "
+ class="w-full border border-[var(--border-soft)] rounded-lg px-3 py-2 text-[var(--text-1)] " />
+ </label>
 
-          <label class="self-end">
-            <span class="sr-only">Subir imagen de bloque</span>
-            <input type="file" accept="image/*" class="hidden" @change=" uploadBlockImage " />
-            <span
-              class="block text-center px-4 py-2 rounded-lg border border-indigo-400 cursor-pointer hover:/10"
-              :class="imageProcessing ? 'opacity-50 pointer-events-none' : '' ">
-              {{
-                imageProcessing
-                  ? "Procesando OCR..."
-                  : "Subir imagen del bloque"
-              }}
-            </span>
-          </label>
-        </div>
+ <label class="self-end">
+ <span class="sr-only">Subir imagen de bloque</span>
+ <input type="file" accept="image/*" class="hidden" @change=" uploadBlockImage " />
+ <span
+ class="block text-center px-4 py-2 rounded-lg border border-indigo-400 cursor-pointer hover:/10"
+ :class="imageProcessing ? 'opacity-50 pointer-events-none' : '' ">
+ {{
+ imageProcessing
+ ? "Procesando OCR..."
+ : "Subir imagen del bloque"
+ }}
+ </span>
+ </label>
+ </div>
 
-        <div v-else class="mt-4 text-sm text-[var(--text-3)]">
-          Usa el botón de imagen de cada día si prefieres procesar días individuales.
-        </div>
+ <div v-else class="mt-4 text-sm text-[var(--text-3)]">
+ Usa el botón de imagen de cada día si prefieres procesar días individuales.
+ </div>
 
-        <p v-if=" imageError " class="text-sm mt-3">
-          {{ imageError }}
-        </p>
-      </section>
+ <p v-if=" imageError " class="text-sm mt-3">
+ {{ imageError }}
+ </p>
+ </section>
 
-      <section class="rounded-xl shadow-sm border border-[var(--border-soft)] p-4">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 class="font-semibold text-[var(--text-1)]">Días compuestos</h2>
-            <p class="text-sm text-[var(--text-3)] mt-1">
-              Crea días con 2 platos que siempre irán juntos en los menús rotativos.
-            </p>
-          </div>
-          <button type="button" @click="openCompoundDayModal()"
-            class="px-4 py-2 text-[var(--text-1)] rounded-lg hover: text-sm font-medium">
-            + Nuevo día compuesto
-          </button>
-        </div>
+ <section class="rounded-xl shadow-sm border border-[var(--border-soft)] p-4">
+ <div class="flex flex-wrap items-start justify-between gap-4">
+ <div>
+ <h2 class="font-semibold text-[var(--text-1)]">Días compuestos</h2>
+ <p class="text-sm text-[var(--text-3)] mt-1">
+ Crea días con 2 platos que siempre irán juntos en los menús rotativos.
+ </p>
+ </div>
+ <button type="button" @click="openCompoundDayModal()"
+ class="px-4 py-2 text-[var(--text-1)] rounded-lg hover:text-sm font-medium">
+ + Nuevo día compuesto
+ </button>
+ </div>
 
-        <div v-if=" loadingCompoundDays " class="mt-4 text-center text-[var(--text-3)]">
-          Cargando...
-        </div>
+ <div v-if=" loadingCompoundDays " class="mt-4 text-center text-[var(--text-3)]">
+ Cargando...
+ </div>
 
-        <div v-else-if=" compoundDays.length === 0 " class="mt-4 text-sm text-[var(--text-3)]">
-          No hay días compuestos todavía. Crea uno para empezar.
-        </div>
+ <div v-else-if=" compoundDays.length === 0 " class="mt-4 text-sm text-[var(--text-3)]">
+ No hay días compuestos todavía. Crea uno para empezar.
+ </div>
 
-        <div v-else class="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          <div v-for=" cd in compoundDays " :key=" cd.id " class="rounded-lg p-3 border border-[var(--border-soft)]">
-            <div class="flex justify-between items-start">
-              <h3 class="font-medium text-[var(--text-1)]">{{ cd.name }}</h3>
-              <div class="flex gap-2">
-                <button @click="openCompoundDayModal( cd )" class="hover: text-sm">
-                  Editar
-                </button>
-                <button @click="deleteCompoundDay( cd.id )" class="hover: text-sm">
-                  Eliminar
-                </button>
-              </div>
-            </div>
-            <p class="text-sm text-[var(--text-3)] mt-2">
-              1º: {{ cd.first_dish?.name || "Sin asignar" }}
-            </p>
-            <p class="text-sm text-[var(--text-3)]">
-              2º: {{ cd.second_dish?.name || "Sin asignar" }}
-            </p>
-          </div>
-        </div>
-      </section>
+ <div v-else class="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+ <div v-for=" cd in compoundDays " :key=" cd.id " class="rounded-lg p-3 border border-[var(--border-soft)]">
+ <div class="flex justify-between items-start">
+ <h3 class="font-medium text-[var(--text-1)]">{{ cd.name }}</h3>
+ <div class="flex gap-2">
+ <button @click="openCompoundDayModal( cd )" class="hover:text-sm">
+ Editar
+ </button>
+ <button @click="deleteCompoundDay( cd.id )" class="hover:text-sm">
+ Eliminar
+ </button>
+ </div>
+ </div>
+ <p class="text-sm text-[var(--text-3)] mt-2">
+ 1º: {{ cd.first_dish?.name || "Sin asignar" }}
+ </p>
+ <p class="text-sm text-[var(--text-3)]">
+ 2º: {{ cd.second_dish?.name || "Sin asignar" }}
+ </p>
+ </div>
+ </div>
+ </section>
 
-      <section class="rounded-xl shadow-sm border border-[var(--border-soft)] overflow-hidden">
-        <div class="px-4 py-3 border-b border-[var(--border-soft)] ">
-          <h2 class="font-semibold text-[var(--text-1)]">Menú semanal</h2>
-          <p class="text-sm text-[var(--text-3)] mt-1">
-            Haz clic en cualquier comida o cena para editarla, marcarla como libre
-            o curar sus ingredientes.
-          </p>
-        </div>
+ <section class="rounded-xl shadow-sm border border-[var(--border-soft)] overflow-hidden">
+ <div class="px-4 py-3 border-b border-[var(--border-soft)] ">
+ <h2 class="font-semibold text-[var(--text-1)]">Menú semanal</h2>
+ <p class="text-sm text-[var(--text-3)] mt-1">
+ Haz clic en cualquier comida o cena para editarla, marcarla como libre
+ o curar sus ingredientes.
+ </p>
+ </div>
 
-        <div class="overflow-x-auto">
-          <table class="min-w-full border-collapse">
-            <thead>
-              <tr class="">
-                <th
-                  class="sticky left-0 z-10 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide border-r border-[var(--border-soft)]">
-                  Franja
-                </th>
-                <th v-for=" day in 7 " :key=" `head-${ day }` "
-                  class="min-w-[170px] px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide border-r border-[var(--border-soft)] last:border-r-0">
-                  <div class="flex items-center justify-center gap-2">
-                    <span>Día {{ day }}</span>
-                    <label class="text-[11px] normal-case cursor-pointer hover:"
-                      :class="imageProcessing ? 'opacity-50 pointer-events-none' : '' ">
-                      {{ imageProcessing ? "OCR..." : "Imagen" }}
-                      <input type="file" accept="image/*" class="hidden" @change="uploadDailyImage( day, $event )" />
-                    </label>
-                  </div>
+ <div class="overflow-x-auto">
+ <table class="min-w-full border-collapse">
+ <thead>
+ <tr class="">
+ <th
+ class="sticky left-0 z-10 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide border-r border-[var(--border-soft)]">
+ Franja
+ </th>
+ <th v-for=" day in 7 " :key=" `head-${ day }` "
+ class="min-w-[170px] px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide border-r border-[var(--border-soft)] last:border-r-0">
+ <div class="flex items-center justify-center gap-2">
+ <span>Día {{ day }}</span>
+ <label class="text-[11px] normal-case cursor-pointer hover:"
+ :class="imageProcessing ? 'opacity-50 pointer-events-none' : '' ">
+ {{ imageProcessing ? "OCR..." : "Imagen" }}
+ <input type="file" accept="image/*" class="hidden" @change="uploadDailyImage( day, $event )" />
+ </label>
+ </div>
 
-                  <img v-if=" getDayImage( day ) " :src=" getDayImage( day )?.image_url " alt="Imagen del menú diario"
-                    class="mt-2 h-16 w-full object-cover rounded border border-[var(--border-soft)]" />
+ <img v-if=" getDayImage( day ) " :src=" getDayImage( day )?.image_url " alt="Imagen del menú diario"
+ class="mt-2 h-16 w-full object-cover rounded border border-[var(--border-soft)]" />
 
-                  <p v-if=" getDayImage( day )?.ocr_status " class="text-[11px] text-[var(--text-3)] mt-1 normal-case">
-                    OCR: {{ ocrStatusLabel( getDayImage( day )?.ocr_status ) }}
-                  </p>
-                </th>
-              </tr>
-            </thead>
+ <p v-if=" getDayImage( day )?.ocr_status " class="text-[11px] text-[var(--text-3)] mt-1 normal-case">
+ OCR: {{ ocrStatusLabel( getDayImage( day )?.ocr_status ) }}
+ </p>
+ </th>
+ </tr>
+ </thead>
 
-            <tbody>
-              <tr v-for=" type in displayMealTypes " :key=" `row-${ type }` " class="border-t border-[var(--border-soft)]">
-                <th
-                  class="sticky left-0 z-10 px-4 py-4 text-left text-sm font-bold border-r border-[var(--border-soft)] align-top">
-                  {{ mealLabel( type ) }}
-                </th>
+ <tbody>
+ <tr v-for=" type in displayMealTypes " :key=" `row-${ type }` " class="border-t border-[var(--border-soft)]">
+ <th
+ class="sticky left-0 z-10 px-4 py-4 text-left text-sm font-bold border-r border-[var(--border-soft)] align-top">
+ {{ mealLabel( type ) }}
+ </th>
 
-                <td v-for=" day in 7 " :key=" `${ day }-${ type }` "
-                  class="align-top border-r border-[var(--border-soft)] last:border-r-0 p-2 ">
-                  <div class="space-y-2">
-                    <button type="button" v-for=" meal in getMealsForDayType( day, type ) " :key=" meal.id "
-                      class="w-full min-h-[92px] rounded-lg border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                      :class="cellClass( meal ) " @click="openMealModal( day, type, meal)">
-                      <div class="mb-1 flex items-center justify-between gap-2">
-                        <p class="text-[11px] font-semibold ">Plato {{ meal.meal_slot || 1 }}</p>
-                        <p v-if=" meal.is_special " class="text-[11px] ">Libre · {{ meal.special_kcal_reserved || 700 }} kcal</p>
-                      </div>
-                      <p class="text-sm font-semibold leading-snug text-[var(--text-1)]">{{ meal.dish_name }}</p>
-                      <p v-if=" recipeStatusText( meal ) " class="mt-2 text-[11px] text-[var(--text-3)]">{{ recipeStatusText( meal ) }}</p>
-                    </button>
+ <td v-for=" day in 7 " :key=" `${ day }-${ type }` "
+ class="align-top border-r border-[var(--border-soft)] last:border-r-0 p-2 ">
+ <div class="space-y-2">
+ <button type="button" v-for=" meal in getMealsForDayType( day, type ) " :key=" meal.id "
+ class="w-full min-h-[92px] rounded-lg border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+ :class="cellClass( meal ) " @click="openMealModal( day, type, meal)">
+ <div class="mb-1 flex items-center justify-between gap-2">
+ <p class="text-[11px] font-semibold ">Plato {{ meal.meal_slot || 1 }}</p>
+ <p v-if=" meal.is_special " class="text-[11px] ">Libre · {{ meal.special_kcal_reserved || 700 }} kcal</p>
+ </div>
+ <p class="text-sm font-semibold leading-snug text-[var(--text-1)]">{{ meal.dish_name }}</p>
+ <p v-if=" recipeStatusText( meal ) " class="mt-2 text-[11px] text-[var(--text-3)]">{{ recipeStatusText( meal ) }}</p>
+ </button>
 
-                    <button type="button"
-                      class="w-full rounded-lg border border-dashed border-[var(--border-soft)] /40 px-3 py-2 text-left text-xs hover:border-[rgba(255,255,255,0.3)] hover:"
-                      @click="openMealModal( day, type )">
-                      + Añadir plato {{ mealLabel( type ).toLowerCase() }}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+ <button type="button"
+ class="w-full rounded-lg border border-dashed border-[var(--border-soft)] px-3 py-2 text-left text-xs hover:border-[rgba(255,255,255,0.3)] hover:"
+ @click="openMealModal( day, type )">
+ + Añadir plato {{ mealLabel( type ).toLowerCase() }}
+ </button>
+ </div>
+ </td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+ </section>
 
-      <section class="rounded-xl shadow-sm border border-[var(--border-soft)] p-4">
-        <h2 class="font-semibold text-[var(--text-1)] mb-3">
-          Ingredientes consolidados
-        </h2>
+ <section class="rounded-xl shadow-sm border border-[var(--border-soft)] p-4">
+ <h2 class="font-semibold text-[var(--text-1)] mb-3">
+ Ingredientes consolidados
+ </h2>
 
-        <div v-if=" consolidatedIngredients.length === 0 " class="text-sm text-[var(--text-3)]">
-          Añade ingredientes exactos a los platos para generar una lista de compra
-          deduplicada.
-        </div>
+ <div v-if=" consolidatedIngredients.length === 0 " class="text-sm text-[var(--text-3)]">
+ Añade ingredientes exactos a los platos para generar una lista de compra
+ deduplicada.
+ </div>
 
-        <div v-else class="grid gap-2 md:grid-cols-4">
-          <div v-for=" ingredient in consolidatedIngredients " :key=" `${ ingredient.name }-${ ingredient.unit_type }` "
-            class="text-sm rounded-lg p-3 border border-[var(--border-soft)]">
-            <p class="font-medium text-[var(--text-1)]">{{ ingredient.name }}</p>
-            <p class="">
-              {{ ingredient.quantity }} {{ ingredient.unit_type }}
-            </p>
-          </div>
-        </div>
-      </section>
+ <div v-else class="grid gap-2 md:grid-cols-4">
+ <div v-for=" ingredient in consolidatedIngredients " :key=" `${ ingredient.name }-${ ingredient.unit_type }` "
+ class="text-sm rounded-lg p-3 border border-[var(--border-soft)]">
+ <p class="font-medium text-[var(--text-1)]">{{ ingredient.name }}</p>
+ <p class="">
+ {{ ingredient.quantity }} {{ ingredient.unit_type }}
+ </p>
+ </div>
+ </div>
+ </section>
 
-      <div v-if=" showMealModal " class="fixed inset-0 bg-[var(--bg-canvas)]/70 flex items-center justify-center z-50 p-4"
-        @click.self=" closeMealModal ">
-        <form
-          class="border border-[var(--border-soft)] rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-xl flex flex-col"
-          @submit.prevent=" saveMeal ">
-          <div class="p-6 overflow-y-auto">
-          <div class="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <h2 class="text-xl font-bold text-[var(--text-1)]">
-                {{ editingMealId ? "Editar" : "Añadir" }}
-                {{ mealLabel( selectedType ).toLowerCase() }} · Día {{ selectedDay }}
-              </h2>
-              <p class="text-sm text-[var(--text-3)] mt-1">
-                Si hay dos platos, mantenlos unidos con “ + ”.
-              </p>
-            </div>
+ <div v-if=" showMealModal " class="fixed inset-0 bg-[var(--bg-canvas)]/70 flex items-center justify-center z-50 p-4"
+ @click.self=" closeMealModal ">
+ <form
+ class="border border-[var(--border-soft)] rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-xl flex flex-col"
+ @submit.prevent=" saveMeal ">
+ <div class="p-6 overflow-y-auto">
+ <div class="flex items-start justify-between gap-4 mb-4">
+ <div>
+ <h2 class="text-xl font-bold text-[var(--text-1)]">
+ {{ editingMealId ? "Editar" : "Añadir" }}
+ {{ mealLabel( selectedType ).toLowerCase() }} · Día {{ selectedDay }}
+ </h2>
+ <p class="text-sm text-[var(--text-3)] mt-1">
+ Si hay dos platos, mantenlos unidos con “ + ”.
+ </p>
+ </div>
 
-            <button type="button" class="hover:text-[var(--text-1)]" @click=" closeMealModal ">
-              ✕
-            </button>
-          </div>
+ <button type="button" class="hover:text-[var(--text-1)]" @click=" closeMealModal ">
+ ✕
+ </button>
+ </div>
 
-          <label class="block mb-4">
-            <span class="block text-sm font-medium mb-1">
-              Usar receta existente o día compuesto
-            </span>
-            <select v-model=" selectedRecipeId "
-              class="w-full border border-[var(--border-soft)] rounded-lg px-4 py-2 text-[var(--text-1)] "
-              @change=" applySavedRecipeToModal ">
-              <option value="">Editar manualmente...</option>
-              <optgroup label="Días compuestos" v-if=" compoundDays.length > 0 ">
-                <option v-for=" cd in compoundDays " :key=" cd.id " :value=" 'COMPOUND:' + cd.id ">
-                  {{ cd.name }} ({{ cd.first_dish?.name }} + {{ cd.second_dish?.name }})
-                </option>
-              </optgroup>
-              <optgroup label="Recetas">
-                <option v-for=" recipe in savedRecipes " :key=" recipe.id " :value=" recipe.id ">
-                  {{ recipe.name }}
-                </option>
-              </optgroup>
-            </select>
-          </label>
+ <label class="block mb-4">
+ <span class="block text-sm font-medium mb-1">
+ Usar receta existente o día compuesto
+ </span>
+ <select v-model=" selectedRecipeId "
+ class="w-full border border-[var(--border-soft)] rounded-lg px-4 py-2 text-[var(--text-1)] "
+ @change=" applySavedRecipeToModal ">
+ <option value="">Editar manualmente...</option>
+ <optgroup label="Días compuestos" v-if=" compoundDays.length > 0 ">
+ <option v-for=" cd in compoundDays " :key=" cd.id " :value=" 'COMPOUND:' + cd.id ">
+ {{ cd.name }} ({{ cd.first_dish?.name }} + {{ cd.second_dish?.name }})
+ </option>
+ </optgroup>
+ <optgroup label="Recetas">
+ <option v-for=" recipe in savedRecipes " :key=" recipe.id " :value=" recipe.id ">
+ {{ recipe.name }}
+ </option>
+ </optgroup>
+ </select>
+ </label>
 
-          <div class="grid gap-3 md:grid-cols-2">
-            <label class="md:col-span-2">
-              <span class="block text-sm font-medium mb-1">
-                Plato o platos unidos
-              </span>
-              <textarea v-model.trim=" newMeal.dish_name " rows="3"
-                class="w-full border border-[var(--border-soft)] rounded-lg px-4 py-2 text-[var(--text-1)] placeholder: text-[var(--text-3)]"
-                placeholder="Ej: Crema de calabacín + Pescado a elegir" required />
-            </label>
+ <div class="grid gap-3 md:grid-cols-2">
+ <label class="md:col-span-2">
+ <span class="block text-sm font-medium mb-1">
+ Plato o platos unidos
+ </span>
+ <textarea v-model.trim=" newMeal.dish_name " rows="3"
+ class="w-full border border-[var(--border-soft)] rounded-lg px-4 py-2 text-[var(--text-1)] placeholder:text-[var(--text-3)]"
+ placeholder="Ej: Crema de calabacín + Pescado a elegir" required />
+ </label>
 
-            <label class="md:col-span-2">
-              <span class="block text-sm font-medium mb-1">
-                Descripción
-              </span>
-              <input v-model.trim=" newMeal.dish_description "
-                class="w-full border border-[var(--border-soft)] rounded-lg px-4 py-2 text-[var(--text-1)] placeholder: text-[var(--text-3)]" />
-            </label>
+ <label class="md:col-span-2">
+ <span class="block text-sm font-medium mb-1">
+ Descripción
+ </span>
+ <input v-model.trim=" newMeal.dish_description "
+ class="w-full border border-[var(--border-soft)] rounded-lg px-4 py-2 text-[var(--text-1)] placeholder:text-[var(--text-3)]" />
+ </label>
 
-            <label class="md:col-span-2">
-              <span class="inline-flex items-center gap-2 text-sm ">
-                <input v-model=" newMeal.is_special " type="checkbox" />
-                <span>Marcar como comida libre/especial</span>
-              </span>
-            </label>
+ <label class="md:col-span-2">
+ <span class="inline-flex items-center gap-2 text-sm ">
+ <input v-model=" newMeal.is_special " type="checkbox" />
+ <span>Marcar como comida libre/especial</span>
+ </span>
+ </label>
 
-            <label v-if=" newMeal.is_special " class="md:col-span-2">
-              <span class="block text-sm font-medium mb-1">
-                kcal reservadas para comida libre
-              </span>
-              <input v-model.number=" newMeal.special_kcal_reserved " type="number" min="0" max="2000" step="10"
-                class="w-full border border-[var(--border-soft)] rounded-lg px-4 py-2 text-[var(--text-1)] " />
-            </label>
-          </div>
+ <label v-if=" newMeal.is_special " class="md:col-span-2">
+ <span class="block text-sm font-medium mb-1">
+ kcal reservadas para comida libre
+ </span>
+ <input v-model.number=" newMeal.special_kcal_reserved " type="number" min="0" max="2000" step="10"
+ class="w-full border border-[var(--border-soft)] rounded-lg px-4 py-2 text-[var(--text-1)] " />
+ </label>
+ </div>
 
-          <div v-if=" getCompositeParts( newMeal.dish_name ).length > 1 "
-            class="mt-4 rounded-lg border border-indigo-400/20 /10 p-3">
-            <p class="text-sm font-medium ">
-              Esta celda contiene varios platos:
-            </p>
-            <ul class="mt-2 space-y-1">
-              <li v-for=" part in getCompositeParts( newMeal.dish_name ) " :key=" part "
-                class="text-sm ">
-                · {{ part }}
-              </li>
-            </ul>
-          </div>
+ <div v-if=" getCompositeParts( newMeal.dish_name ).length > 1 "
+ class="mt-4 rounded-lg border border-[rgba(187,222,242,0.15)] p-3">
+ <p class="text-sm font-medium ">
+ Esta celda contiene varios platos:
+ </p>
+ <ul class="mt-2 space-y-1">
+ <li v-for=" part in getCompositeParts( newMeal.dish_name ) " :key=" part "
+ class="text-sm ">
+ · {{ part }}
+ </li>
+ </ul>
+ </div>
 
-          <div class="mt-5">
-            <div class="flex justify-between items-center mb-2">
-              <h3 class="font-medium text-[var(--text-1)]">Ingredientes exactos</h3>
-              <button type="button" @click=" addIngredientRow " class="text-sm hover:">
-                + Ingrediente
-              </button>
-            </div>
+ <div class="mt-5">
+ <div class="flex justify-between items-center mb-2">
+ <h3 class="font-medium text-[var(--text-1)]">Ingredientes exactos</h3>
+ <button type="button" @click=" addIngredientRow " class="text-sm hover:">
+ + Ingrediente
+ </button>
+ </div>
 
-            <div v-if=" newMeal.is_special "
-              class="rounded-lg border border-amber-300/20 /10 p-3 text-sm ">
-              Esta comida es libre. Sus ingredientes no se usarán para el cálculo
-              del menú rotativo ni para la lista de la compra.
-            </div>
+ <div v-if=" newMeal.is_special "
+ class="rounded-lg border border-amber-300/20 p-3 text-sm ">
+ Esta comida es libre. Sus ingredientes no se usarán para el cálculo
+ del menú rotativo ni para la lista de la compra.
+ </div>
 
-            <div v-else class="space-y-2">
-              <div v-for=" ( ingredient, index ) in ingredientRows " :key=" index "
-                class="grid grid-cols-[1fr_90px_90px_32px] gap-2">
-                <input v-model.trim=" ingredient.name "
-                  class="border border-[var(--border-soft)] rounded-lg px-3 py-2 text-[var(--text-1)] placeholder: text-[var(--text-3)]"
-                  placeholder="Nombre" />
-                <input v-model.number=" ingredient.quantity " type="number" min="0.01" step="0.01"
-                  class="border border-[var(--border-soft)] rounded-lg px-3 py-2 text-[var(--text-1)] " />
-                <select v-model=" ingredient.unit_type "
-                  class="border border-[var(--border-soft)] rounded-lg px-3 py-2 text-[var(--text-1)] ">
-                  <option v-for=" unit in unitTypes " :key=" unit " :value=" unit ">
-                    {{ unit }}
-                  </option>
-                </select>
-                <button type="button" @click="removeIngredientRow( index )" class="hover:">
-                  ×
-                </button>
-              </div>
-            </div>
-          </div>
+ <div v-else class="space-y-2">
+ <div v-for=" ( ingredient, index ) in ingredientRows " :key=" index "
+ class="grid grid-cols-[1fr_90px_90px_32px] gap-2">
+ <input v-model.trim=" ingredient.name "
+ class="border border-[var(--border-soft)] rounded-lg px-3 py-2 text-[var(--text-1)] placeholder:text-[var(--text-3)]"
+ placeholder="Nombre" />
+ <input v-model.number=" ingredient.quantity " type="number" min="0.01" step="0.01"
+ class="border border-[var(--border-soft)] rounded-lg px-3 py-2 text-[var(--text-1)] " />
+ <select v-model=" ingredient.unit_type "
+ class="border border-[var(--border-soft)] rounded-lg px-3 py-2 text-[var(--text-1)] ">
+ <option v-for=" unit in unitTypes " :key=" unit " :value=" unit ">
+ {{ unit }}
+ </option>
+ </select>
+ <button type="button" @click="removeIngredientRow( index )" class="hover:">
+ ×
+ </button>
+ </div>
+ </div>
+ </div>
 
-          <p v-if=" formError " class="text-sm mt-3">
-            {{ formError }}
-          </p>
+ <p v-if=" formError " class="text-sm mt-3">
+ {{ formError }}
+ </p>
 
-          <div class="flex justify-between gap-2 mt-6">
-            <button v-if=" editingMealId " type="button" @click=" deleteCurrentMeal "
-              class="px-4 py-2 hover:bg-red-500/10 rounded-lg">
-              Eliminar
-            </button>
-            <span v-else></span>
+ <div class="flex justify-between gap-2 mt-6">
+ <button v-if=" editingMealId " type="button" @click=" deleteCurrentMeal "
+ class="px-4 py-2 hover:bg-[var(--danger)]/10 rounded-lg">
+ Eliminar
+ </button>
+ <span v-else></span>
 
-            <div class="flex justify-end gap-2">
-              <button type="button" @click=" closeMealModal "
-                class="px-4 py-2 hover: rounded-lg">
-                Cancelar
-              </button>
-              <button type="submit" :disabled=" savingMeal || !mealFormValid "
-                class="px-4 py-2 text-[var(--text-1)] rounded-lg hover: disabled:opacity-50">
-                {{ savingMeal ? "Guardando..." : editingMealId ? "Actualizar" : "Guardar" }}
-              </button>
-            </div>
-          </div>
-          </div>
-        </form>
-      </div>
-    </div>
+ <div class="flex justify-end gap-2">
+ <button type="button" @click=" closeMealModal "
+ class="px-4 py-2 hover: rounded-lg">
+ Cancelar
+ </button>
+ <button type="submit" :disabled=" savingMeal || !mealFormValid "
+ class="px-4 py-2 text-[var(--text-1)] rounded-lg hover: disabled:opacity-50">
+ {{ savingMeal ? "Guardando..." : editingMealId ? "Actualizar" : "Guardar" }}
+ </button>
+ </div>
+ </div>
+ </div>
+ </form>
+ </div>
+ </div>
 
-    <div v-else class="text-center py-12 rounded-lg border border-[var(--border-soft)]">
-      <p class="">Menú no encontrado</p>
-      <button @click="$router.push( '/' )" class="mt-4 hover:">
-        Volver a la lista
-      </button>
-    </div>
-  </div>
+ <div v-else class="text-center py-12 rounded-lg border border-[var(--border-soft)]">
+ <p class="">Menú no encontrado</p>
+ <button @click="$router.push( '/' )" class="mt-4 hover:">
+ Volver a la lista
+ </button>
+ </div>
+ </div>
 </template>
 
 <script setup lang="ts">
 import { logError } from "~/utils/log-error";
 import {
-  extractIngredientCandidatesFromDishName,
-  getRecipeStatusFromDishName,
+ extractIngredientCandidatesFromDishName,
+ getRecipeStatusFromDishName,
 } from "~/utils/ingredient-candidates";
 import type {
-  WeeklyDayImage,
-  WeeklyMeal,
-  WeeklyMealIngredient,
-  WeeklyMenu,
+ WeeklyDayImage,
+ WeeklyMeal,
+ WeeklyMealIngredient,
+ WeeklyMenu,
 } from "~/types";
 
 type MealType = WeeklyMeal[ "meal_type" ];
@@ -435,13 +435,13 @@ const { confirm: confirmDialog } = useConfirmDialog();
 
 const displayMealTypes: MealType[] = [ "comida", "cena" ];
 const unitTypes: WeeklyMealIngredient[ "unit_type" ][] = [
-  "g",
-  "kg",
-  "ml",
-  "l",
-  "ud",
-  "pack",
-  "unidad",
+ "g",
+ "kg",
+ "ml",
+ "l",
+ "ud",
+ "pack",
+ "unidad",
 ];
 
 const menu = ref<WeeklyMenu | null>( null );
@@ -467,1070 +467,1070 @@ const compoundDays = ref<any[]>( [] );
 const showCompoundDayModal = ref( false );
 const editingCompoundDay = ref<any>( null );
 const compoundDayForm = ref( {
-  name: "",
-  firstDishId: "",
-  secondDishId: "",
+ name: "",
+ firstDishId: "",
+ secondDishId: "",
 } );
 const allDishes = ref<Array<{ id: string; name: string }>>( [] );
 const loadingCompoundDays = ref( false );
 
 const savedRecipes = ref<
-  Array<{
-    id: string;
-    name: string;
-    description?: string | null;
-    recipe_ingredients?: Array<{
-      name: string;
-      quantity: number | null;
-      unit_type: string | null;
-      is_confirmed?: boolean;
-    }>;
-  }>
+ Array<{
+ id: string;
+ name: string;
+ description?: string | null;
+ recipe_ingredients?: Array<{
+ name: string;
+ quantity: number | null;
+ unit_type: string | null;
+ is_confirmed?: boolean;
+ }>;
+ }>
 >( [] );
 
 const newMeal = ref( {
-  dish_name: "",
-  dish_description: "",
-  is_special: false,
-  special_kcal_reserved: 700,
+ dish_name: "",
+ dish_description: "",
+ is_special: false,
+ special_kcal_reserved: 700,
 } );
 
 const ingredientRows = ref<
-  Array<{
-    name: string;
-    quantity: number;
-    unit_type: WeeklyMealIngredient[ "unit_type" ];
-  }>
+ Array<{
+ name: string;
+ quantity: number;
+ unit_type: WeeklyMealIngredient[ "unit_type" ];
+ }>
 >( [] );
 
 const mealsCount = computed(
-  () =>
-    meals.value.filter( ( meal ) =>
-      displayMealTypes.includes( meal.meal_type as MealType ),
-    ).length,
+ () =>
+ meals.value.filter( ( meal ) =>
+ displayMealTypes.includes( meal.meal_type as MealType ),
+ ).length,
 );
 
 const consolidatedIngredients = computed( () => {
-  const consolidated: Record<
-    string,
-    { name: string; quantity: number; unit_type: string }
-  > = {};
+ const consolidated: Record<
+ string,
+ { name: string; quantity: number; unit_type: string }
+ > = {};
 
-  for ( const meal of meals.value ) {
-    if ( meal.is_special ) continue;
+ for ( const meal of meals.value ) {
+ if ( meal.is_special ) continue;
 
-    for ( const ingredient of meal.weekly_meal_ingredients || [] ) {
-      const key = `${ ingredient.name.toLowerCase() }::${ ingredient.unit_type }`;
+ for ( const ingredient of meal.weekly_meal_ingredients || [] ) {
+ const key = `${ ingredient.name.toLowerCase() }::${ ingredient.unit_type }`;
 
-      if ( !consolidated[ key ] ) {
-        consolidated[ key ] = {
-          name: ingredient.name,
-          quantity: 0,
-          unit_type: ingredient.unit_type,
-        };
-      }
+ if ( !consolidated[ key ] ) {
+ consolidated[ key ] = {
+ name: ingredient.name,
+ quantity: 0,
+ unit_type: ingredient.unit_type,
+ };
+ }
 
-      consolidated[ key ].quantity += Number( ingredient.quantity ) || 0;
-    }
-  }
+ consolidated[ key ].quantity += Number( ingredient.quantity ) || 0;
+ }
+ }
 
-  return Object.values( consolidated )
-    .map( ( item ) => ( {
-      ...item,
-      quantity: Math.round( item.quantity * 100 ) / 100,
-    } ) )
-    .sort( ( a, b ) => a.name.localeCompare( b.name ) );
+ return Object.values( consolidated )
+ .map( ( item ) => ( {
+ ...item,
+ quantity: Math.round( item.quantity * 100 ) / 100,
+ } ) )
+ .sort( ( a, b ) => a.name.localeCompare( b.name ) );
 } );
 
 const mealFormValid = computed( () => {
-  if ( !newMeal.value.dish_name.trim() ) return false;
-  if ( newMeal.value.is_special ) return true;
+ if ( !newMeal.value.dish_name.trim() ) return false;
+ if ( newMeal.value.is_special ) return true;
 
-  return ingredientRows.value.every(
-    ( ingredient ) => !ingredient.name || Number( ingredient.quantity ) > 0,
-  );
+ return ingredientRows.value.every(
+ ( ingredient ) => !ingredient.name || Number( ingredient.quantity ) > 0,
+ );
 } );
 
 const loadMenu = async () => {
-  loading.value = true;
+ loading.value = true;
 
-  const currentUser = await loadCurrentUser();
+ const currentUser = await loadCurrentUser();
 
-  if ( !currentUser ) {
-    menu.value = null;
-    loading.value = false;
-    return;
-  }
+ if ( !currentUser ) {
+ menu.value = null;
+ loading.value = false;
+ return;
+ }
 
-  const { data: menuData } = await supabase
-    .from( "weekly_menus" )
-    .select( "*" )
-    .eq( "id", route.params.id )
-    .eq( "user_id", currentUser.id )
-    .maybeSingle();
+ const { data: menuData } = await supabase
+ .from( "weekly_menus" )
+ .select( "*" )
+ .eq( "id", route.params.id )
+ .eq( "user_id", currentUser.id )
+ .maybeSingle();
 
-  if ( !menuData ) {
-    menu.value = null;
-    loading.value = false;
-    return;
-  }
+ if ( !menuData ) {
+ menu.value = null;
+ loading.value = false;
+ return;
+ }
 
-  menu.value = menuData;
+ menu.value = menuData;
 
-  const [ { data: mealsData }, { data: imagesData } ] = await Promise.all( [
-    supabase
-      .from( "weekly_meals" )
-      .select( "*, weekly_meal_ingredients(*)" )
-      .eq( "weekly_menu_id", route.params.id as string )
-      .in( "meal_type", displayMealTypes )
-      .order( "day_number", { ascending: true } )
-      .order( "meal_type", { ascending: true } )
-      .order( "meal_slot", { ascending: true } ),
-    supabase
-      .from( "weekly_day_images" )
-      .select( "*" )
-      .eq( "weekly_menu_id", route.params.id as string )
-      .order( "day_number", { ascending: true } ),
-  ] );
+ const [ { data: mealsData }, { data: imagesData } ] = await Promise.all( [
+ supabase
+ .from( "weekly_meals" )
+ .select( "*, weekly_meal_ingredients(*)" )
+ .eq( "weekly_menu_id", route.params.id as string )
+ .in( "meal_type", displayMealTypes )
+ .order( "day_number", { ascending: true } )
+ .order( "meal_type", { ascending: true } )
+ .order( "meal_slot", { ascending: true } ),
+ supabase
+ .from( "weekly_day_images" )
+ .select( "*" )
+ .eq( "weekly_menu_id", route.params.id as string )
+ .order( "day_number", { ascending: true } ),
+ ] );
 
-  meals.value = ( mealsData || [] ).map( ( meal: WeeklyMeal ) => ( {
-    ...meal,
-    dish_name: normalizeCompositeDishName( meal.dish_name || "" ),
-    meal_slot: 1,
-  } ) );
+ meals.value = ( mealsData || [] ).map( ( meal: WeeklyMeal ) => ( {
+ ...meal,
+ dish_name: normalizeCompositeDishName( meal.dish_name || "" ),
+ meal_slot: 1,
+ } ) );
 
-  dayImages.value = imagesData || [];
+ dayImages.value = imagesData || [];
 
-  await ensureRecipeLibrary( meals.value );
-  await loadRecipeStatuses();
+ await ensureRecipeLibrary( meals.value );
+ await loadRecipeStatuses();
 
-  loading.value = false;
+ loading.value = false;
 };
 
 const loadRecipeStatuses = async () => {
-  const currentUser = await loadCurrentUser();
-  if ( !currentUser ) return;
+ const currentUser = await loadCurrentUser();
+ if ( !currentUser ) return;
 
-  const names = getUniqueRecipePartsFromMeals( meals.value );
+ const names = getUniqueRecipePartsFromMeals( meals.value );
 
-  if ( names.length === 0 ) {
-    recipeStatusByName.value = {};
-    return;
-  }
+ if ( names.length === 0 ) {
+ recipeStatusByName.value = {};
+ return;
+ }
 
-  const { data } = await supabase
-    .from( "dishes" )
-    .select( "name,recipe_status" )
-    .eq( "user_id", currentUser.id )
-    .in( "name", names );
+ const { data } = await supabase
+ .from( "dishes" )
+ .select( "name,recipe_status" )
+ .eq( "user_id", currentUser.id )
+ .in( "name", names );
 
-  const map: Record<string, string> = {};
+ const map: Record<string, string> = {};
 
-  for ( const row of data || [] ) {
-    map[ String( row.name ) ] = String( row.recipe_status || "pending_ingredients" );
-  }
+ for ( const row of data || [] ) {
+ map[ String( row.name ) ] = String( row.recipe_status || "pending_ingredients" );
+ }
 
-  recipeStatusByName.value = map;
+ recipeStatusByName.value = map;
 };
 
 const loadSavedRecipes = async () => {
-  const currentUser = await loadCurrentUser();
+ const currentUser = await loadCurrentUser();
 
-  if ( !currentUser ) {
-    savedRecipes.value = [];
-    return;
-  }
+ if ( !currentUser ) {
+ savedRecipes.value = [];
+ return;
+ }
 
-  const { data, error } = await supabase
-    .from( "dishes" )
-    .select(
-      "id,name,description,recipe_ingredients(name,quantity,unit_type,is_confirmed)",
-    )
-    .eq( "user_id", currentUser.id )
-    .order( "name", { ascending: true } );
+ const { data, error } = await supabase
+ .from( "dishes" )
+ .select(
+ "id,name,description,recipe_ingredients(name,quantity,unit_type,is_confirmed)",
+ )
+ .eq( "user_id", currentUser.id )
+ .order( "name", { ascending: true } );
 
-  if ( error ) {
-    savedRecipes.value = [];
-    return;
-  }
+ if ( error ) {
+ savedRecipes.value = [];
+ return;
+ }
 
-  savedRecipes.value = data || [];
+ savedRecipes.value = data || [];
 };
 
 const ensureRecipeLibrary = async ( weeklyMeals: WeeklyMeal[] ) => {
-  const currentUser = await loadCurrentUser();
-  if ( !currentUser ) return;
+ const currentUser = await loadCurrentUser();
+ if ( !currentUser ) return;
 
-  const names = getUniqueRecipePartsFromMeals( weeklyMeals ).filter(
-    ( name ) => !isFreeMealName( name ),
-  );
+ const names = getUniqueRecipePartsFromMeals( weeklyMeals ).filter(
+ ( name ) => !isFreeMealName( name ),
+ );
 
-  if ( names.length === 0 ) return;
+ if ( names.length === 0 ) return;
 
-  const { data: existing } = await supabase
-    .from( "dishes" )
-    .select( "id,name,recipe_status" )
-    .eq( "user_id", currentUser.id )
-    .in( "name", names );
+ const { data: existing } = await supabase
+ .from( "dishes" )
+ .select( "id,name,recipe_status" )
+ .eq( "user_id", currentUser.id )
+ .in( "name", names );
 
-  const existingByName = new Map(
-    ( existing || [] ).map( ( item: any ) => [ item.name, item ] ),
-  );
+ const existingByName = new Map(
+ ( existing || [] ).map( ( item: any ) => [ item.name, item ] ),
+ );
 
-  const toInsert = names
-    .filter( ( name ) => !existingByName.has( name ) )
-    .map( ( name ) => {
-      const candidates = extractIngredientCandidatesFromDishName( name );
+ const toInsert = names
+ .filter( ( name ) => !existingByName.has( name ) )
+ .map( ( name ) => {
+ const candidates = extractIngredientCandidatesFromDishName( name );
 
-      return {
-        user_id: currentUser.id,
-        name,
-        normalized_name: name.toLowerCase().trim(),
-        description: null,
-        source: "ocr",
-        kcal: null,
-        protein_g: null,
-        carbs_g: null,
-        fat_g: null,
-        servings_base: 1,
-        recipe_status: getRecipeStatusFromDishName( name, candidates ),
-      };
-    } );
+ return {
+ user_id: currentUser.id,
+ name,
+ normalized_name: name.toLowerCase().trim(),
+ description: null,
+ source: "ocr",
+ kcal: null,
+ protein_g: null,
+ carbs_g: null,
+ fat_g: null,
+ servings_base: 1,
+ recipe_status: getRecipeStatusFromDishName( name, candidates ),
+ };
+ } );
 
-  if ( toInsert.length === 0 ) return;
+ if ( toInsert.length === 0 ) return;
 
-  const { data: insertedDishes } = await supabase
-    .from( "dishes" )
-    .insert( toInsert )
-    .select( "id,name" );
+ const { data: insertedDishes } = await supabase
+ .from( "dishes" )
+ .insert( toInsert )
+ .select( "id,name" );
 
-  const suggestions = ( insertedDishes || [] ).flatMap( ( dish: any ) => {
-    const candidates = extractIngredientCandidatesFromDishName( dish.name || "" );
+ const suggestions = ( insertedDishes || [] ).flatMap( ( dish: any ) => {
+ const candidates = extractIngredientCandidatesFromDishName( dish.name || "" );
 
-    return candidates.map( ( candidate ) => ( {
-      recipe_id: dish.id,
-      ingredient_id: null,
-      name: candidate.name,
-      normalized_name: candidate.name.toLowerCase().trim(),
-      quantity: null,
-      unit_type: null,
-      is_confirmed: false,
-      is_suggested: true,
-      needs_review: candidate.needs_review,
-    } ) );
-  } );
+ return candidates.map( ( candidate ) => ( {
+ recipe_id: dish.id,
+ ingredient_id: null,
+ name: candidate.name,
+ normalized_name: candidate.name.toLowerCase().trim(),
+ quantity: null,
+ unit_type: null,
+ is_confirmed: false,
+ is_suggested: true,
+ needs_review: candidate.needs_review,
+ } ) );
+ } );
 
-  if ( suggestions.length > 0 ) {
-    await supabase
-      .from( "recipe_ingredients" )
-      .upsert( suggestions, { onConflict: "recipe_id,normalized_name" } );
-  }
+ if ( suggestions.length > 0 ) {
+ await supabase
+ .from( "recipe_ingredients" )
+ .upsert( suggestions, { onConflict: "recipe_id,normalized_name" } );
+ }
 
-  if ( ( insertedDishes || [] ).length > 0 ) {
-    try {
-      await $fetch( "/api/recipes-auto-curate", {
-        method: "POST",
-        body: {
-          recipeIds: ( insertedDishes || [] ).map( ( dish: any ) => dish.id ),
-          source: "open_food_facts",
-        },
-      } );
-    } catch ( curationError ) {
-      await logError( "web", curationError, {
-        context: "menu.ensureRecipeLibrary.autoCurate",
-      } );
-    }
+ if ( ( insertedDishes || [] ).length > 0 ) {
+ try {
+ await $fetch( "/api/recipes-auto-curate", {
+ method: "POST",
+ body: {
+ recipeIds: ( insertedDishes || [] ).map( ( dish: any ) => dish.id ),
+ source: "open_food_facts",
+ },
+ } );
+ } catch ( curationError ) {
+ await logError( "web", curationError, {
+ context: "menu.ensureRecipeLibrary.autoCurate",
+ } );
+ }
 
-    await expandAndMergeIngredients( currentUser.id, insertedDishes || [] );
-  }
+ await expandAndMergeIngredients( currentUser.id, insertedDishes || [] );
+ }
 };
 
 const expandAndMergeIngredients = async ( userId: string, dishes: any[] ) => {
-  if ( !dishes || dishes.length === 0 ) return;
+ if ( !dishes || dishes.length === 0 ) return;
 
-  const config = useRuntimeConfig();
-  const dishNames = dishes.map( ( d: any ) => d.name );
+ const config = useRuntimeConfig();
+ const dishNames = dishes.map( ( d: any ) => d.name );
 
-  try {
-    const response = await fetch(
-      `${ config.public.supabaseUrl }/functions/v1/expand-ingredients`,
-      {
-        method: "POST",
-        headers: {
-          apikey: config.public.supabaseAnonKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify( { dishNames, userId } ),
-      },
-    );
+ try {
+ const response = await fetch(
+ `${ config.public.supabaseUrl }/functions/v1/expand-ingredients`,
+ {
+ method: "POST",
+ headers: {
+ apikey: config.public.supabaseAnonKey,
+ "Content-Type": "application/json",
+ },
+ body: JSON.stringify( { dishNames, userId } ),
+ },
+ );
 
-    const { results } = await response.json();
+ const { results } = await response.json();
 
-    for ( const result of results || [] ) {
-      if ( !result.expanded || !result.ingredients?.length ) continue;
+ for ( const result of results || [] ) {
+ if ( !result.expanded || !result.ingredients?.length ) continue;
 
-      const dish = dishes.find( ( d: any ) => d.name === result.original );
-      if ( !dish ) continue;
+ const dish = dishes.find( ( d: any ) => d.name === result.original );
+ if ( !dish ) continue;
 
-      const expandedIngredients = result.ingredients.map( ( ing: any ) => ( {
-        recipe_id: dish.id,
-        ingredient_id: null,
-        name: ing.name,
-        normalized_name: ing.name.toLowerCase().trim(),
-        quantity: ing.quantity || null,
-        unit_type: ing.unit_type || null,
-        is_confirmed: true,
-        is_suggested: false,
-        needs_review: false,
-        source: "expansion_rule",
-      } ) );
+ const expandedIngredients = result.ingredients.map( ( ing: any ) => ( {
+ recipe_id: dish.id,
+ ingredient_id: null,
+ name: ing.name,
+ normalized_name: ing.name.toLowerCase().trim(),
+ quantity: ing.quantity || null,
+ unit_type: ing.unit_type || null,
+ is_confirmed: true,
+ is_suggested: false,
+ needs_review: false,
+ source: "expansion_rule",
+ } ) );
 
-      await supabase
-        .from( "recipe_ingredients" )
-        .upsert( expandedIngredients, { onConflict: "recipe_id,normalized_name" } );
-    }
-  } catch ( error ) {
-    console.error( "expandAndMergeIngredients error:", error );
-  }
+ await supabase
+ .from( "recipe_ingredients" )
+ .upsert( expandedIngredients, { onConflict: "recipe_id,normalized_name" } );
+ }
+ } catch ( error ) {
+ console.error( "expandAndMergeIngredients error:", error );
+ }
 };
 
 const getPrimaryMeal = ( day: number, type: MealType ) => {
-  return getMealsForDayType( day, type )[ 0 ] || null;
+ return getMealsForDayType( day, type )[ 0 ] || null;
 };
 
 const getMealsForDayType = ( day: number, type: MealType ) => {
-  return meals.value
-    .filter( ( meal ) => meal.day_number === day && meal.meal_type === type )
-    .sort( ( a, b ) => Number( a.meal_slot || 1 ) - Number( b.meal_slot || 1 ) );
+ return meals.value
+ .filter( ( meal ) => meal.day_number === day && meal.meal_type === type )
+ .sort( ( a, b ) => Number( a.meal_slot || 1 ) - Number( b.meal_slot || 1 ) );
 };
 
 const getDayImage = ( day: number ) => {
-  return dayImages.value.find( ( image ) => image.day_number === day );
+ return dayImages.value.find( ( image ) => image.day_number === day );
 };
 
 const getCompositeParts = ( dishName?: string | null ) => {
-  return splitCompositeDishName( dishName || "" );
+ return splitCompositeDishName( dishName || "" );
 };
 
 const getUniqueRecipePartsFromMeals = ( weeklyMeals: WeeklyMeal[] ) => {
-  return Array.from(
-    new Set(
-      weeklyMeals
-        .filter( ( meal ) => displayMealTypes.includes( meal.meal_type as MealType ) )
-        .flatMap( ( meal ) => splitCompositeDishName( meal.dish_name || "" ) )
-        .map( ( name ) => name.trim() )
-        .filter( Boolean ),
-    ),
-  );
+ return Array.from(
+ new Set(
+ weeklyMeals
+ .filter( ( meal ) => displayMealTypes.includes( meal.meal_type as MealType ) )
+ .flatMap( ( meal ) => splitCompositeDishName( meal.dish_name || "" ) )
+ .map( ( name ) => name.trim() )
+ .filter( Boolean ),
+ ),
+ );
 };
 
 const splitCompositeDishName = ( dishName: string ) => {
-  const normalized = normalizeCompositeDishName( dishName );
+ const normalized = normalizeCompositeDishName( dishName );
 
-  if ( !normalized ) return [];
+ if ( !normalized ) return [];
 
-  if ( isFreeMealName( normalized ) ) return [ "Libre" ];
+ if ( isFreeMealName( normalized ) ) return [ "Libre" ];
 
-  return normalized
-    .split( /\s+\+\s+/g )
-    .map( ( part ) => part.trim() )
-    .filter( Boolean );
+ return normalized
+ .split( /\s+\+\s+/g )
+ .map( ( part ) => part.trim() )
+ .filter( Boolean );
 };
 
 const normalizeCompositeDishName = ( dishName: string ) => {
-  return String( dishName || "" )
-    .replace( /\s+/g, " " )
-    .replace( /\s*\(\s*ver foto\s*\)\s*/gi, " " )
-    .replace( /\s*\(\s*ver doc anexo\s*\)\s*/gi, " " )
-    .replace( /\s*\(\s*ver dox anexo\s*\)\s*/gi, " " )
-    .replace( /\s*\(\s*ver anexo\s*\)\s*/gi, " " )
-    .replace( /\s*\+\s*/g, " + " )
-    .replace( /\s{2,}/g, " " )
-    .trim();
+ return String( dishName || "" )
+ .replace( /\s+/g, " " )
+ .replace( /\s*\(\s*ver foto\s*\)\s*/gi, " " )
+ .replace( /\s*\(\s*ver doc anexo\s*\)\s*/gi, " " )
+ .replace( /\s*\(\s*ver dox anexo\s*\)\s*/gi, " " )
+ .replace( /\s*\(\s*ver anexo\s*\)\s*/gi, " " )
+ .replace( /\s*\+\s*/g, " + " )
+ .replace( /\s{2,}/g, " " )
+ .trim();
 };
 
 const isFreeMealName = ( dishName: string ) => {
-  return /^libre$/i.test( String( dishName || "" ).trim() );
+ return /^libre$/i.test( String( dishName || "" ).trim() );
 };
 
 watch( blockStartDay, ( day ) => {
-  const normalizedDay = Math.min( 7, Math.max( 1, Number( day ) || 1 ) );
-  if ( normalizedDay !== day ) blockStartDay.value = normalizedDay;
-  blockDayCount.value = Math.min( blockDayCount.value, 8 - normalizedDay );
+ const normalizedDay = Math.min( 7, Math.max( 1, Number( day ) || 1 ) );
+ if ( normalizedDay !== day ) blockStartDay.value = normalizedDay;
+ blockDayCount.value = Math.min( blockDayCount.value, 8 - normalizedDay );
 } );
 
 watch( blockDayCount, ( count ) => {
-  const normalizedCount = Math.min(
-    8 - blockStartDay.value,
-    Math.max( 1, Number( count ) || 1 ),
-  );
+ const normalizedCount = Math.min(
+ 8 - blockStartDay.value,
+ Math.max( 1, Number( count ) || 1 ),
+ );
 
-  if ( normalizedCount !== count ) blockDayCount.value = normalizedCount;
+ if ( normalizedCount !== count ) blockDayCount.value = normalizedCount;
 } );
 
 const openMealModal = ( day: number, type: MealType, meal?: WeeklyMeal | null ) => {
-  selectedDay.value = day;
-  selectedType.value = type;
-  editingMealId.value = meal?.id || null;
-  selectedRecipeId.value = "";
+ selectedDay.value = day;
+ selectedType.value = type;
+ editingMealId.value = meal?.id || null;
+ selectedRecipeId.value = "";
 
-  newMeal.value = meal
-    ? {
-      dish_name: normalizeCompositeDishName( meal.dish_name ),
-      dish_description: meal.dish_description || "",
-      is_special: Boolean( meal.is_special ) || isFreeMealName( meal.dish_name ),
-      special_kcal_reserved: Number( meal.special_kcal_reserved || 700 ),
-    }
-    : {
-      dish_name: "",
-      dish_description: "",
-      is_special: false,
-      special_kcal_reserved: 700,
-    };
+ newMeal.value = meal
+ ? {
+ dish_name: normalizeCompositeDishName( meal.dish_name ),
+ dish_description: meal.dish_description || "",
+ is_special: Boolean( meal.is_special ) || isFreeMealName( meal.dish_name ),
+ special_kcal_reserved: Number( meal.special_kcal_reserved || 700 ),
+ }
+ : {
+ dish_name: "",
+ dish_description: "",
+ is_special: false,
+ special_kcal_reserved: 700,
+ };
 
-  ingredientRows.value = meal?.weekly_meal_ingredients?.length
-    ? meal.weekly_meal_ingredients.map( ( ingredient ) => ( {
-      name: ingredient.name,
-      quantity: Number( ingredient.quantity ) || 1,
-      unit_type: ingredient.unit_type,
-    } ) )
-    : [ { name: "", quantity: 1, unit_type: "g" } ];
+ ingredientRows.value = meal?.weekly_meal_ingredients?.length
+ ? meal.weekly_meal_ingredients.map( ( ingredient ) => ( {
+ name: ingredient.name,
+ quantity: Number( ingredient.quantity ) || 1,
+ unit_type: ingredient.unit_type,
+ } ) )
+ : [ { name: "", quantity: 1, unit_type: "g" } ];
 
-  formError.value = "";
-  showMealModal.value = true;
+ formError.value = "";
+ showMealModal.value = true;
 };
 
 const applySavedRecipeToModal = () => {
-  if ( !selectedRecipeId.value ) return;
+ if ( !selectedRecipeId.value ) return;
 
-  if ( selectedRecipeId.value.startsWith( "COMPOUND:" ) ) {
-    const compoundDayId = selectedRecipeId.value.replace( "COMPOUND:", "" );
-    const compoundDay = compoundDays.value.find( ( cd ) => cd.id === compoundDayId );
-    if ( !compoundDay ) return;
+ if ( selectedRecipeId.value.startsWith( "COMPOUND:" ) ) {
+ const compoundDayId = selectedRecipeId.value.replace( "COMPOUND:", "" );
+ const compoundDay = compoundDays.value.find( ( cd ) => cd.id === compoundDayId );
+ if ( !compoundDay ) return;
 
-    newMeal.value.dish_name = `${ compoundDay.first_dish?.name } + ${ compoundDay.second_dish?.name }`;
-    newMeal.value.dish_description = `Día compuesto: ${ compoundDay.name }`;
-    ingredientRows.value = [ { name: "", quantity: 1, unit_type: "g" } ];
-    return;
-  }
+ newMeal.value.dish_name = `${ compoundDay.first_dish?.name } + ${ compoundDay.second_dish?.name }`;
+ newMeal.value.dish_description = `Día compuesto: ${ compoundDay.name }`;
+ ingredientRows.value = [ { name: "", quantity: 1, unit_type: "g" } ];
+ return;
+ }
 
-  const recipe = savedRecipes.value.find(
-    ( item ) => item.id === selectedRecipeId.value,
-  );
+ const recipe = savedRecipes.value.find(
+ ( item ) => item.id === selectedRecipeId.value,
+ );
 
-  if ( !recipe ) return;
+ if ( !recipe ) return;
 
-  newMeal.value.dish_name = recipe.name || "";
-  newMeal.value.dish_description = recipe.description || "";
+ newMeal.value.dish_name = recipe.name || "";
+ newMeal.value.dish_description = recipe.description || "";
 
-  const confirmedIngredients = ( recipe.recipe_ingredients || [] ).filter(
-    ( ingredient ) => ingredient.is_confirmed !== false && ingredient.name,
-  );
+ const confirmedIngredients = ( recipe.recipe_ingredients || [] ).filter(
+ ( ingredient ) => ingredient.is_confirmed !== false && ingredient.name,
+ );
 
-  ingredientRows.value =
-    confirmedIngredients.length > 0
-      ? confirmedIngredients.map( ( ingredient ) => ( {
-        name: ingredient.name,
-        quantity:
-          Number( ingredient.quantity ) > 0 ? Number( ingredient.quantity ) : 1,
-        unit_type:
-          ( ingredient.unit_type as WeeklyMealIngredient[ "unit_type" ] ) || "g",
-      } ) )
-      : [ { name: "", quantity: 1, unit_type: "g" } ];
+ ingredientRows.value =
+ confirmedIngredients.length > 0
+ ? confirmedIngredients.map( ( ingredient ) => ( {
+ name: ingredient.name,
+ quantity:
+ Number( ingredient.quantity ) > 0 ? Number( ingredient.quantity ) : 1,
+ unit_type:
+ ( ingredient.unit_type as WeeklyMealIngredient[ "unit_type" ] ) || "g",
+ } ) )
+ : [ { name: "", quantity: 1, unit_type: "g" } ];
 };
 
 const closeMealModal = () => {
-  showMealModal.value = false;
-  editingMealId.value = null;
-  selectedRecipeId.value = "";
-  formError.value = "";
+ showMealModal.value = false;
+ editingMealId.value = null;
+ selectedRecipeId.value = "";
+ formError.value = "";
 };
 
 const addIngredientRow = () => {
-  ingredientRows.value.push( { name: "", quantity: 1, unit_type: "g" } );
+ ingredientRows.value.push( { name: "", quantity: 1, unit_type: "g" } );
 };
 
 const removeIngredientRow = ( index: number ) => {
-  ingredientRows.value.splice( index, 1 );
+ ingredientRows.value.splice( index, 1 );
 };
 
 const saveMeal = async () => {
-  if ( !menu.value || !mealFormValid.value ) return;
+ if ( !menu.value || !mealFormValid.value ) return;
 
-  savingMeal.value = true;
-  formError.value = "";
+ savingMeal.value = true;
+ formError.value = "";
 
-  const normalizedDishName = normalizeCompositeDishName( newMeal.value.dish_name );
+ const normalizedDishName = normalizeCompositeDishName( newMeal.value.dish_name );
 
-  const isSpecial =
-    Boolean( newMeal.value.is_special ) || isFreeMealName( normalizedDishName );
+ const isSpecial =
+ Boolean( newMeal.value.is_special ) || isFreeMealName( normalizedDishName );
 
-  const rowsToInsert = isSpecial
-    ? []
-    : ingredientRows.value.filter(
-      ( ingredient ) => ingredient.name && Number( ingredient.quantity ) > 0,
-    );
+ const rowsToInsert = isSpecial
+ ? []
+ : ingredientRows.value.filter(
+ ( ingredient ) => ingredient.name && Number( ingredient.quantity ) > 0,
+ );
 
-  const nextMealSlot = editingMealId.value
-    ? Number( meals.value.find( ( meal ) => meal.id === editingMealId.value )?.meal_slot || 1 )
-    : getMealsForDayType( selectedDay.value, selectedType.value ).length + 1;
+ const nextMealSlot = editingMealId.value
+ ? Number( meals.value.find( ( meal ) => meal.id === editingMealId.value )?.meal_slot || 1 )
+ : getMealsForDayType( selectedDay.value, selectedType.value ).length + 1;
 
-  const payload = {
-    weekly_menu_id: menu.value.id,
-    day_number: selectedDay.value,
-    meal_type: selectedType.value,
-    meal_slot: Math.max( 1, nextMealSlot ),
-    dish_name: normalizedDishName,
-    dish_description: newMeal.value.dish_description || null,
-    is_special: isSpecial,
-    special_kcal_reserved: isSpecial
-      ? Math.max(
-        0,
-        Math.min( 2000, Number( newMeal.value.special_kcal_reserved ) || 700 ),
-      )
-      : 0,
-    kcal: 0,
-    protein_g: 0,
-    carbs_g: 0,
-    fat_g: 0,
-  };
+ const payload = {
+ weekly_menu_id: menu.value.id,
+ day_number: selectedDay.value,
+ meal_type: selectedType.value,
+ meal_slot: Math.max( 1, nextMealSlot ),
+ dish_name: normalizedDishName,
+ dish_description: newMeal.value.dish_description || null,
+ is_special: isSpecial,
+ special_kcal_reserved: isSpecial
+ ? Math.max(
+ 0,
+ Math.min( 2000, Number( newMeal.value.special_kcal_reserved ) || 700 ),
+ )
+ : 0,
+ kcal: 0,
+ protein_g: 0,
+ carbs_g: 0,
+ fat_g: 0,
+ };
 
-  let savedMeal: any = null;
-  let upsertError: any = null;
+ let savedMeal: any = null;
+ let upsertError: any = null;
 
-  const firstAttempt = await supabase
-    .from( "weekly_meals" )
-    .upsert( payload, {
-      onConflict: "weekly_menu_id,day_number,meal_type,meal_slot",
-    } )
-    .select()
-    .single();
+ const firstAttempt = await supabase
+ .from( "weekly_meals" )
+ .upsert( payload, {
+ onConflict: "weekly_menu_id,day_number,meal_type,meal_slot",
+ } )
+ .select()
+ .single();
 
-  savedMeal = firstAttempt.data;
-  upsertError = firstAttempt.error;
+ savedMeal = firstAttempt.data;
+ upsertError = firstAttempt.error;
 
-  if ( upsertError?.code === "42P10" ) {
-    const { meal_slot, ...legacyPayload } = payload;
+ if ( upsertError?.code === "42P10" ) {
+ const { meal_slot, ...legacyPayload } = payload;
 
-    const fallbackAttempt = await supabase
-      .from( "weekly_meals" )
-      .upsert( legacyPayload, {
-        onConflict: "weekly_menu_id,day_number,meal_type",
-      } )
-      .select()
-      .single();
+ const fallbackAttempt = await supabase
+ .from( "weekly_meals" )
+ .upsert( legacyPayload, {
+ onConflict: "weekly_menu_id,day_number,meal_type",
+ } )
+ .select()
+ .single();
 
-    savedMeal = fallbackAttempt.data;
-    upsertError = fallbackAttempt.error;
-  }
+ savedMeal = fallbackAttempt.data;
+ upsertError = fallbackAttempt.error;
+ }
 
-  if ( upsertError || !savedMeal ) {
-    savingMeal.value = false;
-    formError.value = `Error guardando el plato: ${ upsertError?.message || "desconocido"
-      }`;
-    return;
-  }
+ if ( upsertError || !savedMeal ) {
+ savingMeal.value = false;
+ formError.value = `Error guardando el plato: ${ upsertError?.message || "desconocido"
+ }`;
+ return;
+ }
 
-  const { error: deleteIngredientsError } = await supabase
-    .from( "weekly_meal_ingredients" )
-    .delete()
-    .eq( "weekly_meal_id", savedMeal.id );
+ const { error: deleteIngredientsError } = await supabase
+ .from( "weekly_meal_ingredients" )
+ .delete()
+ .eq( "weekly_meal_id", savedMeal.id );
 
-  if ( deleteIngredientsError ) {
-    savingMeal.value = false;
-    formError.value = `Error limpiando ingredientes: ${ deleteIngredientsError.message }`;
-    return;
-  }
+ if ( deleteIngredientsError ) {
+ savingMeal.value = false;
+ formError.value = `Error limpiando ingredientes: ${ deleteIngredientsError.message }`;
+ return;
+ }
 
-  if ( rowsToInsert.length > 0 ) {
-    const { error: ingredientsError } = await supabase
-      .from( "weekly_meal_ingredients" )
-      .insert(
-        rowsToInsert.map( ( ingredient ) => ( {
-          weekly_meal_id: savedMeal.id,
-          name: ingredient.name.toLowerCase(),
-          quantity: ingredient.quantity,
-          unit_type: ingredient.unit_type,
-        } ) ),
-      );
+ if ( rowsToInsert.length > 0 ) {
+ const { error: ingredientsError } = await supabase
+ .from( "weekly_meal_ingredients" )
+ .insert(
+ rowsToInsert.map( ( ingredient ) => ( {
+ weekly_meal_id: savedMeal.id,
+ name: ingredient.name.toLowerCase(),
+ quantity: ingredient.quantity,
+ unit_type: ingredient.unit_type,
+ } ) ),
+ );
 
-    if ( ingredientsError ) {
-      savingMeal.value = false;
-      formError.value = `Error guardando ingredientes: ${ ingredientsError.message }`;
-      return;
-    }
-  }
+ if ( ingredientsError ) {
+ savingMeal.value = false;
+ formError.value = `Error guardando ingredientes: ${ ingredientsError.message }`;
+ return;
+ }
+ }
 
-  savingMeal.value = false;
-  closeMealModal();
-  await loadMenu();
+ savingMeal.value = false;
+ closeMealModal();
+ await loadMenu();
 };
 
 const deleteCurrentMeal = async () => {
-  if ( !editingMealId.value ) return;
-  await deleteMeal( editingMealId.value );
-  closeMealModal();
+ if ( !editingMealId.value ) return;
+ await deleteMeal( editingMealId.value );
+ closeMealModal();
 };
 
 const deleteMeal = async ( mealId: string ) => {
-  const confirmed = await confirmDialog( {
-    title: "Eliminar comida",
-    message: "¿Eliminar esta comida/cena?",
-    confirmText: "Eliminar",
-    danger: true,
-  } );
-  if ( !confirmed ) return;
+ const confirmed = await confirmDialog( {
+ title: "Eliminar comida",
+ message: "¿Eliminar esta comida/cena?",
+ confirmText: "Eliminar",
+ danger: true,
+ } );
+ if ( !confirmed ) return;
 
-  const { error } = await supabase
-    .from( "weekly_meals" )
-    .delete()
-    .eq( "id", mealId );
+ const { error } = await supabase
+ .from( "weekly_meals" )
+ .delete()
+ .eq( "id", mealId );
 
-  if ( error ) {
-    appToast.error( "Error: " + error.message );
-    return;
-  }
+ if ( error ) {
+ appToast.error( "Error: " + error.message );
+ return;
+ }
 
-  await loadMenu();
-  appToast.success( "Comida eliminada." );
+ await loadMenu();
+ appToast.success( "Comida eliminada." );
 };
 
 const deleteMenu = async () => {
-  if ( !menu.value ) return;
+ if ( !menu.value ) return;
 
-  const confirmed = await confirmDialog( {
-    title: "Eliminar menú",
-    message: `¿Eliminar el menú "${ menu.value.name }" y todo su contenido?`,
-    confirmText: "Eliminar",
-    danger: true,
-  } );
-  if ( !confirmed ) {
-    return;
-  }
+ const confirmed = await confirmDialog( {
+ title: "Eliminar menú",
+ message: `¿Eliminar el menú "${ menu.value.name }" y todo su contenido?`,
+ confirmText: "Eliminar",
+ danger: true,
+ } );
+ if ( !confirmed ) {
+ return;
+ }
 
-  const currentUser = await loadCurrentUser();
+ const currentUser = await loadCurrentUser();
 
-  if ( !currentUser ) {
-    appToast.error( "No hay usuario configurado. Usa /start en Telegram primero." );
-    return;
-  }
+ if ( !currentUser ) {
+ appToast.error( "No hay usuario configurado. Usa /start en Telegram primero." );
+ return;
+ }
 
-  const { error } = await supabase
-    .from( "weekly_menus" )
-    .delete()
-    .eq( "id", menu.value.id )
-    .eq( "user_id", currentUser.id );
+ const { error } = await supabase
+ .from( "weekly_menus" )
+ .delete()
+ .eq( "id", menu.value.id )
+ .eq( "user_id", currentUser.id );
 
-  if ( error ) {
-    appToast.error( "Error eliminando menú: " + error.message );
-    return;
-  }
+ if ( error ) {
+ appToast.error( "Error eliminando menú: " + error.message );
+ return;
+ }
 
-  appToast.success( "Menú eliminado." );
-  await router.push( "/" );
+ appToast.success( "Menú eliminado." );
+ await router.push( "/" );
 };
 
 const uploadDailyImage = async ( day: number, event: Event ) => {
-  creationMode.value = "daily";
+ creationMode.value = "daily";
 
-  await uploadMenuImage( {
-    event,
-    startDay: day,
-    dayCount: 1,
-    sourceMode: "daily",
-  } );
+ await uploadMenuImage( {
+ event,
+ startDay: day,
+ dayCount: 1,
+ sourceMode: "daily",
+ } );
 };
 
 const uploadBlockImage = async ( event: Event ) => {
-  await uploadMenuImage( {
-    event,
-    startDay: blockStartDay.value,
-    dayCount: blockDayCount.value,
-    sourceMode: "block",
-  } );
+ await uploadMenuImage( {
+ event,
+ startDay: blockStartDay.value,
+ dayCount: blockDayCount.value,
+ sourceMode: "block",
+ } );
 };
 
 const uploadMenuImage = async ( {
-  event,
-  startDay,
-  dayCount,
-  sourceMode,
+ event,
+ startDay,
+ dayCount,
+ sourceMode,
 }: {
-  event: Event;
-  startDay: number;
-  dayCount: number;
-  sourceMode: "daily" | "block";
+ event: Event;
+ startDay: number;
+ dayCount: number;
+ sourceMode: "daily" | "block";
 } ) => {
-  if ( !menu.value ) return;
+ if ( !menu.value ) return;
 
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[ 0 ];
+ const target = event.target as HTMLInputElement;
+ const file = target.files?.[ 0 ];
 
-  if ( !file ) return;
+ if ( !file ) return;
 
-  const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+ const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
-  if ( file.size > MAX_IMAGE_BYTES ) {
-    imageError.value =
-      "La imagen supera 2MB. Reduce tamaño/resolución e inténtalo de nuevo.";
-    target.value = "";
-    return;
-  }
+ if ( file.size > MAX_IMAGE_BYTES ) {
+ imageError.value =
+ "La imagen supera 2MB. Reduce tamaño/resolución e inténtalo de nuevo.";
+ target.value = "";
+ return;
+ }
 
-  imageProcessing.value = true;
-  imageError.value = "";
+ imageProcessing.value = true;
+ imageError.value = "";
 
-  const normalizedStartDay = Math.min( 7, Math.max( 1, startDay ) );
-  const normalizedDayCount = Math.min(
-    8 - normalizedStartDay,
-    Math.max( 1, dayCount ),
-  );
+ const normalizedStartDay = Math.min( 7, Math.max( 1, startDay ) );
+ const normalizedDayCount = Math.min(
+ 8 - normalizedStartDay,
+ Math.max( 1, dayCount ),
+ );
 
-  const affectedDays = Array.from(
-    { length: normalizedDayCount },
-    ( _, index ) => normalizedStartDay + index,
-  );
+ const affectedDays = Array.from(
+ { length: normalizedDayCount },
+ ( _, index ) => normalizedStartDay + index,
+ );
 
-  const extension = file.name.split( "." ).pop() || "jpg";
-  const fileName = `${ menu.value.id }/${ sourceMode }_${ normalizedStartDay }_${ normalizedDayCount }_${ Date.now() }.${ extension }`;
+ const extension = file.name.split( "." ).pop() || "jpg";
+ const fileName = `${ menu.value.id }/${ sourceMode }_${ normalizedStartDay }_${ normalizedDayCount }_${ Date.now() }.${ extension }`;
 
-  const { error: uploadError } = await supabase.storage
-    .from( "menu-images" )
-    .upload( fileName, file );
+ const { error: uploadError } = await supabase.storage
+ .from( "menu-images" )
+ .upload( fileName, file );
 
-  if ( uploadError ) {
-    imageProcessing.value = false;
-    imageError.value = "Error subiendo imagen: " + uploadError.message;
-    target.value = "";
-    return;
-  }
+ if ( uploadError ) {
+ imageProcessing.value = false;
+ imageError.value = "Error subiendo imagen: " + uploadError.message;
+ target.value = "";
+ return;
+ }
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from( "menu-images" ).getPublicUrl( fileName );
+ const {
+ data: { publicUrl },
+ } = supabase.storage.from( "menu-images" ).getPublicUrl( fileName );
 
-  const rows = affectedDays.map( ( day ) => ( {
-    weekly_menu_id: menu.value!.id,
-    day_number: day,
-    image_url: publicUrl,
-    source_mode: sourceMode,
-    day_span_count: normalizedDayCount,
-    ocr_status: "processing",
-    ocr_error: null,
-    updated_at: new Date().toISOString(),
-  } ) );
+ const rows = affectedDays.map( ( day ) => ( {
+ weekly_menu_id: menu.value!.id,
+ day_number: day,
+ image_url: publicUrl,
+ source_mode: sourceMode,
+ day_span_count: normalizedDayCount,
+ ocr_status: "processing",
+ ocr_error: null,
+ updated_at: new Date().toISOString(),
+ } ) );
 
-  const { data: imageRows, error } = await supabase
-    .from( "weekly_day_images" )
-    .upsert( rows, {
-      onConflict: "weekly_menu_id,day_number",
-    } )
-    .select();
+ const { data: imageRows, error } = await supabase
+ .from( "weekly_day_images" )
+ .upsert( rows, {
+ onConflict: "weekly_menu_id,day_number",
+ } )
+ .select();
 
-  if ( error ) {
-    imageProcessing.value = false;
-    imageError.value = "Error guardando imagen: " + error.message;
-    target.value = "";
-    return;
-  }
+ if ( error ) {
+ imageProcessing.value = false;
+ imageError.value = "Error guardando imagen: " + error.message;
+ target.value = "";
+ return;
+ }
 
-  const { error: ocrError } = await invokeOcrWithRetry( {
-    file,
-    payload: {
-      weekly_menu_id: menu.value.id,
-      weekly_day_image_ids: ( imageRows || [] ).map( ( image ) => image.id ),
-      image_url: publicUrl,
-      start_day: normalizedStartDay,
-      day_count: normalizedDayCount,
-      source_mode: sourceMode,
-      meal_types: OCR_WEEKLY_MEAL_TYPES,
-    },
-  } );
+ const { error: ocrError } = await invokeOcrWithRetry( {
+ file,
+ payload: {
+ weekly_menu_id: menu.value.id,
+ weekly_day_image_ids: ( imageRows || [] ).map( ( image ) => image.id ),
+ image_url: publicUrl,
+ start_day: normalizedStartDay,
+ day_count: normalizedDayCount,
+ source_mode: sourceMode,
+ meal_types: OCR_WEEKLY_MEAL_TYPES,
+ },
+ } );
 
-  if ( ocrError ) {
-    const ocrMessage = String( ocrError.message || "" );
-    const mappingError = ocrMessage.includes( "OCR_1TO1_MAPPING_ERROR" );
+ if ( ocrError ) {
+ const ocrMessage = String( ocrError.message || "" );
+ const mappingError = ocrMessage.includes( "OCR_1TO1_MAPPING_ERROR" );
 
-    imageError.value = mappingError
-      ? "No se pudo mapear día/comida/cena desde la imagen. Revisa calidad o recorte."
-      : "La imagen se guardó, pero el OCR falló: " + ocrError.message;
+ imageError.value = mappingError
+ ? "No se pudo mapear día/comida/cena desde la imagen. Revisa calidad o recorte."
+ : "La imagen se guardó, pero el OCR falló: " + ocrError.message;
 
-    await logError( "ocr", ocrError, {
-      context: "menu.uploadMenuImage.invokeOcrWithRetry",
-    } );
+ await logError( "ocr", ocrError, {
+ context: "menu.uploadMenuImage.invokeOcrWithRetry",
+ } );
 
-    await supabase
-      .from( "weekly_day_images" )
-      .update( {
-        ocr_status: "error",
-        ocr_error: ocrError.message,
-      } )
-      .in(
-        "id",
-        ( imageRows || [] ).map( ( image ) => image.id ),
-      );
-  }
+ await supabase
+ .from( "weekly_day_images" )
+ .update( {
+ ocr_status: "error",
+ ocr_error: ocrError.message,
+ } )
+ .in(
+ "id",
+ ( imageRows || [] ).map( ( image ) => image.id ),
+ );
+ }
 
-  imageProcessing.value = false;
-  target.value = "";
-  await loadMenu();
+ imageProcessing.value = false;
+ target.value = "";
+ await loadMenu();
 };
 
 const sleep = ( ms: number ) =>
-  new Promise( ( resolve ) => {
-    setTimeout( resolve, ms );
-  } );
+ new Promise( ( resolve ) => {
+ setTimeout( resolve, ms );
+ } );
 
 const invokeOcrWithRetry = async ( {
-  file,
-  payload,
+ file,
+ payload,
 }: {
-  file: File;
-  payload: Record<string, unknown>;
+ file: File;
+ payload: Record<string, unknown>;
 } ) => {
-  const maxAttempts = 3;
-  let lastError: Error | null = null;
+ const maxAttempts = 3;
+ let lastError: Error | null = null;
 
-  for ( let attempt = 1; attempt <= maxAttempts; attempt++ ) {
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+ for ( let attempt = 1; attempt <= maxAttempts; attempt++ ) {
+ try {
+ const {
+ data: { session },
+ } = await supabase.auth.getSession();
 
-      const accessToken =
-        session?.access_token || runtimeConfig.public.supabaseAnonKey;
+ const accessToken =
+ session?.access_token || runtimeConfig.public.supabaseAnonKey;
 
-      const formData = new FormData();
-      formData.append( "file", file );
+ const formData = new FormData();
+ formData.append( "file", file );
 
-      for ( const [ key, value ] of Object.entries( payload ) ) {
-        if ( value === undefined || value === null ) continue;
+ for ( const [ key, value ] of Object.entries( payload ) ) {
+ if ( value === undefined || value === null ) continue;
 
-        if ( Array.isArray( value ) || typeof value === "object" ) {
-          formData.append( key, JSON.stringify( value ) );
-        } else {
-          formData.append( key, String( value ) );
-        }
-      }
+ if ( Array.isArray( value ) || typeof value === "object" ) {
+ formData.append( key, JSON.stringify( value ) );
+ } else {
+ formData.append( key, String( value ) );
+ }
+ }
 
-      const response = await fetch(
-        `${ runtimeConfig.public.supabaseUrl }/functions/v1/ocr-processor`,
-        {
-          method: "POST",
-          headers: {
-            apikey: runtimeConfig.public.supabaseAnonKey,
-            Authorization: `Bearer ${ accessToken }`,
-          },
-          body: formData,
-        },
-      );
+ const response = await fetch(
+ `${ runtimeConfig.public.supabaseUrl }/functions/v1/ocr-processor`,
+ {
+ method: "POST",
+ headers: {
+ apikey: runtimeConfig.public.supabaseAnonKey,
+ Authorization: `Bearer ${ accessToken }`,
+ },
+ body: formData,
+ },
+ );
 
-      if ( response.ok ) return { error: null };
+ if ( response.ok ) return { error: null };
 
-      const body = await response.json().catch( () => ( {} ) );
-      lastError = new Error( body?.error || `OCR error HTTP ${ response.status }` );
-    } catch ( error ) {
-      lastError =
-        error instanceof Error ? error : new Error( "Error OCR desconocido" );
-    }
+ const body = await response.json().catch( () => ( {} ) );
+ lastError = new Error( body?.error || `OCR error HTTP ${ response.status }` );
+ } catch ( error ) {
+ lastError =
+ error instanceof Error ? error : new Error( "Error OCR desconocido" );
+ }
 
-    if ( attempt < maxAttempts ) {
-      const backoffMs = 500 * 2 ** ( attempt - 1 );
-      await sleep( backoffMs );
-    }
-  }
+ if ( attempt < maxAttempts ) {
+ const backoffMs = 500 * 2 ** ( attempt - 1 );
+ await sleep( backoffMs );
+ }
+ }
 
-  return { error: lastError };
+ return { error: lastError };
 };
 
 const mealLabel = ( type: MealType ) => {
-  if ( type === "comida" ) return "Comida";
-  if ( type === "cena" ) return "Cena";
-  return "Desayuno";
+ if ( type === "comida" ) return "Comida";
+ if ( type === "cena" ) return "Cena";
+ return "Desayuno";
 };
 
 const ocrStatusLabel = ( status?: WeeklyDayImage[ "ocr_status" ] ) => {
-  if ( status === "processing" ) return "procesando";
-  if ( status === "processed" ) return "procesado";
-  if ( status === "error" ) return "error";
-  return "pendiente";
+ if ( status === "processing" ) return "procesando";
+ if ( status === "processed" ) return "procesado";
+ if ( status === "error" ) return "error";
+ return "pendiente";
 };
 
 const cellClass = ( meal?: WeeklyMeal | null ) => {
-  if ( !meal ) {
-    return "border-dashed border-[var(--border-soft)]  bg-[rgba(255,255,255,0.03)] bg-[var(--surface-1)] text-[var(--text-3)]";
-  }
+ if ( !meal ) {
+ return "border-dashed border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] bg-[var(--surface-1)] text-[var(--text-3)]";
+ }
 
-  if ( meal.is_special || isFreeMealName( meal.dish_name ) ) {
-    return "border-amber-200 bg-[rgba(255,214,0,0.06)]";
-  }
+ if ( meal.is_special || isFreeMealName( meal.dish_name ) ) {
+ return "border-[rgba(255,214,0,0.2)] bg-[rgba(255,214,0,0.06)]";
+ }
 
-  return "border-[var(--border-soft)] bg-transparent bg-[var(--surface-1)]";
+ return "border-[var(--border-soft)] bg-[var(--surface-1)]";
 };
 
 const recipeStatusText = ( meal?: WeeklyMeal | null ) => {
-  if ( !meal?.dish_name ) return "";
+ if ( !meal?.dish_name ) return "";
 
-  const parts = splitCompositeDishName( meal.dish_name ).filter(
-    ( part ) => !isFreeMealName( part ),
-  );
+ const parts = splitCompositeDishName( meal.dish_name ).filter(
+ ( part ) => !isFreeMealName( part ),
+ );
 
-  if ( parts.length === 0 ) return "Comida libre";
+ if ( parts.length === 0 ) return "Comida libre";
 
-  const statuses = parts.map( ( part ) => recipeStatusByName.value[ part ] );
+ const statuses = parts.map( ( part ) => recipeStatusByName.value[ part ] );
 
-  if ( statuses.every( ( status ) => status === "complete" ) ) {
-    return "Receta completa";
-  }
+ if ( statuses.every( ( status ) => status === "complete" ) ) {
+ return "Receta completa";
+ }
 
-  if ( statuses.some( ( status ) => status === "incomplete_nutrition" ) ) {
-    return "Pendiente de nutrición";
-  }
+ if ( statuses.some( ( status ) => status === "incomplete_nutrition" ) ) {
+ return "Pendiente de nutrición";
+ }
 
-  if (
-    statuses.some(
-      ( status ) =>
-        status === "suggested_ingredients" ||
-        status === "pending_ingredients" ||
-        !status,
-    )
-  ) {
-    return "Pendiente de curar ingredientes";
-  }
+ if (
+ statuses.some(
+ ( status ) =>
+ status === "suggested_ingredients" ||
+ status === "pending_ingredients" ||
+ !status,
+ )
+ ) {
+ return "Pendiente de curar ingredientes";
+ }
 
-  return "";
+ return "";
 };
 
 const formatDate = ( dateString: string ): string => {
-  return new Date( dateString ).toLocaleDateString( "es-ES", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  } );
+ return new Date( dateString ).toLocaleDateString( "es-ES", {
+ day: "numeric",
+ month: "short",
+ year: "numeric",
+ } );
 };
 
 const loadCompoundDays = async () => {
-  const user = await loadCurrentUser();
-  if ( !user ) return;
+ const user = await loadCurrentUser();
+ if ( !user ) return;
 
-  loadingCompoundDays.value = true;
-  try {
-    const result = await $fetch<{ compoundDays: any[] }>( "/api/compound-day-meals", {
-      query: { userId: user.id },
-    } );
-    if ( result?.compoundDays ) {
-      compoundDays.value = result.compoundDays;
-    }
-  } catch ( error ) {
-    console.error( "Error loading compound days:", error );
-  } finally {
-    loadingCompoundDays.value = false;
-  }
+ loadingCompoundDays.value = true;
+ try {
+ const result = await $fetch<{ compoundDays: any[] }>( "/api/compound-day-meals", {
+ query: { userId: user.id },
+ } );
+ if ( result?.compoundDays ) {
+ compoundDays.value = result.compoundDays;
+ }
+ } catch ( error ) {
+ console.error( "Error loading compound days:", error );
+ } finally {
+ loadingCompoundDays.value = false;
+ }
 };
 
 const loadAllDishes = async () => {
-  const user = await loadCurrentUser();
-  if ( !user ) return;
+ const user = await loadCurrentUser();
+ if ( !user ) return;
 
-  const result = await $fetch<{ dishes: any[] }>( "/api/dishes", {
-    query: { userId: user.id },
-  } );
-  if ( result?.dishes ) {
-    allDishes.value = result.dishes.map( ( d: any ) => ( {
-      id: d.id,
-      name: d.name,
-    } ) );
-  }
+ const result = await $fetch<{ dishes: any[] }>( "/api/dishes", {
+ query: { userId: user.id },
+ } );
+ if ( result?.dishes ) {
+ allDishes.value = result.dishes.map( ( d: any ) => ( {
+ id: d.id,
+ name: d.name,
+ } ) );
+ }
 };
 
 const openCompoundDayModal = ( compoundDay?: any ) => {
-  if ( compoundDay ) {
-    editingCompoundDay.value = compoundDay;
-    compoundDayForm.value = {
-      name: compoundDay.name,
-      firstDishId: compoundDay.first_dish?.id || "",
-      secondDishId: compoundDay.second_dish?.id || "",
-    };
-  } else {
-    editingCompoundDay.value = null;
-    compoundDayForm.value = {
-      name: "",
-      firstDishId: "",
-      secondDishId: "",
-    };
-  }
-  showCompoundDayModal.value = true;
+ if ( compoundDay ) {
+ editingCompoundDay.value = compoundDay;
+ compoundDayForm.value = {
+ name: compoundDay.name,
+ firstDishId: compoundDay.first_dish?.id || "",
+ secondDishId: compoundDay.second_dish?.id || "",
+ };
+ } else {
+ editingCompoundDay.value = null;
+ compoundDayForm.value = {
+ name: "",
+ firstDishId: "",
+ secondDishId: "",
+ };
+ }
+ showCompoundDayModal.value = true;
 };
 
 const saveCompoundDay = async () => {
-  const user = await loadCurrentUser();
-  if ( !user ) return;
+ const user = await loadCurrentUser();
+ if ( !user ) return;
 
-  if ( !compoundDayForm.value.name || !compoundDayForm.value.firstDishId || !compoundDayForm.value.secondDishId ) {
-    formError.value = "Todos los campos son obligatorios";
-    return;
-  }
+ if ( !compoundDayForm.value.name || !compoundDayForm.value.firstDishId || !compoundDayForm.value.secondDishId ) {
+ formError.value = "Todos los campos son obligatorios";
+ return;
+ }
 
-  if ( compoundDayForm.value.firstDishId === compoundDayForm.value.secondDishId ) {
-    formError.value = "Los dos platos deben ser diferentes";
-    return;
-  }
+ if ( compoundDayForm.value.firstDishId === compoundDayForm.value.secondDishId ) {
+ formError.value = "Los dos platos deben ser diferentes";
+ return;
+ }
 
-  try {
-    if ( editingCompoundDay.value ) {
-      await useFetch( "/api/compound-day-meals", {
-        method: "PUT",
-        body: {
-          id: editingCompoundDay.value.id,
-          userId: user.id,
-          name: compoundDayForm.value.name,
-          firstDishId: compoundDayForm.value.firstDishId,
-          secondDishId: compoundDayForm.value.secondDishId,
-        },
-      } );
-    } else {
-      await useFetch( "/api/compound-day-meals", {
-        method: "POST",
-        body: {
-          userId: user.id,
-          name: compoundDayForm.value.name,
-          firstDishId: compoundDayForm.value.firstDishId,
-          secondDishId: compoundDayForm.value.secondDishId,
-        },
-      } );
-    }
+ try {
+ if ( editingCompoundDay.value ) {
+ await useFetch( "/api/compound-day-meals", {
+ method: "PUT",
+ body: {
+ id: editingCompoundDay.value.id,
+ userId: user.id,
+ name: compoundDayForm.value.name,
+ firstDishId: compoundDayForm.value.firstDishId,
+ secondDishId: compoundDayForm.value.secondDishId,
+ },
+ } );
+ } else {
+ await useFetch( "/api/compound-day-meals", {
+ method: "POST",
+ body: {
+ userId: user.id,
+ name: compoundDayForm.value.name,
+ firstDishId: compoundDayForm.value.firstDishId,
+ secondDishId: compoundDayForm.value.secondDishId,
+ },
+ } );
+ }
 
-    showCompoundDayModal.value = false;
-    await loadCompoundDays();
-  } catch ( error: any ) {
-    formError.value = error.message || "Error guardando día compuesto";
-  }
+ showCompoundDayModal.value = false;
+ await loadCompoundDays();
+ } catch ( error: any ) {
+ formError.value = error.message || "Error guardando día compuesto";
+ }
 };
 
 const deleteCompoundDay = async ( id: string ) => {
-  const user = await loadCurrentUser();
-  if ( !user ) return;
+ const user = await loadCurrentUser();
+ if ( !user ) return;
 
-  const confirmed = await confirmDialog( {
-    title: "Eliminar día compuesto",
-    message: "¿Estás seguro de que quieres eliminar este día compuesto?",
-    confirmText: "Eliminar",
-    danger: true,
-  } );
-  if ( !confirmed ) return;
+ const confirmed = await confirmDialog( {
+ title: "Eliminar día compuesto",
+ message: "¿Estás seguro de que quieres eliminar este día compuesto?",
+ confirmText: "Eliminar",
+ danger: true,
+ } );
+ if ( !confirmed ) return;
 
-  try {
-    await useFetch( "/api/compound-day-meals", {
-      method: "DELETE",
-      body: { id, userId: user.id },
-    } );
-    await loadCompoundDays();
-  } catch ( error ) {
-    console.error( "Error deleting compound day:", error );
-  }
+ try {
+ await useFetch( "/api/compound-day-meals", {
+ method: "DELETE",
+ body: { id, userId: user.id },
+ } );
+ await loadCompoundDays();
+ } catch ( error ) {
+ console.error( "Error deleting compound day:", error );
+ }
 };
 
 onMounted( async () => {
-  await Promise.all( [ loadMenu(), loadSavedRecipes(), loadCompoundDays() ] );
+ await Promise.all( [ loadMenu(), loadSavedRecipes(), loadCompoundDays() ] );
 } );
 </script>

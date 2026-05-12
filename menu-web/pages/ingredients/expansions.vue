@@ -8,10 +8,10 @@
           <p class="mt-1 text-sm ui-muted">Reglas para anadir ingredientes automaticamente en platos OCR.</p>
         </div>
         <div class="flex items-center gap-2">
-          <NuxtLink href="/ingredients" class="rounded-2xl border border-white/25 px-4 py-2 text-sm text-[var(--text-1)] hover:bg-[rgba(255,255,255,0.08)]">
+          <NuxtLink href="/ingredients" class="rounded-2xl border border-[var(--border-soft)] px-4 py-2 text-sm text-[var(--text-1)] hover:bg-[rgba(255,255,255,0.08)]">
             Volver a ingredientes
           </NuxtLink>
-          <button class="rounded-2xl border border-white/40 bg-transparent/10 px-4 py-2 text-sm font-medium text-[var(--text-1)] hover:bg-white/20" @click="openExpansionModal()">
+          <button class="rounded-2xl border border-[var(--border-strong)] bg-[rgba(255,255,255,0.06)] px-4 py-2 text-sm font-medium text-[var(--text-1)] hover:bg-white/20" @click="openExpansionModal()">
             Nueva expansion
           </button>
         </div>
@@ -35,12 +35,12 @@
               <p class="mt-1 truncate text-xs ui-subtle">{{ m.aliases?.length ? m.aliases.join(', ') : 'Sin alias' }}</p>
             </div>
             <div class="flex items-center gap-1">
-              <button class="rounded-lg border border-white/20 px-2 py-1 text-xs text-[var(--text-1)] hover:bg-[rgba(255,255,255,0.08)]" @click="openExpansionModal(m)">Editar</button>
-              <button class="rounded-lg border border-red-400/50 px-2 py-1 text-xs hover:bg-red-500/10" @click="deleteExpansion(m.id)">Borrar</button>
+              <button class="rounded-lg border border-[var(--border-soft)] px-2 py-1 text-xs text-[var(--text-1)] hover:bg-[rgba(255,255,255,0.08)]" @click="openExpansionModal(m)">Editar</button>
+              <button class="rounded-lg border border-[rgba(255,100,103,0.25)] px-2 py-1 text-xs hover:bg-[var(--danger)]/10" @click="deleteExpansion(m.id)">Borrar</button>
             </div>
           </div>
           <div class="mt-3 flex flex-wrap gap-1.5">
-            <span v-for="(ing, i) in (m.ingredients || []).slice(0, 5)" :key="i" class="rounded-md border border-white/20 px-2 py-1 text-xs text-[var(--text-1)]/90">
+            <span v-for="(ing, i) in (m.ingredients || []).slice(0, 5)" :key="i" class="rounded-md border border-[var(--border-soft)] px-2 py-1 text-xs text-[var(--text-1)]/90">
               {{ ing.name }}
             </span>
             <span v-if="(m.ingredients?.length || 0) > 5" class="px-2 py-1 text-xs ui-muted">+{{ m.ingredients.length - 5 }} mas</span>

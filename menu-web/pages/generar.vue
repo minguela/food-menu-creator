@@ -4,13 +4,13 @@
 
       <!-- Notification Toast -->
       <div v-if=" notificationMessage "
-        class="fixed right-4 top-20 z-50 max-w-sm rounded-xl border bg-transparent bg-[var(--surface-1)] p-4 shadow-xl"
-        :class="notificationLevel === 'error' ? 'border-red-200' : 'border-emerald-200' ">
+        class="fixed right-4 top-20 z-50 max-w-sm rounded-xl border bg-[var(--surface-1)] p-4 shadow-xl"
+        :class="notificationLevel === 'error' ? 'border-[rgba(255,100,103,0.2)]' : 'border-[rgba(114,206,123,0.2)]' ">
         <div class="flex items-start justify-between gap-3">
           <p class="text-sm" :class="notificationLevel === 'error' ? '' : '' ">
             {{ notificationMessage }}
           </p>
-          <button class="text-xs text-[var(--text-3)] hover: text-[var(--text-2)]" @click="notificationMessage = ''">
+          <button class="text-xs text-[var(--text-3)] hover:text-[var(--text-2)]" @click="notificationMessage = ''">
             ✕
           </button>
         </div>
@@ -20,14 +20,14 @@
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div class="flex items-center gap-4">
           <div
-            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-200">
+            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[rgba(114,206,123,0.25)] to-[rgba(114,206,123,0.1)] flex items-center justify-center shadow-lg shadow-black/40">
             <svg class="w-6 h-6 text-[var(--text-1)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
             </svg>
           </div>
           <div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-[var(--text-1)] to-[var(--text-2)] bg-clip-text text-transparent">
               Generar menú rotativo
             </h1>
             <p class="text-[var(--text-3)] text-sm mt-1">Mismas recetas, cantidades ajustadas por objetivos</p>
@@ -35,7 +35,7 @@
         </div>
         <div class="flex gap-3">
           <NuxtLink href="/shopping"
-            class="px-4 py-2.5 border border-[var(--border-soft)] text-[var(--text-2)] rounded-xl hover: bg-[var(--surface-1)] hover:border-[var(--border-soft)] transition-all text-sm font-medium">
+            class="px-4 py-2.5 border border-[var(--border-soft)] text-[var(--text-2)] rounded-xl hover:bg-[var(--surface-1)] hover:border-[var(--border-soft)] transition-all text-sm font-medium">
             Ir a compra
           </NuxtLink>
           <button
@@ -169,7 +169,7 @@
           </div>
         </article>
 
-        <article class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4">
+        <article class="rounded-lg border bg-[var(--surface-1)] p-4">
           <h2 class="mb-3 font-semibold text-[var(--text-1)]">Flujo</h2>
           <ol class="space-y-2 text-sm text-[var(--text-2)]">
             <li class="rounded-md bg-[var(--surface-2)] bg-[var(--surface-1)] px-3 py-2">
@@ -188,9 +188,8 @@
               5. Lista de compra creada automáticamente
             </li>
           </ol>
-          <div v-if=" currentJob " class="mt-4 rounded-lg border p-3 text-sm" :class="currentJob.status === 'failed' ? 'border-red-200 bg-[rgba(255,100,103,0.06)] text-[var(--danger)]' : currentJob.status === 'completed'
-              ? 'border-emerald-200 bg-[rgba(114,206,123,0.06)] text-[var(--success)]'
-              : 'border-amber-200 bg-[rgba(255,214,0,0.06)] text-[var(--goldenrod)]'
+          <div v-if=" currentJob " class="mt-4 rounded-lg border p-3 text-sm" :class="currentJob.status === 'failed' ? 'border-[rgba(255,100,103,0.2)] bg-[rgba(255,100,103,0.06)] text-[var(--danger)]' : currentJob.status === 'completed' ? 'border-[rgba(114,206,123,0.2)] bg-[rgba(114,206,123,0.06)] text-[var(--success)]'
+              : 'border-[rgba(255,214,0,0.2)] bg-[rgba(255,214,0,0.06)] text-[var(--goldenrod)]'
             ">
             <p class="font-medium">
               {{
@@ -205,9 +204,8 @@
               Estado: {{ currentJob.status }} · progreso
               {{ currentJob.progress ?? 0 }}%
             </p>
-            <div class="mt-3 h-2 w-full overflow-hidden rounded bg-transparent bg-[var(--surface-1)]/70">
-              <div class="h-2 rounded transition-all" :class="currentJob.status === 'failed' ? 'bg-red-500' : currentJob.status === 'completed'
-                  ? ''
+            <div class="mt-3 h-2 w-full overflow-hidden rounded bg-[var(--surface-1)]/70">
+              <div class="h-2 rounded transition-all" :class="currentJob.status === 'failed' ? 'bg-[var(--danger)]' : currentJob.status === 'completed' ? ''
                   : ''
                 " :style=" { width: `${ Math.max( 0, Math.min( 100, currentJob.progress || 0 ) ) }%` } " />
             </div>
@@ -273,7 +271,7 @@
         </article>
       </section>
 
-      <section class="mt-6 rounded-2xl border border-emerald-100 bg-transparent bg-[var(--surface-1)] p-6 shadow-sm">
+      <section class="mt-6 rounded-2xl border border-[rgba(114,206,123,0.15)] bg-[var(--surface-1)] p-6 shadow-sm">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--success)]">
@@ -291,7 +289,7 @@
               :disabled=" nutritionGenerating || !selectedNutritionProfileId " @click=" generateNutritionMenu ">
               {{ nutritionGenerating ? "Calculando..." : "Generar preview" }}
             </button>
-            <button class="rounded-lg border px-4 py-2 text-sm font-medium text-[var(--text-2)] hover: text-[var(--text-2)] bg-[var(--surface-1)] disabled:opacity-50"
+            <button class="rounded-lg border px-4 py-2 text-sm font-medium text-[var(--text-2)] hover:text-[var(--text-2)] bg-[var(--surface-1)] disabled:opacity-50"
               :disabled=" nutritionSaving || !nutritionPreview " @click=" saveNutritionMenu ">
               {{ nutritionSaving ? "Guardando..." : "Guardar menú" }}
             </button>
@@ -416,7 +414,7 @@
         </div>
       </section>
 
-      <section v-if=" profilesSummary.length > 0 " class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4">
+      <section v-if=" profilesSummary.length > 0 " class="rounded-lg border bg-[var(--surface-1)] p-4">
         <h2 class="mb-3 font-semibold text-[var(--text-1)]">Objetivos por perfil</h2>
         <div class="overflow-x-auto">
           <table class="min-w-[760px] w-full text-sm">
@@ -443,7 +441,7 @@
       </section>
 
       <section v-if=" generatedDays.length > 0 " class="space-y-4">
-        <article v-for=" day in generatedDays " :key=" day.day_number " class="rounded-lg border bg-transparent bg-[var(--surface-1)] p-4">
+        <article v-for=" day in generatedDays " :key=" day.day_number " class="rounded-lg border bg-[var(--surface-1)] p-4">
           <h3 class="mb-3 text-lg font-semibold text-[var(--text-1)]">
             Día {{ day.day_number }} · {{ formatDate( day.day_date ) }}
           </h3>

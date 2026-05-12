@@ -9,7 +9,7 @@
       </div>
       <NuxtLink
         href="/generar"
-        class="rounded-lg px-4 py-2 text-sm text-white hover:"
+        class="rounded-lg px-4 py-2 text-sm text-[var(--text-1)] hover:"
       >
         Nuevo menú rotativo
       </NuxtLink>
@@ -60,7 +60,7 @@
                 {{ expandedJobId === job.id ? "Ocultar logs" : "Ver logs" }}
               </button>
               <button
-                class="rounded border border-[rgba(255,100,103,0.2)] px-2 py-1 text-xs text-[var(--danger)] hover:bg-red-50"
+                class="rounded border border-[rgba(255,100,103,0.2)] px-2 py-1 text-xs text-[var(--danger)] hover:bg-[rgba(255,100,103,0.08)]"
                 @click="deleteJob(job)"
               >
                 Eliminar job
@@ -167,7 +167,7 @@
                 Ver compra asociada
               </button>
               <button
-                class="rounded border border-[rgba(255,100,103,0.2)] px-3 py-1.5 text-xs text-[var(--danger)] hover:bg-red-50"
+                class="rounded border border-[rgba(255,100,103,0.2)] px-3 py-1.5 text-xs text-[var(--danger)] hover:bg-[rgba(255,100,103,0.08)]"
                 @click="deleteRotatingMenu(menu)"
               >
                 Eliminar
@@ -230,7 +230,7 @@ const statusLabel = (status: MenuGenerationJob["status"]) => {
 
 const statusClass = (status: MenuGenerationJob["status"]) => {
   if (status === "completed") return " text-[var(--success)]";
-  if (status === "failed") return "bg-red-100 ";
+  if (status === "failed") return "bg-[rgba(255,100,103,0.12)] ";
   return " text-[var(--goldenrod)]";
 };
 

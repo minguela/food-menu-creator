@@ -108,10 +108,19 @@ export function validateDayNutritionTotals({
     const targetProtein = Number(total?.target_protein_g || 0);
     const regularKcal = Number(total?.regular_kcal ?? total?.total_kcal ?? 0);
     const totalProtein = Number(total?.total_protein_g || 0);
+    const profileKcalLowerBound = Number(total?.kcal_lower_bound);
+    const effectiveKcalLowerBound =
+      Number.isFinite(profileKcalLowerBound) && profileKcalLowerBound > 0
+        ? profileKcalLowerBound
+        : targetKcal > 0
+          ? targetKcal * Number(minKcalRatio || 0)
+          : 0;
+    const effectiveMinKcalRatio =
+      targetKcal > 0 ? effectiveKcalLowerBound / targetKcal : Number(minKcalRatio || 0);
     const kcalRatio = targetKcal > 0 ? regularKcal / targetKcal : 1;
     const proteinRatio = targetProtein > 0 ? totalProtein / targetProtein : 1;
 
-    if (kcalRatio < minKcalRatio || proteinRatio < minProteinRatio) {
+    if (regularKcal < effectiveKcalLowerBound || proteinRatio < minProteinRatio) {
       violations.push({
         profile_id: total?.profile_id,
         profile_name: total?.profile_name,
@@ -120,9 +129,11 @@ export function validateDayNutritionTotals({
         total_kcal: Number(total?.total_kcal || 0),
         target_protein_g: targetProtein,
         total_protein_g: totalProtein,
+        tolerance_percent: Number(total?.tolerance_percent ?? 0),
+        kcal_lower_bound: round(effectiveKcalLowerBound, 2),
         kcal_ratio: round(kcalRatio, 4),
         protein_ratio: round(proteinRatio, 4),
-        min_kcal_ratio: minKcalRatio,
+        min_kcal_ratio: round(effectiveMinKcalRatio, 4),
         min_protein_ratio: minProteinRatio,
       });
     }

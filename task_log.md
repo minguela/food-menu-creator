@@ -1,5 +1,18 @@
 # Registro de Tareas
 
+## Sesión actual: 2026-05-14 - Comidas fijas rotativas + tolerancia kcal por perfil
+
+### Checklist de tareas
+
+- [x] Tarea #178: Implementar escalado de comidas fijas semanales en generación rotativa
+  - Nota: `menu-web/server/api/rotating-menu-generate.post.ts` ahora carga `weekly_meal_ingredients`, resuelve sus nombres contra `ingredients`, crea bases virtuales por `weekly_meal_id` y las prioriza sobre `dish.recipe_ingredients` cuando existen ingredientes explícitos en la comida semanal fuente.
+- [x] Tarea #179: Aplicar tolerancia diaria de kcal según cada perfil en el generador rotativo
+  - Nota: el runtime reutiliza `profileTargetsFromProfile`, expone `tolerance_percent` + `kcal_lower_bound` por perfil y `validateDayNutritionTotals` deja de depender solo del ratio global duro cuando el perfil aporta un límite kcal propio.
+- [x] Tarea #180: Añadir regresiones y validar build para el fix rotativo
+  - Nota: ampliados `menu-web/tests/rotating-portion-scaling.test.mjs` y `menu-web/tests/rotating-portion-scaling.spec.ts` con cobertura para tolerancia estricta/relajada y bases de comidas fijas; verificado con `npm run test:rotating`, `npm run test:nutrition`, `npm run build` y `openspec validate "fix-rotating-fixed-meal-scaling-and-profile-kcal-tolerance"`.
+- [x] Tarea #181: Preparar rama de trabajo y OpenSpec para PR
+  - Nota: creada la rama `fix/rotating-fixed-meal-scaling-profile-tolerance`; OpenSpec activo en `openspec/changes/fix-rotating-fixed-meal-scaling-and-profile-kcal-tolerance` con propuesta, diseño, spec deltas y checklist actualizado.
+
 ## Sesión actual: 2026-05-12 - Generador nutricional por scoring
 
 ### Checklist de tareas

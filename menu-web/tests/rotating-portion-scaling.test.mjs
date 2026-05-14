@@ -63,6 +63,8 @@ test("flags collapsed day totals against kcal and protein guardrails", () => {
         total_kcal: 54,
         target_protein_g: 120,
         total_protein_g: 1.2,
+        tolerance_percent: 10,
+        kcal_lower_bound: 1710,
       },
     ],
     minKcalRatio: 0.8,
@@ -71,8 +73,69 @@ test("flags collapsed day totals against kcal and protein guardrails", () => {
 
   assert.equal(violations.length, 1);
   assert.equal(violations[0].profile_id, "david");
+  assert.equal(violations[0].kcal_lower_bound, 1710);
   assert.ok(violations[0].kcal_ratio < 0.8);
   assert.ok(violations[0].protein_ratio < 0.75);
+});
+
+test("uses profile-specific kcal tolerance instead of one global ratio", () => {
+  const strictViolations = validateDayNutritionTotals({
+    dayTotals: [
+      {
+        profile_id: "strict",
+        profile_name: "Strict",
+        all_special_day: false,
+        target_kcal: 1900,
+        regular_kcal: 1660,
+        total_kcal: 1660,
+        target_protein_g: 120,
+        total_protein_g: 120,
+        tolerance_percent: 10,
+        kcal_lower_bound: 1710,
+      },
+    ],
+    minKcalRatio: 0.8,
+    minProteinRatio: 0.75,
+  });
+  const relaxedViolations = validateDayNutritionTotals({
+    dayTotals: [
+      {
+        profile_id: "relaxed",
+        profile_name: "Relaxed",
+        all_special_day: false,
+        target_kcal: 1900,
+        regular_kcal: 1660,
+        total_kcal: 1660,
+        target_protein_g: 120,
+        total_protein_g: 120,
+        tolerance_percent: 15,
+        kcal_lower_bound: 1615,
+      },
+    ],
+    minKcalRatio: 0.95,
+    minProteinRatio: 0.75,
+  });
+
+  assert.equal(strictViolations.length, 1);
+  assert.equal(relaxedViolations.length, 0);
+});
+
+test("weekly fixed meal ingredient bases scale above their curated quantities", () => {
+  const decision = computeAppliedMultiplier({
+    desiredMultiplier: 1.8,
+    minMultiplier: 1,
+    densityCap: 8,
+    maxMultiplier: 8,
+  });
+  const bread = calculateDensityScaledQuantity({
+    baseQuantity: 120,
+    mealMultiplier: decision.appliedMultiplier,
+    caloricDensityLevel: "normal",
+    kcalPer100g: 250,
+  });
+
+  assert.ok(bread.finalQuantity >= 120);
+  assert.ok(bread.finalQuantity > 120);
 });
 
 test("scales low density ingredients more than very caloric ingredients", () => {

@@ -14,6 +14,7 @@ import {
   calculateDensityScaledQuantity,
   validateDayNutritionTotals,
 } from "~/utils/rotating-portion-scaling.js";
+import { profileTargetsFromProfile } from "~/utils/nutrition/profileTargets";
 
 type MealType = "desayuno" | "comida" | "cena";
 
@@ -25,6 +26,7 @@ const MAX_SERVING_MULTIPLIER = 8;
 const MAX_RELATIVE_SERVING_MULTIPLIER = 500;
 const MIN_KCAL_TARGET_RATIO = 0.8;
 const MIN_PROTEIN_TARGET_RATIO = 0.75;
+const WEEKLY_MEAL_VIRTUAL_RECIPE_PREFIX = "weekly-meal:";
 
 type GeneratePayload = {
   userId: string;
@@ -146,32 +148,59 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const profileTargets = (profiles || []).map((profile: any) => {
-    const inferredProteinG = Number(
-      (Number(profile.daily_kcal_target) *
-        (100 - Number(profile.fat_pct_target) - Number(profile.carbs_pct_target))) /
-        100 /
-        4,
-    );
-    const proteinTarget = Number(profile.daily_protein_target || inferredProteinG);
-    return {
-      key: profile.id,
-      profile_id: profile.id,
-      profile_name: profile.name,
-      target_kcal: Number(profile.daily_kcal_target),
-      target_protein_g: proteinTarget,
-      target_carbs_g: Number(
-        (Number(profile.daily_kcal_target) * Number(profile.carbs_pct_target)) /
-          100 /
-          4,
-      ),
-      target_fat_g: Number(
-        (Number(profile.daily_kcal_target) * Number(profile.fat_pct_target)) /
-          100 /
-          9,
-      ),
-    };
-  });
+  let profileTargets: Array<{
+    key: string;
+    profile_id: string;
+    profile_name: string;
+    target_kcal: number;
+    target_protein_g: number;
+    target_carbs_g: number;
+    target_fat_g: number;
+    tolerance_percent: number;
+    kcal_lower_bound: number;
+  }> = [];
+
+  try {
+    profileTargets = (profiles || []).map((profile: any) => {
+      const targets = profileTargetsFromProfile(profile);
+      return {
+        key: profile.id,
+        profile_id: String(targets.profileId || profile.id),
+        profile_name: String(targets.profileName || profile.name || "Perfil"),
+        target_kcal: Number(targets.targetKcal),
+        target_protein_g: Number(targets.targetProteinG),
+        target_carbs_g: Number(targets.targetCarbsG),
+        target_fat_g: Number(targets.targetFatG),
+        tolerance_percent: Number(targets.tolerancePercent),
+        kcal_lower_bound: Number(targets.bounds.kcal.min),
+      };
+    });
+  } catch (error: any) {
+    const message =
+      error?.message ||
+      "Los perfiles seleccionados tienen objetivos nutricionales inválidos.";
+    await logger.log({
+      level: "error",
+      step: "read_profiles",
+      status: "failed",
+      message,
+      metadata: {
+        requested_profile_ids: body.profileIds,
+        error: error?.message || String(error),
+      },
+      progress: {
+        progress: 100,
+        currentStep: "read_profiles",
+        status: "failed",
+        errorMessage: message,
+        completedAt: new Date().toISOString(),
+      },
+    });
+    throw createError({
+      statusCode: 422,
+      statusMessage: message,
+    });
+  }
 
   await logger.log({
     level: "info",
@@ -183,6 +212,8 @@ export default defineEventHandler(async (event) => {
         profile_id: profile.profile_id,
         profile_name: profile.profile_name,
         target_kcal: profile.target_kcal,
+        tolerance_percent: profile.tolerance_percent,
+        kcal_lower_bound: profile.kcal_lower_bound,
       })),
     },
     progress: { progress: 22, currentStep: "target_kcal" },
@@ -349,6 +380,24 @@ export default defineEventHandler(async (event) => {
     recipeIngredientsByRecipeId.get(row.recipe_id)?.push(row);
   }
 
+  const weeklyMealIds = Array.from(
+    new Set((weeklyMeals || []).map((meal: any) => meal.id).filter(Boolean)),
+  );
+  const { data: weeklyMealIngredientRows } = weeklyMealIds.length
+    ? await supabase
+        .from("weekly_meal_ingredients")
+        .select("id, weekly_meal_id, name, quantity, unit_type")
+        .in("weekly_meal_id", weeklyMealIds)
+    : { data: [] as any[] };
+  const weeklyMealIngredientsByMealId = new Map<string, any[]>();
+  for (const row of weeklyMealIngredientRows || []) {
+    const key = String(row.weekly_meal_id);
+    if (!weeklyMealIngredientsByMealId.has(key)) {
+      weeklyMealIngredientsByMealId.set(key, []);
+    }
+    weeklyMealIngredientsByMealId.get(key)?.push(row);
+  }
+
   const ingredientIds = Array.from(
     new Set(
       (recipeRows || [])
@@ -356,16 +405,46 @@ export default defineEventHandler(async (event) => {
         .map((row: any) => row.ingredient_id),
     ),
   );
-  const { data: ingredientRows } = ingredientIds.length
-    ? await supabase
+  const weeklyIngredientNormalizedNames = Array.from(
+    new Set(
+      (weeklyMealIngredientRows || [])
+        .map((row: any) => normalizeDishName(row.name))
+        .filter(Boolean),
+    ),
+  );
+  const recipeIngredientSelect = ingredientIds.length
+    ? supabase
         .from("ingredients")
         .select(
           "id, name, normalized_name, nutrition_status, caloric_density_level, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
         )
         .in("id", ingredientIds)
-    : { data: [] as any[] };
+    : Promise.resolve({ data: [] as any[] });
+  const weeklyIngredientSelect = weeklyIngredientNormalizedNames.length
+    ? supabase
+        .from("ingredients")
+        .select(
+          "id, name, normalized_name, nutrition_status, caloric_density_level, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
+        )
+        .in("normalized_name", weeklyIngredientNormalizedNames)
+    : Promise.resolve({ data: [] as any[] });
+  const [{ data: recipeIngredientRows }, { data: weeklyCatalogIngredientRows }] =
+    await Promise.all([recipeIngredientSelect, weeklyIngredientSelect]);
+  const ingredientRows = Array.from(
+    new Map(
+      [...(recipeIngredientRows || []), ...(weeklyCatalogIngredientRows || [])].map(
+        (row: any) => [String(row.id), row],
+      ),
+    ).values(),
+  );
   const nutritionById = new Map(
-    (ingredientRows || []).map((row: any) => [row.id, row]),
+    (ingredientRows || []).map((row: any) => [String(row.id), row]),
+  );
+  const nutritionByNormalizedName = new Map(
+    (ingredientRows || []).map((row: any) => [
+      normalizeDishName(row.normalized_name || row.name),
+      row,
+    ]),
   );
 
   await logger.log({
@@ -377,6 +456,7 @@ export default defineEventHandler(async (event) => {
       unique_dish_names_count: uniqueDishNames.length,
       matched_dishes_count: dishRows?.length || 0,
       recipe_ingredients_count: recipeRows?.length || 0,
+      weekly_meal_ingredients_count: weeklyMealIngredientRows?.length || 0,
       nutrition_rows_count: ingredientRows?.length || 0,
     },
     progress: { progress: 36, currentStep: "recipe_selection" },
@@ -678,6 +758,165 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  const invalidWeeklyMealBaseByMealId = new Map<
+    string,
+    {
+      reason: string;
+      details?: string;
+      blocking_ingredients?: string[];
+    }
+  >();
+
+  for (const weeklyMeal of weeklyMeals || []) {
+    const weeklyMealId = String(weeklyMeal.id || "").trim();
+    if (!weeklyMealId) continue;
+    const explicitWeeklyIngredients =
+      weeklyMealIngredientsByMealId.get(weeklyMealId) || [];
+    if (explicitWeeklyIngredients.length === 0) continue;
+    if (isSpecialMealCandidate(weeklyMeal)) continue;
+
+    const normalizedName = normalizeDishName(weeklyMeal.dish_name);
+    const ingredientBase = explicitWeeklyIngredients.map((ing: any) => {
+      const matchedIngredient = nutritionByNormalizedName.get(
+        normalizeDishName(ing.name),
+      );
+      return {
+        ingredient_id: matchedIngredient?.id || null,
+        name: String(ing.name || ""),
+        normalized_name: normalizeDishName(ing.name),
+        quantity: Number(ing.quantity),
+        unit_type: String(ing.unit_type || ""),
+      };
+    });
+    const hasInvalidQuantity = ingredientBase.some(
+      (ing) => !Number.isFinite(ing.quantity) || ing.quantity <= 0,
+    );
+    const hasInvalidUnit = ingredientBase.some(
+      (ing) => normalizeToGrams(ing.quantity, ing.unit_type) === null,
+    );
+    if (hasInvalidQuantity || hasInvalidUnit) {
+      invalidWeeklyMealBaseByMealId.set(weeklyMealId, {
+        reason: "invalid_weekly_meal_ingredient_data",
+        details: hasInvalidQuantity
+          ? "ingredient_quantity_invalid"
+          : "ingredient_unit_not_convertible",
+      });
+      continue;
+    }
+
+    const unresolvedIngredientNames = Array.from(
+      new Set(
+        ingredientBase
+          .filter((ing) => !ing.ingredient_id)
+          .map((ing) => String(ing.name || "").trim())
+          .filter(Boolean),
+      ),
+    );
+    if (unresolvedIngredientNames.length > 0) {
+      invalidWeeklyMealBaseByMealId.set(weeklyMealId, {
+        reason: "missing_ingredient_link",
+        details: `weekly_meal_ingredients_unresolved:${unresolvedIngredientNames.join(",")}`,
+        blocking_ingredients: unresolvedIngredientNames,
+      });
+      continue;
+    }
+
+    const missingNutritionNames = Array.from(
+      new Set(
+        ingredientBase
+          .filter((ing) => {
+            const ingredient = nutritionById.get(String(ing.ingredient_id));
+            return (
+              !ingredient ||
+              ingredient.nutrition_status !== "complete" ||
+              ingredient.kcal_per_100g == null ||
+              ingredient.protein_per_100g == null ||
+              ingredient.carbs_per_100g == null ||
+              ingredient.fat_per_100g == null
+            );
+          })
+          .map((ing) => String(ing.name || "").trim())
+          .filter(Boolean),
+      ),
+    );
+    if (missingNutritionNames.length > 0) {
+      invalidWeeklyMealBaseByMealId.set(weeklyMealId, {
+        reason: "missing_nutrition",
+        details: `weekly_meal_ingredients_missing_nutrition:${missingNutritionNames.join(",")}`,
+        blocking_ingredients: missingNutritionNames,
+      });
+      continue;
+    }
+
+    let baseKcal = 0;
+    let baseProtein = 0;
+    const normalizedIngredientBase = ingredientBase.map((ing) => ({
+      ...ing,
+      grams: normalizeToGrams(ing.quantity, ing.unit_type),
+    }));
+    for (const ing of ingredientBase) {
+      const nutrition = nutritionById.get(String(ing.ingredient_id));
+      const grams = normalizeToGrams(ing.quantity, ing.unit_type);
+      if (!nutrition || grams === null) continue;
+      const factor = grams / 100;
+      baseKcal += Number(nutrition.kcal_per_100g) * factor;
+      baseProtein += Number(nutrition.protein_per_100g) * factor;
+    }
+
+    if (baseKcal <= 0 || baseProtein <= 0) {
+      invalidWeeklyMealBaseByMealId.set(weeklyMealId, {
+        reason: "invalid_recipe_data",
+        details: "weekly_meal_base_macros_not_calculable",
+      });
+      continue;
+    }
+
+    const weeklyBaseValidation = validateRecipeBase({
+      ingredientBase: normalizedIngredientBase,
+      baseKcal,
+      minIngredientGrams: MIN_RECIPE_INGREDIENT_GRAMS,
+      minBaseKcal: MIN_NORMAL_RECIPE_BASE_KCAL,
+      isSpecial: false,
+      isCountBasedUnit,
+    });
+
+    if (!weeklyBaseValidation.valid) {
+      const detail = weeklyBaseValidation.issues
+        .map((issue) =>
+          [
+            issue.code,
+            issue.ingredient_name || "",
+            Number.isFinite(issue.quantity) ? `q=${issue.quantity}` : "",
+            issue.unit_type ? `u=${issue.unit_type}` : "",
+            Number.isFinite(issue.grams) ? `g=${issue.grams}` : "",
+            issue.message,
+          ]
+            .filter(Boolean)
+            .join("|"),
+        )
+        .join(";");
+      invalidWeeklyMealBaseByMealId.set(weeklyMealId, {
+        reason: "invalid_recipe_data",
+        details: detail || "implausible_weekly_meal_base",
+      });
+      continue;
+    }
+
+    validRecipeById.set(toWeeklyMealVirtualRecipeId(weeklyMealId), {
+      dish_id: toWeeklyMealVirtualRecipeId(weeklyMealId),
+      dish_name: String(weeklyMeal.dish_name || ""),
+      normalized_name: normalizedName,
+      ingredient_base: ingredientBase.map((ing) => ({
+        ...ing,
+        ingredient_id: String(ing.ingredient_id),
+      })),
+      base_kcal: baseKcal,
+      base_protein: baseProtein,
+      uses_relative_quantities: weeklyBaseValidation.usesRelativeQuantities,
+      scaling_warnings: weeklyBaseValidation.issues,
+    });
+  }
+
   for (const [, dish] of dishByNormalizedName) {
     if (!dish._compound) continue;
     const compoundDishIds = Array.isArray(dish._compoundDishIds)
@@ -837,10 +1076,24 @@ export default defineEventHandler(async (event) => {
   for (const mealType of ["desayuno", "comida", "cena"] as MealType[]) {
     const sourceMeals = mealLibrary[mealType] || [];
     for (const sourceMeal of sourceMeals) {
-      let linkedDish =
-        dishByNormalizedName.get(normalizeDishName(sourceMeal.dish_name)) || null;
+      const sourceMealId = String(sourceMeal.id || "").trim();
+      const weeklyMealVirtualRecipeId = toWeeklyMealVirtualRecipeId(sourceMealId);
+      const hasExplicitWeeklyIngredients = weeklyMealIngredientsByMealId.has(sourceMealId);
+      let linkedDish = hasExplicitWeeklyIngredients
+        ? {
+            id: weeklyMealVirtualRecipeId,
+            name: String(sourceMeal.dish_name || ""),
+            normalized_name: normalizeDishName(sourceMeal.dish_name),
+            recipe_status: validRecipeById.has(weeklyMealVirtualRecipeId)
+              ? "complete"
+              : "pending_ingredients",
+            is_special: false,
+            special_kcal_reserved: 0,
+            _fromWeeklyMealIngredients: true,
+          }
+        : dishByNormalizedName.get(normalizeDishName(sourceMeal.dish_name)) || null;
 
-      if (!linkedDish && sourceMeal.compound_day_id) {
+      if (!hasExplicitWeeklyIngredients && !linkedDish && sourceMeal.compound_day_id) {
         const compoundDay = compoundDayById.get(String(sourceMeal.compound_day_id));
         if (compoundDay) {
           const firstDish = dishById.get(String(compoundDay.first_dish_id)) || null;
@@ -880,7 +1133,11 @@ export default defineEventHandler(async (event) => {
         }
       }
 
-      if (!linkedDish && String(sourceMeal.dish_name || "").includes("+")) {
+      if (
+        !hasExplicitWeeklyIngredients &&
+        !linkedDish &&
+        String(sourceMeal.dish_name || "").includes("+")
+      ) {
         const parts = String(sourceMeal.dish_name || "")
           .split(/\s*\+\s*/)
           .map((p) => p.trim())
@@ -960,6 +1217,24 @@ export default defineEventHandler(async (event) => {
             ),
           });
         }
+      }
+
+      if (
+        hasExplicitWeeklyIngredients &&
+        !validRecipeById.has(weeklyMealVirtualRecipeId)
+      ) {
+        const invalidWeeklyMeal = invalidWeeklyMealBaseByMealId.get(sourceMealId);
+        discardedMealOptions.push({
+          weekly_menu_id: sourceMeal.weekly_menu_id
+            ? String(sourceMeal.weekly_menu_id)
+            : null,
+          day_number: Number(sourceMeal.day_number) || null,
+          meal_type: mealType,
+          meal_slot: normalizeMealSlot(sourceMeal.meal_slot),
+          dish_name: String(sourceMeal.dish_name || ""),
+          reason: invalidWeeklyMeal?.reason || "weekly_meal_ingredients_not_validated",
+        });
+        continue;
       }
 
       const isSpecial = isSpecialMealCandidate(sourceMeal, linkedDish);
@@ -1488,6 +1763,8 @@ export default defineEventHandler(async (event) => {
         target_protein_g: round(profile.target_protein_g),
         target_carbs_g: round(profile.target_carbs_g),
         target_fat_g: round(profile.target_fat_g),
+        tolerance_percent: round(profile.tolerance_percent),
+        kcal_lower_bound: round(profile.kcal_lower_bound),
         total_kcal: Math.round(kcal),
         total_protein_g: round(protein),
         total_carbs_g: round(carbs),
@@ -1593,6 +1870,11 @@ export default defineEventHandler(async (event) => {
         violations: dayNutritionGuardrailViolations.slice(0, 40),
         min_kcal_ratio: MIN_KCAL_TARGET_RATIO,
         min_protein_ratio: MIN_PROTEIN_TARGET_RATIO,
+        profiles: profileTargets.map((profile) => ({
+          profile_id: profile.profile_id,
+          tolerance_percent: profile.tolerance_percent,
+          kcal_lower_bound: profile.kcal_lower_bound,
+        })),
       },
       progress: {
         progress: 72,
@@ -2094,6 +2376,10 @@ export default defineEventHandler(async (event) => {
     },
   };
 });
+
+function toWeeklyMealVirtualRecipeId(weeklyMealId: string) {
+  return `${WEEKLY_MEAL_VIRTUAL_RECIPE_PREFIX}${String(weeklyMealId || "").trim()}`;
+}
 
 function normalizeToGrams(quantity: number, unitType: string): number | null {
   if (!Number.isFinite(quantity) || quantity <= 0) return 0;

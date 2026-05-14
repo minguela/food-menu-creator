@@ -53,6 +53,8 @@ test.describe("rotating menu scaling guardrails", () => {
           total_kcal: 54,
           target_protein_g: 120,
           total_protein_g: 1.2,
+          tolerance_percent: 10,
+          kcal_lower_bound: 1710,
         },
       ],
       minKcalRatio: 0.8,
@@ -60,7 +62,68 @@ test.describe("rotating menu scaling guardrails", () => {
     });
 
     expect(violations).toHaveLength(1);
+    expect(violations[0].kcal_lower_bound).toBe(1710);
     expect(violations[0].kcal_ratio).toBeLessThan(0.8);
+  });
+
+  test("profile-specific kcal tolerance can pass a day that a stricter profile warns", async () => {
+    const strictViolations = validateDayNutritionTotals({
+      dayTotals: [
+        {
+          profile_id: "strict",
+          profile_name: "Strict",
+          all_special_day: false,
+          target_kcal: 1900,
+          regular_kcal: 1660,
+          total_kcal: 1660,
+          target_protein_g: 120,
+          total_protein_g: 120,
+          tolerance_percent: 10,
+          kcal_lower_bound: 1710,
+        },
+      ],
+      minKcalRatio: 0.8,
+      minProteinRatio: 0.75,
+    });
+    const relaxedViolations = validateDayNutritionTotals({
+      dayTotals: [
+        {
+          profile_id: "relaxed",
+          profile_name: "Relaxed",
+          all_special_day: false,
+          target_kcal: 1900,
+          regular_kcal: 1660,
+          total_kcal: 1660,
+          target_protein_g: 120,
+          total_protein_g: 120,
+          tolerance_percent: 15,
+          kcal_lower_bound: 1615,
+        },
+      ],
+      minKcalRatio: 0.95,
+      minProteinRatio: 0.75,
+    });
+
+    expect(strictViolations).toHaveLength(1);
+    expect(relaxedViolations).toHaveLength(0);
+  });
+
+  test("weekly fixed meal ingredient bases still scale above curated quantities", async () => {
+    const decision = computeAppliedMultiplier({
+      desiredMultiplier: 1.8,
+      minMultiplier: 1,
+      densityCap: 8,
+      maxMultiplier: 8,
+    });
+    const bread = calculateDensityScaledQuantity({
+      baseQuantity: 120,
+      mealMultiplier: decision.appliedMultiplier,
+      caloricDensityLevel: "normal",
+      kcalPer100g: 250,
+    });
+
+    expect(bread.finalQuantity).toBeGreaterThanOrEqual(120);
+    expect(bread.finalQuantity).toBeGreaterThan(120);
   });
 
   test("density-aware scaling grows low-density ingredients more than very caloric ones", async () => {

@@ -334,4 +334,6 @@ export interface RotatingProfileTarget {
   target_protein_g: number;
   target_carbs_g: number;
   target_fat_g: number;
+  tolerance_percent?: number;
+  kcal_lower_bound?: number;
 }

@@ -1317,17 +1317,14 @@ const invokeOcrWithRetry = async ( {
         }
       }
 
-      const response = await fetch(
-        `${ runtimeConfig.public.supabaseUrl }/functions/v1/ocr-processor`,
-        {
-          method: "POST",
-          headers: {
-            apikey: runtimeConfig.public.supabaseAnonKey,
-            Authorization: `Bearer ${ accessToken }`,
-          },
-          body: formData,
+      const response = await fetch( "/api/ocr", {
+        method: "POST",
+        headers: {
+          apikey: runtimeConfig.public.supabaseAnonKey,
+          Authorization: `Bearer ${ accessToken }`,
         },
-      );
+        body: formData,
+      } );
 
       if ( response.ok ) return { error: null };
 

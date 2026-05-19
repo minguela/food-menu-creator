@@ -21,6 +21,8 @@ export default defineNuxtConfig({
       appBuildTime: process.env.NUXT_PUBLIC_APP_BUILD_TIME || "",
     },
     supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    ocrProcessorUrl: process.env.OCR_PROCESSOR_URL || "",
+    ocrSharedSecret: process.env.OCR_SHARED_SECRET || "",
     twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
     twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
     twilioFromNumber: process.env.TWILIO_FROM_NUMBER,

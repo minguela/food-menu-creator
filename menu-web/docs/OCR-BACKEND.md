@@ -25,10 +25,36 @@ Proxy server-side (server/api/ocr.post.ts)
 |---------|--------|
 | `nuxt.config.ts` | Anadido `ocrProcessorUrl` y `ocrSharedSecret` a runtimeConfig (server-only) |
 | `.env.example` | Anadido `OCR_PROCESSOR_URL` y `OCR_SHARED_SECRET` |
-| `server/api/ocr.post.ts` | Nuevo proxy server-side: reenvia al Docker OCR o a Supabase Edge |
+| `server/api/ocr.post.ts` | Nuevo proxy server-side: reenvia al Docker OCR o a Supabase Edge. **Fallback automatico** a Supabase si Docker devuelve 502/503/504 o timeout. |
 | `pages/menu/[id].vue` | Modificado `invokeOcrWithRetry` para llamar a `/api/ocr` |
 
 ## Como Cambiar de Backend OCR
+
+### Fallback Automatico (Nuevo)
+
+El proxy ahora tiene **fallback automatico** a Supabase Edge Function cuando:
+
+- Docker OCR devuelve HTTP 502, 503, o 504
+- Docker OCR no responde (timeout, connection refused, fetch failed)
+- Cloudflare Tunnel u OCR Docker estan caidos
+
+NO hace fallback cuando:
+- Docker devuelve 401 (secreto invalido)
+- Docker devuelve 400/422 (payload invalido)
+- Docker devuelve 500 (error interno de OCR)
+
+En estos casos, el error se devuelve tal cual al cliente.
+
+```
+Cliente → Vercel Proxy → Docker OCR
+                              ↓ (502/503/504/timeout)
+                         Supabase Edge (fallback)
+                              ↓ (tambien falla)
+                         Error 504 al cliente
+```
+
+Este fallback automatico permite que la app siga funcionando
+incluso si el tunnel Cloudflare o el contenedor OCR caen.
 
 ### 1. Usar Supabase Edge Function (default, produccion actual)
 

@@ -7,6 +7,11 @@ import { defineEventHandler, readRawBody, getHeader, createError } from 'h3'
  * - Si OCR_PROCESSOR_URL tiene valor → Docker OCR (external)
  * - Si esta vacio → Supabase Edge Function (default)
  *
+ * FALLBACK AUTOMATICO (infra):
+ *   Si Docker OCR devuelve 502/503/504 o timeout de red,
+ *   se intenta fallback a Supabase Edge automaticamente.
+ *   Solo aplica a errores de transporte/infra, NO a 401 ni validacion.
+ *
  * El secreto x-ocr-secret nunca sale del servidor.
  *
  * Hardening:
@@ -17,7 +22,7 @@ import { defineEventHandler, readRawBody, getHeader, createError } from 'h3'
  * - Logs sanitizados (nunca loguean imagenes ni secretos)
  * - Respuesta OCR truncada a 1MB para proteger memoria
  * - No filtra secretos en errores
- * - Retry 0 (1 solo intento, el cliente hace retry si quiere)
+ * - Fallback automatico a Supabase en errores infra Docker
  */
 
 const OCR_TIMEOUT_MS = 45000
@@ -67,8 +72,67 @@ export default defineEventHandler(async (event) => {
 
   const startTime = Date.now()
 
+  // --- Funcion interna: llamada a Supabase Edge (fallback) ---
+  async function callSupabaseFallback(reason: string): Promise<any> {
+    const supabaseUrl = runtimeConfig.public.supabaseUrl
+    const supabaseAnonKey = runtimeConfig.public.supabaseAnonKey
+
+    console.log(`[server/api/ocr] FALLBACK → Supabase Edge (${reason}, ${body!.length} bytes)`)
+
+    const headers: Record<string, string> = {
+      'Content-Type': contentType,
+      'apikey': clientApiKey || supabaseAnonKey,
+    }
+
+    if (clientAuth) {
+      headers['Authorization'] = clientAuth
+    }
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), OCR_TIMEOUT_MS)
+
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/ocr-processor`,
+        {
+          method: 'POST',
+          headers,
+          body: body || undefined,
+          signal: controller.signal,
+        },
+      )
+
+      clearTimeout(timeoutId)
+
+      const responseBody = await response.text()
+
+      if (responseBody.length > MAX_RESPONSE_BYTES) {
+        console.warn(`[server/api/ocr] Supabase Edge response too large: ${responseBody.length} bytes`)
+        event.node.res.statusCode = 502
+        return { success: false, error: 'OCR response too large' }
+      }
+
+      const duration = Date.now() - startTime
+      console.log(`[server/api/ocr] ← Supabase ${response.status} ${duration}ms (fallback)`)
+
+      event.node.res.statusCode = response.status
+      return JSON.parse(responseBody)
+    } catch (err: any) {
+      clearTimeout(timeoutId)
+      const duration = Date.now() - startTime
+      const isTimeout = err.name === 'AbortError'
+      console.error(`[server/api/ocr] Supabase Edge fallback error: ${isTimeout ? 'Timeout' : err.message} (${duration}ms)`)
+      throw createError({
+        statusCode: 504,
+        statusMessage: isTimeout
+          ? 'OCR timeout (45s). Both Docker and Supabase failed. Retry later.'
+          : 'OCR unreachable. Both Docker and Supabase failed.',
+      })
+    }
+  }
+
+  // --- Modo Docker OCR (external) ---
   if (ocrUrl) {
-    // Modo Docker OCR (external)
     console.log(`[server/api/ocr] → Docker OCR (${body.length} bytes)`)
 
     const headers: Record<string, string> = {
@@ -101,17 +165,33 @@ export default defineEventHandler(async (event) => {
         return { success: false, error: 'OCR response too large' }
       }
 
-      // Sanitizar: no loguear el body completo (puede contener datos de menus)
       const duration = Date.now() - startTime
       console.log(`[server/api/ocr] ← Docker ${response.status} ${duration}ms`)
 
+      // FALLBACK AUTOMATICO: solo errores de infra/transporte
+      if (response.status === 502 || response.status === 503 || response.status === 504) {
+        console.warn(`[server/api/ocr] Docker returned ${response.status}, triggering fallback to Supabase`)
+        return await callSupabaseFallback(`Docker HTTP ${response.status}`)
+      }
+
+      // Para 401/403/400/422/500: NO hacer fallback, devolver tal cual al cliente
+      // El cliente debe manejar estos errores (ej: 401 = secreto mal)
       event.node.res.statusCode = response.status
       return JSON.parse(responseBody)
     } catch (err: any) {
       clearTimeout(timeoutId)
       const duration = Date.now() - startTime
       const isTimeout = err.name === 'AbortError'
+
       console.error(`[server/api/ocr] Docker OCR error: ${isTimeout ? 'Timeout' : err.message} (${duration}ms)`)
+
+      // FALLBACK AUTOMATICO: timeout de red o conexion rechazada
+      if (isTimeout || err.message?.includes('fetch failed') || err.message?.includes('ECONNREFUSED')) {
+        console.warn(`[server/api/ocr] Docker unreachable (${isTimeout ? 'timeout' : err.message}), triggering fallback to Supabase`)
+        return await callSupabaseFallback(isTimeout ? 'Docker timeout' : `Docker unreachable: ${err.message}`)
+      }
+
+      // Otros errores (DNS, etc): no fallback
       throw createError({
         statusCode: 504,
         statusMessage: isTimeout
@@ -121,7 +201,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Modo Supabase Edge Function (default fallback)
+  // --- Modo Supabase Edge Function (default fallback cuando URL vacia) ---
   const supabaseUrl = runtimeConfig.public.supabaseUrl
   const supabaseAnonKey = runtimeConfig.public.supabaseAnonKey
 

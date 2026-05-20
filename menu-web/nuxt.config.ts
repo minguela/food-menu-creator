@@ -5,7 +5,11 @@ export default defineNuxtConfig({
   modules: ["@nuxtjs/tailwindcss"],
   css: ["~/assets/css/main.css"],
   nitro: {
-    preset: "vercel-edge",
+    // CAMBIO CRITICO OCR-DOCKER: vercel-edge -> vercel
+    // vercel-edge usa Edge Runtime que NO soporta event.node.* ni readRawBody
+    // para multipart. vercel usa Node.js serverless (18.x) que SI lo soporta.
+    // Este cambio es necesario para que /api/ocr.post.ts funcione con OCR Docker.
+    preset: "vercel",
   },
   runtimeConfig: {
     public: {

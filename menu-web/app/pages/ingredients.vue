@@ -14,7 +14,9 @@
 
     <section class="ui-surface rounded-lg border p-4">
       <div class="flex flex-wrap items-center gap-2">
-        <button class="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+        <button
+          v-if="selectedIds.length > 0"
+          class="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
           :disabled=" selectedIds.length === 0 " @click=" deleteSelected ">
           Eliminar seleccionados ({{ selectedIds.length }})
         </button>
@@ -26,7 +28,9 @@
           :disabled="exportingCsv" @click="exportCsv">
           {{ exportingCsv ? "Exportando..." : "Exportar CSV" }}
         </button>
-        <button class="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+        <button
+          v-if="selectedIds.length > 1"
+          class="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           :disabled="selectedIds.length < 2" @click="openMergeSelectedModal">
           Fusionar seleccionados
         </button>

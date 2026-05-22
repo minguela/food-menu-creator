@@ -1,16 +1,16 @@
 :root {
-  --color-canvas: #000000;
-  --color-shell: #020202;
-  --color-surface-1: #050505;
-  --color-surface-2: #0b0b0b;
-  --color-surface-3: #121212;
+  --color-canvas: #0a0b0d;
+  --color-shell: #101217;
+  --color-surface-1: #151923;
+  --color-surface-2: #1b2130;
+  --color-surface-3: #242c3d;
 
   --color-text-1: #ffffff;
-  --color-text-2: #e5e5e5;
-  --color-text-3: #a1a1a1;
+  --color-text-2: #d7dbe5;
+  --color-text-3: #a5acba;
 
-  --color-border-soft: rgba(255, 255, 255, 0.1);
-  --color-border-strong: rgba(255, 255, 255, 0.16);
+  --color-border-soft: rgba(255, 255, 255, 0.14);
+  --color-border-strong: rgba(255, 255, 255, 0.24);
 
   --color-accent: #bbdef2;
   --color-accent-strong: #d1aad7;
@@ -28,7 +28,7 @@
   --color-ghost-white: #ffffff;
   --color-iron-slate: #a1a1a1;
   --color-halo-pale: #f4f0ff;
-  --color-shadow-tint: #020202;
+  --color-shadow-tint: #111522;
   --color-subtle-gray: #e5e5e5;
   --color-iridescent-glow: #bbdef2;
   --color-spectrum-flare: #d1aad7;
@@ -88,20 +88,20 @@
 
 @theme {
   /* ── Surface colors ── */
-  --color-canvas: #000000;
-  --color-shell: #020202;
-  --color-surface-1: #050505;
-  --color-surface-2: #0b0b0b;
-  --color-surface-3: #121212;
+  --color-canvas: #0a0b0d;
+  --color-shell: #101217;
+  --color-surface-1: #151923;
+  --color-surface-2: #1b2130;
+  --color-surface-3: #242c3d;
 
   /* ── Text colors ── */
   --color-text-1: #ffffff;
-  --color-text-2: #e5e5e5;
-  --color-text-3: #a1a1a1;
+  --color-text-2: #d7dbe5;
+  --color-text-3: #a5acba;
 
   /* ── Border colors ── */
-  --color-border-soft: #272727;
-  --color-border-strong: #4a4a4a;
+  --color-border-soft: #3a445c;
+  --color-border-strong: #4f5b77;
 
   /* ── Accent (iridescent) ── */
   --color-accent: #bbdef2;
@@ -124,7 +124,7 @@
   --color-ghost-white: #ffffff;
   --color-iron-slate: #a1a1a1;
   --color-halo-pale: #f4f0ff;
-  --color-shadow-tint: #020202;
+  --color-shadow-tint: #111522;
   --color-subtle-gray: #e5e5e5;
   --color-iridescent-glow: #bbdef2;
   --color-spectrum-flare: #d1aad7;

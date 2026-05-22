@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const targets = ["pages", "components"];
+const targets = ["app/pages", "app/components"];
 const includeExt = new Set([".vue"]);
 const forbiddenTokens = [
   "bg-white",

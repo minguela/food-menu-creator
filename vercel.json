@@ -2,9 +2,5 @@
   "buildCommand": "cd menu-web && npm run build",
   "devCommand": "cd menu-web && npm run dev",
   "installCommand": "cd menu-web && npm install",
-  "framework": "nuxtjs",
-  "env": {
-    "NUXT_PUBLIC_SUPABASE_URL": "https://tceusgxbfpekjcthrrqu.supabase.co",
-    "NUXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable__ar3t49-ts89flpoWupqTA_44jctdfW"
-  }
+  "framework": "nuxtjs"
 }

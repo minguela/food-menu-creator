@@ -5,11 +5,7 @@ export default defineNuxtConfig({
   modules: ["@nuxtjs/tailwindcss"],
   css: ["~/assets/css/main.css"],
   nitro: {
-    // CAMBIO CRITICO OCR-DOCKER: vercel-edge -> vercel
-    // vercel-edge usa Edge Runtime que NO soporta event.node.* ni readRawBody
-    // para multipart. vercel usa Node.js serverless (18.x) que SI lo soporta.
-    // Este cambio es necesario para que /api/ocr.post.ts funcione con OCR Docker.
-    preset: "vercel",
+      preset: "vercel",  // OCR Docker requiere Node serverless (no Edge)
   },
   runtimeConfig: {
     public: {
@@ -23,6 +19,7 @@ export default defineNuxtConfig({
         process.env.VERCEL_GIT_COMMIT_SHA ||
         "",
       appBuildTime: process.env.NUXT_PUBLIC_APP_BUILD_TIME || "",
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || "",
     },
     supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
     ocrProcessorUrl: process.env.OCR_PROCESSOR_URL || "",
@@ -42,13 +39,37 @@ export default defineNuxtConfig({
       meta: [
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
-        { name: "theme-color", content: "#000000" },
+        { name: "theme-color", content: "#0F172A" },
         {
           name: "description",
           content: "Planificador de menús semanales rotativos",
         },
+        { property: "og:title", content: "MenuPlanner" },
+        {
+          property: "og:description",
+          content: "Planificador de menús semanales rotativos",
+        },
+        { property: "og:type", content: "website" },
+        {
+          property: "og:image",
+          content:
+            (process.env.NUXT_PUBLIC_SITE_URL || "") + "/og-image.png",
+        },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: "MenuPlanner" },
+        {
+          name: "twitter:description",
+          content: "Planificador de menús semanales rotativos",
+        },
+        {
+          name: "twitter:image",
+          content:
+            (process.env.NUXT_PUBLIC_SITE_URL || "") + "/og-image.png",
+        },
       ],
       link: [
+        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+        { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
         {
           rel: "preconnect",
@@ -58,6 +79,10 @@ export default defineNuxtConfig({
         {
           rel: "stylesheet",
           href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@300;400;500&family=Source+Code+Pro:wght@400&display=swap",
+        },
+        {
+          rel: "canonical",
+          href: (process.env.NUXT_PUBLIC_SITE_URL || "") + "/",
         },
       ],
     },

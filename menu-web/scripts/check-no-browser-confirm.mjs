@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const scanDirs = ["pages", "components", "composables", "server", "utils"];
+const scanDirs = ["app/pages", "app/components", "app/composables", "server", "utils"];
 const includeExt = new Set([".vue", ".ts", ".js", ".mjs"]);
 const patterns = [/\bwindow\.confirm\s*\(/, /\bconfirm\s*\(/];
 

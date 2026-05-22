@@ -53,24 +53,37 @@ Vercel ya está conectado al repo y despliega automáticamente los pushes a `mai
 
 ```
 menu-web/
-├── pages/
-│   ├── index.vue           # Lista de menús semanales
-│   ├── menu/[id].vue       # Detalle: desayuno/comida/cena, imágenes e ingredientes
-│   ├── generar.vue         # Generar menú rotativo de N días
-│   ├── shopping.vue        # Lista de compra consolidada
-│   └── config.vue          # Perfiles y objetivos nutricionales
-├── composables/
-│   ├── useCurrentUser.ts   # Usuario activo de la app
-│   └── useSupabase.ts      # Cliente Supabase
-├── utils/
-│   └── nutrition.js        # Validación y cálculo de macros
+├── app/                    # Código fuente de la app (Nuxt 4)
+│   ├── assets/
+│   ├── components/
+│   ├── composables/
+│   │   ├── useCurrentUser.ts   # Usuario activo de la app
+│   │   └── useSupabase.ts      # Cliente Supabase
+│   ├── pages/
+│   │   ├── index.vue           # Lista de menús semanales
+│   │   ├── menu/[id].vue       # Detalle: desayuno/comida/cena, imágenes e ingredientes
+│   │   ├── generar.vue         # Generar menú rotativo de N días
+│   │   ├── shopping.vue        # Lista de compra consolidada
+│   │   └── config.vue          # Perfiles y objetivos nutricionales
+│   ├── public/
+│   ├── types/
+│   │   └── index.ts            # Tipos TypeScript
+│   ├── utils/
+│   │   └── nutrition.js        # Validación y cálculo de macros
+│   └── app.vue                 # Layout principal
+├── server/                 # API y middleware (Nitro)
+│   ├── api/
+│   ├── middleware/
+│   ├── services/
+│   └── utils/
 ├── tests/
 │   └── nutrition.test.mjs  # Tests de lógica nutricional
+├── scripts/
+├── docs/
 ├── health-check.js         # Verificación HTTP básica de rutas clave
-├── types/
-│   └── index.ts            # Tipos TypeScript
-├── app.vue                 # Layout principal
 ├── nuxt.config.ts          # Configuración
+├── package.json
+├── tsconfig.json
 └── vercel.json             # Configuración Vercel
 ```
 

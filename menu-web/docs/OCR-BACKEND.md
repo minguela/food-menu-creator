@@ -26,7 +26,7 @@ Proxy server-side (server/api/ocr.post.ts)
 | `nuxt.config.ts` | Anadido `ocrProcessorUrl` y `ocrSharedSecret` a runtimeConfig (server-only) |
 | `.env.example` | Anadido `OCR_PROCESSOR_URL` y `OCR_SHARED_SECRET` |
 | `server/api/ocr.post.ts` | Nuevo proxy server-side: reenvia al Docker OCR o a Supabase Edge. **Fallback automatico** a Supabase si Docker devuelve 502/503/504 o timeout. |
-| `pages/menu/[id].vue` | Modificado `invokeOcrWithRetry` para llamar a `/api/ocr` |
+| `app/pages/menu/[id].vue` | Modificado `invokeOcrWithRetry` para llamar a `/api/ocr` |
 
 ## Como Cambiar de Backend OCR
 

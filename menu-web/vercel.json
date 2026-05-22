@@ -2,9 +2,5 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "framework": "nuxtjs",
-  "env": {
-    "NUXT_PUBLIC_SUPABASE_URL": "https://tceusgxbfpekjcthrrqu.supabase.co",
-    "NUXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable__ar3t49-ts89flpoWupqTA_44jctdfW"
-  }
+  "framework": "nuxtjs"
 }

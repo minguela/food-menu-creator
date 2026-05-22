@@ -31,17 +31,32 @@ npx vercel --prod
 
 ```
 menu-web/
-├── app.vue                 # Layout principal
+├── app/                    # Código fuente de la app (Nuxt 4)
+│   ├── app.vue             # Layout principal
+│   ├── assets/
+│   ├── components/
+│   ├── composables/
+│   │   └── useSupabase.ts      # Cliente de Supabase
+│   ├── pages/
+│   │   ├── index.vue           # Lista de menús
+│   │   ├── menu/[id].vue       # Detalle de menú (añadir platos)
+│   │   └── generar.vue         # Generar menú rotativo
+│   ├── public/
+│   ├── types/
+│   │   └── index.ts            # Tipos TypeScript
+│   └── utils/
+├── server/                 # API y middleware (Nitro)
+│   ├── api/
+│   ├── middleware/
+│   ├── services/
+│   └── utils/
+├── tests/
+├── scripts/
+├── docs/
 ├── nuxt.config.ts          # Configuración de Nuxt
+├── package.json
+├── tsconfig.json
 ├── vercel.json             # Configuración de Vercel
-├── composables/
-│   └── useSupabase.ts      # Cliente de Supabase
-├── types/
-│   └── index.ts            # Tipos TypeScript
-├── pages/
-│   ├── index.vue           # Lista de menús
-│   ├── menu/[id].vue       # Detalle de menú (añadir platos)
-│   └── generar.vue         # Generar menú rotativo
 └── .env.example            # Variables de entorno (ejemplo)
 ```
 

@@ -1,3 +1,29 @@
+# Root hidden files/directories: ignore by default, then allow-list the ones this repo versions
+/.*
+!/.agents/
+!/.agents/**
+!/.claude/
+!/.claude/**
+!/.claudeignore
+!/.codex/
+!/.codex/**
+!/.config/
+!/.config/**
+!/.env.example
+!/.github/
+!/.github/**
+!/.gitignore
+!/.gpt/
+!/.gpt/**
+!/.opencode/
+!/.opencode/**
+!/.prettierignore
+
+# Local hidden artifacts that should stay unversioned
+/.codegraph/
+/.codex/agents/
+/.codex/migrate-to-codex-report.txt
+
 # Nuxt dev/build outputs
 .output
 .data

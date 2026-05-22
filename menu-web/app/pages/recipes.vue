@@ -13,10 +13,10 @@
             </svg>
           </div>
           <div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+            <h1 class="ui-title text-3xl font-bold">
               Biblioteca de recetas
             </h1>
-            <p class="text-slate-500 ui-subtle text-sm mt-1">Curación de platos detectados por OCR</p>
+            <p class="text-slate-500 ui-subtle text-sm mt-1">Revisa y completa tus recetas antes de generar menús</p>
           </div>
         </div>
         <div class="flex gap-3">
@@ -73,11 +73,15 @@
             " @click="filter = item.value">
             {{ item.label }}
           </button>
-          <button class="px-3 py-1.5 rounded-lg border text-sm ui-muted ui-muted disabled:opacity-50"
+          <button
+            v-if="selectedDishIds.length > 0"
+            class="px-3 py-1.5 rounded-lg border text-sm ui-muted ui-muted disabled:opacity-50"
             :disabled=" selectedDishIds.length === 0 " @click=" clearSelection ">
             Limpiar selección
           </button>
-          <button class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-sm disabled:opacity-50"
+          <button
+            v-if="selectedDishIds.length > 0"
+            class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-sm disabled:opacity-50"
             :disabled=" selectedDishIds.length === 0 || savingSelectedRecipes " @click=" saveSelectedRecipes ">
             {{
               savingSelectedRecipes
@@ -85,11 +89,15 @@
                 : `Guardar seleccionadas (${ selectedDishIds.length })`
             }}
           </button>
-          <button class="ml-auto px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm disabled:opacity-50"
+          <button
+            v-if="selectedDishIds.length > 0"
+            class="ml-auto px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm disabled:opacity-50"
             :disabled=" selectedDishIds.length === 0 " @click=" deleteSelectedRecipes ">
             Eliminar recetas ({{ selectedDishIds.length }})
           </button>
-          <button class="px-3 py-1.5 rounded-lg bg-sky-700 text-white text-sm disabled:opacity-50"
+          <button
+            v-if="selectedDishIds.length > 1"
+            class="px-3 py-1.5 rounded-lg bg-sky-700 text-white text-sm disabled:opacity-50"
             :disabled=" selectedDishIds.length < 2 || mergingRecipes " @click=" openMergePanel ">
             {{ mergingRecipes ? "Fusionando..." : "Fusionar seleccionadas" }}
           </button>

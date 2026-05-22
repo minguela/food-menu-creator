@@ -35,6 +35,14 @@
     transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
   }
 
+  button,
+  [role="button"],
+  input[type="checkbox"] + label,
+  input[type="radio"] + label {
+    min-height: 24px;
+    min-width: 24px;
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
@@ -86,8 +94,9 @@
     color: var(--color-ghost-white);
     border: 1px solid rgba(255,255,255,0.18);
     border-radius: var(--radius-xl);
-    font-weight: 500;
-    padding: 0.625rem 1.25rem;
+    font-weight: 600;
+    min-height: 44px;
+    padding: 0.625rem 1.125rem;
     font-size: var(--text-sm);
   }
   .ui-btn-primary:hover { background: var(--color-surface-3); border-color: rgba(255,255,255,0.24); }
@@ -97,6 +106,7 @@
     border: 1px solid rgba(255,255,255,0.14);
     background: var(--color-deep-space);
     color: var(--color-iron-slate);
+    min-height: 44px;
     padding: 0.5rem 1rem;
     font-size: var(--text-sm);
   }
@@ -107,6 +117,7 @@
     border: 1px solid rgba(255,100,103,0.3);
     background: color-mix(in srgb, var(--color-danger) 10%, transparent);
     color: var(--color-danger);
+    min-height: 44px;
     padding: 0.5rem 1rem;
     font-size: var(--text-sm);
   }
@@ -194,41 +205,6 @@
   .shadow-xl,
   .shadow-2xl {
     box-shadow: var(--shadow-subtle) !important;
-  }
-
-  .bg-gradient-to-r,
-  .bg-gradient-to-l,
-  .bg-gradient-to-b,
-  .bg-gradient-to-t,
-  .bg-gradient-to-br,
-  .bg-gradient-to-bl,
-  .bg-gradient-to-tr,
-  .bg-gradient-to-tl {
-    background-image: none !important;
-    background-color: var(--color-shadow-tint) !important;
-  }
-
-  .from-indigo-500, .from-indigo-600, .from-violet-500, .from-violet-600, .from-emerald-400, .from-emerald-500, .from-amber-400, .from-amber-500,
-  .to-purple-600, .to-purple-700, .to-indigo-700, .to-teal-600, .to-orange-500, .to-orange-600 {
-    --tw-gradient-from: transparent !important;
-    --tw-gradient-to: transparent !important;
-    --tw-gradient-stops: transparent !important;
-  }
-
-  .text-indigo-700, .text-indigo-600, .text-indigo-400, .text-sky-700, .text-sky-800, .text-sky-300, .text-purple-600, .text-violet-600 {
-    color: var(--color-halo-pale) !important;
-  }
-
-  .bg-indigo-50, .bg-indigo-100, .bg-amber-50, .bg-amber-100, .bg-emerald-50, .bg-sky-50, .bg-sky-100 {
-    background: var(--color-surface-3) !important;
-  }
-
-  .border-indigo-200, .border-indigo-300, .border-indigo-500, .border-amber-200, .border-amber-300, .border-emerald-200, .border-sky-200 {
-    border-color: rgba(255, 255, 255, 0.16) !important;
-  }
-
-  .text-amber-700, .text-amber-800, .text-emerald-700, .text-emerald-800, .text-sky-800 {
-    color: var(--color-text-2) !important;
   }
 }
 

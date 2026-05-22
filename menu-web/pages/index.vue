@@ -24,7 +24,9 @@
             :disabled="menus.length === 0">
             {{ allMenusSelected ? "Deseleccionar" : "Seleccionar" }} menús
           </button>
-          <button @click="deleteSelectedMenus"
+          <button
+            v-if="selectedMenuIds.length > 0"
+            @click="deleteSelectedMenus"
             class="px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all text-sm font-medium disabled:opacity-50"
             :disabled="selectedMenuIds.length === 0">
             Eliminar seleccionados ({{ selectedMenuIds.length }})
@@ -76,7 +78,7 @@
               </div>
             </div>
             <button type="button"
-              class="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+              class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
               title="Eliminar menú" @click.stop="confirmDeleteMenu( menu )">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -139,12 +141,19 @@
     </div>
 
     <!-- Modal para nuevo menú -->
-    <div v-if=" showNewMenuModal " class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    <div
+      v-if=" showNewMenuModal "
+      class="fixed inset-0 z-50 flex items-center justify-center p-4"
       @click.self="showNewMenuModal = false">
       <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-      <div class="ui-surface relative rounded-2xl shadow-2xl shadow-slate-900/20 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div
+        class="ui-surface relative rounded-2xl shadow-2xl shadow-slate-900/20 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-menu-title"
+      >
         <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
-          <h2 class="text-xl font-bold text-white">Crear nuevo menú semanal</h2>
+          <h2 id="new-menu-title" class="text-xl font-bold text-white">Crear nuevo menú semanal</h2>
           <p class="text-indigo-100 text-sm mt-1">Configura las opciones de tu menú</p>
         </div>
 

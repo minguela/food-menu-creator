@@ -27,7 +27,7 @@
             </svg>
           </div>
           <div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+            <h1 class="ui-title text-3xl font-bold">
               Generar menú rotativo
             </h1>
             <p class="text-slate-500 ui-subtle text-sm mt-1">Mismas recetas, cantidades ajustadas por objetivos</p>

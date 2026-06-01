@@ -1,5 +1,5 @@
-import { generateNutritionMenu, type MenuPeriodType } from "~/server/services/menuGenerator";
-import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+import { generateNutritionMenu, type MenuPeriodType } from "~~/server/services/menuGenerator";
+import { createSupabaseAdminClient } from "~~/server/utils/supabase-admin";
 
 type GenerateBody = {
   userId?: string;

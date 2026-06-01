@@ -1,4 +1,4 @@
-import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+import { createSupabaseAdminClient } from "~~/server/utils/supabase-admin";
 import { normalizeIngredientName } from "~/utils/ingredient-normalize";
 
 export default defineEventHandler(async (event) => {

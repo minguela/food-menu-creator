@@ -2,7 +2,7 @@ import { resolveSupabaseServerKey } from "~/utils/enrich-runtime";
 import {
   scoreIngredientCandidate,
   toNutrientNumberOrNull,
-} from "~/server/utils/ingredient-enrichment";
+} from "~~/server/utils/ingredient-enrichment";
 
 type SearchSource = "usda" | "open_food_facts" | "bedca";
 

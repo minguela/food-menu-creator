@@ -1,5 +1,5 @@
-import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
-import { buildEnglishAliasForIngredient } from "~/server/utils/ingredient-aliases";
+import { createSupabaseAdminClient } from "~~/server/utils/supabase-admin";
+import { buildEnglishAliasForIngredient } from "~~/server/utils/ingredient-aliases";
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event).catch(() => ({}))) as { limit?: number };

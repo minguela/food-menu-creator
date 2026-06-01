@@ -1,5 +1,5 @@
 import { normalizeIngredientName } from "~/utils/ingredient-normalize";
-import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+import { createSupabaseAdminClient } from "~~/server/utils/supabase-admin";
 
 type AutoCurateBody = {
   recipeIds?: string[];

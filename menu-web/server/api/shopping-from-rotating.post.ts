@@ -1,5 +1,5 @@
-import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
-import { buildShoppingListFromRotatingMenu } from "~/server/utils/shopping-from-rotating";
+import { createSupabaseAdminClient } from "~~/server/utils/supabase-admin";
+import { buildShoppingListFromRotatingMenu } from "~~/server/utils/shopping-from-rotating";
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as {

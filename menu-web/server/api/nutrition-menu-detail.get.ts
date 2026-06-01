@@ -1,5 +1,5 @@
-import { loadNutritionGeneratedMenuDetail } from "~/server/services/menuGeneratorPersistence";
-import { createSupabaseAdminClient } from "~/server/utils/supabase-admin";
+import { loadNutritionGeneratedMenuDetail } from "~~/server/services/menuGeneratorPersistence";
+import { createSupabaseAdminClient } from "~~/server/utils/supabase-admin";
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);

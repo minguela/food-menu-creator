@@ -5,7 +5,7 @@ import {
   normalizeIngredientName,
   scoreIngredientCandidate,
   toNutrientNumberOrNull,
-} from "~/server/utils/ingredient-enrichment";
+} from "~~/server/utils/ingredient-enrichment";
 import {
   normalizeEnrichSource,
   resolveSupabaseServerKey,

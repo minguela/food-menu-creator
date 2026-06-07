@@ -15,9 +15,11 @@ USING (bucket_id = 'menu-images');
 -- Política: permitir subida a usuarios autenticados
 CREATE POLICY "Permitir subida autenticada"
 ON storage.objects FOR INSERT
+TO authenticated
 WITH CHECK (bucket_id = 'menu-images');
 
 -- Política: permitir eliminación al dueño
 CREATE POLICY "Permitir eliminación al dueño"
 ON storage.objects FOR DELETE
-USING (bucket_id = 'menu-images');
+TO authenticated
+USING (bucket_id = 'menu-images' AND owner = auth.uid());

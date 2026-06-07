@@ -50,3 +50,35 @@ test("keeps unresolved ingredient names when no normalized match exists", () => 
 
   assert.deepEqual(result.unresolvedIngredientNames, ["Pan misterioso"]);
 });
+
+test("resolves confirmed recipe rows when stored normalized_name uses underscores", () => {
+  const nutritionByNormalizedName = new Map([
+    [
+      "pan integral",
+      {
+        id: "ing-pan",
+        nutrition_status: "complete",
+        kcal_per_100g: 247,
+        protein_per_100g: 13,
+        carbs_per_100g: 41,
+        fat_per_100g: 4.2,
+      },
+    ],
+  ]);
+
+  const result = resolveRecipeIngredientRows({
+    confirmedRows: [
+      {
+        ingredient_id: null,
+        name: "pan integral",
+        normalized_name: "pan_integral",
+        quantity: 60,
+        unit_type: "g",
+      },
+    ],
+    nutritionByNormalizedName,
+  });
+
+  assert.equal(result.unresolvedIngredientNames.length, 0);
+  assert.equal(result.ingredientBase[0].ingredient_id, "ing-pan");
+});

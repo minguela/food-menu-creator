@@ -1,14 +1,13 @@
-const normalizeValue = (value) =>
-  String(value || "")
-    .trim()
-    .toLowerCase();
+import { normalizeIngredientLookupKey } from "./ingredient-nutrition-lookup.js";
 
 export const resolveRecipeIngredientRows = ({
   confirmedRows = [],
   nutritionByNormalizedName = new Map(),
 }) => {
   const ingredientBase = confirmedRows.map((row) => {
-    const normalizedName = normalizeValue(row.normalized_name || row.name);
+    const normalizedName = normalizeIngredientLookupKey(
+      row.normalized_name || row.name,
+    );
     const matchedIngredient =
       row.ingredient_id || !normalizedName
         ? null

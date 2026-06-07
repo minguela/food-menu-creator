@@ -3,7 +3,7 @@
 ## ✅ Completado
 
 ### 1. Función `telegram-webhook` actualizada
-- **URL:** `https://tceusgxbfpekjcthrrqu.supabase.co/functions/v1/telegram-webhook`
+- **URL:** `https://your-project.supabase.co/functions/v1/telegram-webhook`
 - **Estado:** Desplegada y funcionando
 - **Nuevos comandos:**
   - `/semanal nuevo [nombre]` - Crear menú semanal
@@ -13,7 +13,7 @@
 
 ### 2. Webhook de Telegram
 - **Configurado correctamente**
-- **URL:** `https://tceusgxbfpekjcthrrqu.supabase.co/functions/v1/telegram-webhook`
+- **URL:** `https://your-project.supabase.co/functions/v1/telegram-webhook`
 - **Allowed updates:** `["message"]`
 
 ### 3. Plugin claude-mem
@@ -29,7 +29,7 @@ Las tablas `weekly_menus` y `weekly_meals` necesitan crearse manualmente.
 ### Pasos a seguir:
 
 1. **Abre el dashboard de Supabase:**
-   - https://app.supabase.com/project/tceusgxbfpekjcthrrqu
+   - https://app.supabase.com/project/your-project-ref
 
 2. **Ve al SQL Editor:**
    - Menú lateral → **SQL Editor** → **New Query**

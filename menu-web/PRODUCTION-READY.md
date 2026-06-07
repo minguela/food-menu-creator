@@ -13,7 +13,7 @@
 | Componente | Estado | URL |
 |------------|--------|-----|
 | menu-web | ✅ Deployed | https://menu-planner.dminguela.es |
-| OCR Funnel | ✅ Activo | https://minguela-server.tailc7f2e4.ts.net |
+| OCR Funnel | ✅ Activo | <production-ocr-url> |
 | Proxy /api/ocr | ✅ Funcional | Via Vercel serverless |
 | Fallback Supabase | ✅ Automático | Si Docker 502/503/504/timeout |
 | Variables Vercel | ✅ Configuradas | Production + Preview |
@@ -24,14 +24,14 @@
 
 | Variable | Valor | Environment |
 |----------|-------|-------------|
-| `OCR_PROCESSOR_URL` | `https://minguela-server.tailc7f2e4.ts.net` | Production |
-| `OCR_SHARED_SECRET` | `KqzYTSKDsNhMEx0d+r+mwA4EsgORJAMa2QpmDgjXobg=` | Production |
+| `OCR_PROCESSOR_URL` | `<production-ocr-url>` | Production |
+| `OCR_SHARED_SECRET` | `<redacted-server-only-secret>` | Production |
 
 **Comandos Vercel CLI (ya ejecutados):**
 
 ```bash
-vercel env add OCR_PROCESSOR_URL production --value "https://minguela-server.tailc7f2e4.ts.net" --yes --force
-vercel env add OCR_SHARED_SECRET production --value "KqzYTSKDsNhMEx0d+r+mwA4EsgORJAMa2QpmDgjXobg=" --yes --force --sensitive
+vercel env add OCR_PROCESSOR_URL production --value "<production-ocr-url>" --yes --force
+vercel env add OCR_SHARED_SECRET production --value "<new-shared-secret>" --yes --force --sensitive
 ```
 
 ---

@@ -6,8 +6,8 @@
 2. **Importa el repositorio** desde GitHub
 3. **Asegúrate de que `main` esté marcado como `Production Branch`**
 4. **Configura las variables de entorno:**
-   - `NUXT_PUBLIC_SUPABASE_URL` = `https://tceusgxbfpekjcthrrqu.supabase.co`
-   - `NUXT_PUBLIC_SUPABASE_ANON_KEY` = `sb_publishable__ar3t49-ts89flpoWupqTA_44jctdfW`
+   - `NUXT_PUBLIC_SUPABASE_URL` = `https://your-project.supabase.co`
+   - `NUXT_PUBLIC_SUPABASE_ANON_KEY` = `your-public-anon-or-publishable-key`
 5. **Haz clic en Deploy**
 
 Con la integración nativa de GitHub activa, cada push a `main` se despliega automáticamente en producción.

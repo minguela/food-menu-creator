@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from "~~/server/utils/supabase-admin";
 import { buildShoppingListFromRotatingMenu } from "~~/server/utils/shopping-from-rotating";
 import { createMenuGenerationLogger } from "~~/server/utils/menu-generation-logger";
+import { resolveRecipeIngredientRows } from "~~/server/utils/rotating-recipe-resolution.js";
 import {
   normalizeMealSlot,
   rotatingMealKey,
@@ -570,16 +571,14 @@ export default defineEventHandler(async (event) => {
       continue;
     }
 
-    const hasMissingLink = confirmedRows.some((row: any) => !row.ingredient_id);
-    if (hasMissingLink) {
-      const missingLinkNames = Array.from(
-        new Set(
-          confirmedRows
-            .filter((row: any) => !row.ingredient_id)
-            .map((row: any) => String(row.name || "").trim())
-            .filter(Boolean),
-        ),
-      );
+    const {
+      ingredientBase,
+      unresolvedIngredientNames: missingLinkNames,
+    } = resolveRecipeIngredientRows({
+      confirmedRows,
+      nutritionByNormalizedName,
+    });
+    if (missingLinkNames.length > 0) {
       uncuredSet.add(
         `${dish.id}:missing_ingredient_link:${normalizedName || dish.id}`,
       );
@@ -598,7 +597,7 @@ export default defineEventHandler(async (event) => {
       continue;
     }
 
-    const hasMissingNutrition = confirmedRows.some((row: any) => {
+    const hasMissingNutrition = ingredientBase.some((row: any) => {
       const ingredient = nutritionById.get(row.ingredient_id);
       return (
         !ingredient ||
@@ -613,7 +612,7 @@ export default defineEventHandler(async (event) => {
     if (hasMissingNutrition) {
       const missingNutritionNames = Array.from(
         new Set(
-          confirmedRows
+          ingredientBase
             .filter((row: any) => {
               const ingredient = nutritionById.get(row.ingredient_id);
               return (
@@ -647,13 +646,6 @@ export default defineEventHandler(async (event) => {
       continue;
     }
 
-    const ingredientBase = confirmedRows.map((ing: any) => ({
-      ingredient_id: ing.ingredient_id,
-      name: String(ing.name || ""),
-      normalized_name: String(ing.normalized_name || ing.name || "").toLowerCase(),
-      quantity: Number(ing.quantity),
-      unit_type: String(ing.unit_type || ""),
-    }));
     const hasInvalidQuantity = ingredientBase.some(
       (ing) => !Number.isFinite(ing.quantity) || ing.quantity <= 0,
     );

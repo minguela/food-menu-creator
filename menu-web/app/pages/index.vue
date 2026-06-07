@@ -524,6 +524,41 @@ const loadSavedRecipes = async () => {
   savedRecipes.value = data || [];
 };
 
+const ensureMasterIngredientId = async ( name: string, unitType: string ) => {
+  const normalizedIngredientName = normalizeName( name );
+  if ( !normalizedIngredientName ) return null;
+
+  const { data: existingIngredient } = await supabase
+    .from( "ingredients" )
+    .select( "id" )
+    .eq( "normalized_name", normalizedIngredientName )
+    .maybeSingle();
+
+  if ( existingIngredient?.id ) {
+    return existingIngredient.id;
+  }
+
+  const { data: createdIngredient, error: createdIngredientError } = await supabase
+    .from( "ingredients" )
+    .insert( {
+      name: name.trim().toLowerCase(),
+      normalized_name: normalizedIngredientName,
+      default_unit_type: unitType,
+      unit_type: unitType,
+      source: "manual",
+      is_verified: false,
+    } )
+    .select( "id" )
+    .single();
+
+  if ( createdIngredientError ) {
+    console.error( "Error creando ingrediente maestro desde menú semanal:", createdIngredientError );
+    return null;
+  }
+
+  return createdIngredient?.id || null;
+};
+
 const createMenu = async () => {
   if ( !newMenuName.value.trim() ) {
     appToast.error( "Pon un nombre para el menú semanal." );
@@ -590,16 +625,24 @@ const createMenu = async () => {
         return null;
       }
 
-      const recipeIngredients = fixed.ingredients
-        .filter( ( ingredient ) => ingredient.name && ingredient.quantity > 0 )
-        .map( ( ingredient ) => ( {
-          recipe_id: createdDish.id,
-          name: ingredient.name.toLowerCase(),
-          normalized_name: normalizeName( ingredient.name ),
-          quantity: ingredient.quantity,
-          unit_type: ingredient.unit_type,
-          is_confirmed: true,
-        } ) );
+      const recipeIngredients = (
+        await Promise.all(
+          fixed.ingredients
+            .filter( ( ingredient ) => ingredient.name && ingredient.quantity > 0 )
+            .map( async ( ingredient ) => ( {
+              recipe_id: createdDish.id,
+              ingredient_id: await ensureMasterIngredientId(
+                ingredient.name,
+                ingredient.unit_type,
+              ),
+              name: ingredient.name.toLowerCase(),
+              normalized_name: normalizeName( ingredient.name ),
+              quantity: ingredient.quantity,
+              unit_type: ingredient.unit_type,
+              is_confirmed: true,
+            } ) ),
+        )
+      ).filter( ( ingredient ) => ingredient.ingredient_id );
 
       if ( recipeIngredients.length > 0 ) {
         const { error: recipeIngredientsError } = await supabase
@@ -610,6 +653,11 @@ const createMenu = async () => {
             "Error guardando ingredientes de receta desde menú semanal:",
             recipeIngredientsError,
           );
+        } else {
+          await supabase
+            .from( "dishes" )
+            .update( { recipe_status: "complete" } )
+            .eq( "id", createdDish.id );
         }
       }
 
@@ -690,6 +738,7 @@ const createMenu = async () => {
             ( ingredient ) => ingredient.name && ingredient.quantity > 0,
           );
           for ( const ing of ingredientRows ) {
+            await ensureMasterIngredientId( ing.name, ing.unit_type );
             fixedIngredientRows.push( {
               weekly_meal_id: meal.id,
               name: ing.name.toLowerCase(),

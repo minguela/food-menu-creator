@@ -227,6 +227,47 @@
               Abrir menú generado
             </NuxtLink>
           </div>
+          <div
+            v-if="failedJobSummary"
+            class="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800"
+          >
+            <p class="font-semibold">Resumen del fallo</p>
+            <p v-if="failedJobSummary.empty_required_types.length > 0" class="mt-1">
+              Franjas sin recetas válidas:
+              {{ failedJobSummary.empty_required_types.join(", ") }}
+            </p>
+            <p v-if="failedJobSummary.discarded_total > 0" class="mt-1">
+              Opciones descartadas: {{ failedJobSummary.discarded_total }}
+            </p>
+            <p
+              v-if="Object.keys(failedJobSummary.discarded_by_reason || {}).length > 0"
+              class="mt-1"
+            >
+              Motivos:
+              {{ formatSummaryCounts(failedJobSummary.discarded_by_reason) }}
+            </p>
+            <p
+              v-if="failedJobSummary.affected_dishes.length > 0"
+              class="mt-1"
+            >
+              Platos afectados:
+              {{ failedJobSummary.affected_dishes.join(", ") }}
+            </p>
+            <p
+              v-if="Object.keys(failedJobSummary.uncured_by_reason || {}).length > 0"
+              class="mt-1"
+            >
+              Recetas bloqueadas:
+              {{ formatSummaryCounts(failedJobSummary.uncured_by_reason) }}
+            </p>
+            <p
+              v-if="failedJobSummary.blocking_ingredients.length > 0"
+              class="mt-1"
+            >
+              Ingredientes bloqueantes:
+              {{ failedJobSummary.blocking_ingredients.join(", ") }}
+            </p>
+          </div>
           <div v-if=" currentJob " class="mt-4 rounded-lg border bg-zinc-950 p-3 text-sm text-zinc-100">
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
@@ -498,6 +539,17 @@ type MenuGenerationLog = {
   created_at: string;
 };
 
+type JobFailureSummary = {
+  empty_required_types: string[];
+  discarded_total: number;
+  discarded_by_reason: Record<string, number>;
+  discarded_by_meal_type: Record<string, number>;
+  affected_dishes: string[];
+  uncured_total: number;
+  uncured_by_reason: Record<string, number>;
+  blocking_ingredients: string[];
+};
+
 const supabase = useSupabase();
 const { loadCurrentUser } = useCurrentUser();
 const { chooseClearExistingShoppingList } = useShoppingListRegeneration();
@@ -521,6 +573,7 @@ const currentJob = ref<{
   current_step?: string | null;
   error_message?: string | null;
   result_menu_id?: string | null;
+  result_payload?: Record<string, any> | null;
 } | null>( null );
 const jobChannel = ref<any>( null );
 const generationLogs = ref<MenuGenerationLog[]>( [] );
@@ -529,6 +582,11 @@ const loading = ref( false );
 const error = ref( "" );
 const notificationMessage = ref( "" );
 const notificationLevel = ref<"success" | "error">( "success" );
+const failedJobSummary = computed<JobFailureSummary | null>( () => {
+  const summary = currentJob.value?.result_payload?.error_summary;
+  if ( !summary || typeof summary !== "object" ) return null;
+  return summary as JobFailureSummary;
+} );
 
 const selectedInitialMenuOptions = computed( () =>
   menus.value.filter( ( menu ) => selectedMenuIds.value.includes( menu.id ) ),
@@ -548,6 +606,11 @@ const deltaClass = ( value: number ) => {
   if ( abs <= 90 ) return "text-amber-700";
   return "text-red-700";
 };
+
+const formatSummaryCounts = ( counts: Record<string, number> ) =>
+  Object.entries( counts )
+    .map( ( [ key, value ] ) => `${ key }: ${ value }` )
+    .join( " · " );
 
 watch( selectedMenuIds, () => {
   if (
@@ -761,6 +824,7 @@ const startJobPolling = ( jobId: string ) => {
       current_step: data.current_step,
       error_message: data.error_message,
       result_menu_id: data.result_menu_id,
+      result_payload: data.result_payload,
     };
 
     if ( data.status === "completed" || data.status === "failed" ) {
@@ -869,6 +933,7 @@ const subscribeToJob = ( jobId: string ) => {
           current_step: next.current_step,
           error_message: next.error_message,
           result_menu_id: next.result_menu_id,
+          result_payload: next.result_payload,
         };
         if ( next.status === "completed" ) {
           notificationLevel.value = "success";

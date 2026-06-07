@@ -2,6 +2,8 @@ import { createSupabaseAdminClient } from "~~/server/utils/supabase-admin";
 import { buildShoppingListFromRotatingMenu } from "~~/server/utils/shopping-from-rotating";
 import { createMenuGenerationLogger } from "~~/server/utils/menu-generation-logger";
 import { resolveRecipeIngredientRows } from "~~/server/utils/rotating-recipe-resolution.js";
+import { chooseRotatingMealSource } from "~~/server/utils/rotating-meal-source.js";
+import { summarizeRotatingGenerationErrorData } from "~/utils/rotating-job-failure.js";
 import {
   normalizeMealSlot,
   rotatingMealKey,
@@ -1213,11 +1215,16 @@ export default defineEventHandler(async (event) => {
         }
       }
 
-      if (
-        hasExplicitWeeklyIngredients &&
-        !validRecipeById.has(weeklyMealVirtualRecipeId)
-      ) {
-        const invalidWeeklyMeal = invalidWeeklyMealBaseByMealId.get(sourceMealId);
+      const invalidWeeklyMeal = invalidWeeklyMealBaseByMealId.get(sourceMealId);
+      const mealSource = chooseRotatingMealSource({
+        hasExplicitWeeklyIngredients,
+        weeklyMealVirtualRecipeId,
+        validRecipeById,
+        linkedDish,
+        invalidWeeklyMealReason: invalidWeeklyMeal?.reason,
+      });
+
+      if (mealSource.mode === "discard") {
         discardedMealOptions.push({
           weekly_menu_id: sourceMeal.weekly_menu_id
             ? String(sourceMeal.weekly_menu_id)
@@ -1226,7 +1233,7 @@ export default defineEventHandler(async (event) => {
           meal_type: mealType,
           meal_slot: normalizeMealSlot(sourceMeal.meal_slot),
           dish_name: String(sourceMeal.dish_name || ""),
-          reason: invalidWeeklyMeal?.reason || "weekly_meal_ingredients_not_validated",
+          reason: invalidWeeklyMeal?.reason || mealSource.reason,
         });
         continue;
       }
@@ -1302,14 +1309,18 @@ export default defineEventHandler(async (event) => {
 
   if (emptyRequiredTypes.length > 0) {
     const message = `No hay recetas válidas para: ${emptyRequiredTypes.join(", ")}`;
+    const errorData = {
+      empty_required_types: emptyRequiredTypes,
+      discarded_meal_options: discardedMealOptions,
+    };
     await logger.log({
       level: "error",
       step: "recipe_selection",
       status: "failed",
       message,
       metadata: {
-        empty_required_types: emptyRequiredTypes,
-        discarded_meal_options: discardedMealOptions.slice(0, 120),
+        ...errorData,
+        error_summary: summarizeRotatingGenerationErrorData(errorData),
       },
       progress: {
         progress: 100,
@@ -1322,10 +1333,7 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 409,
       statusMessage: message,
-      data: {
-        empty_required_types: emptyRequiredTypes,
-        discarded_meal_options: discardedMealOptions,
-      },
+      data: errorData,
     });
   }
 

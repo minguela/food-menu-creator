@@ -45,6 +45,7 @@ export interface WeeklyMenu {
 export interface WeeklyMeal {
   id: string;
   weekly_menu_id: string;
+  dish_id?: string | null;
   day_number: number;
   meal_type: ScheduledMealType;
   meal_slot?: 1 | 2;
@@ -78,6 +79,7 @@ export interface WeeklyDayImage {
 export interface WeeklyMealIngredient {
   id: string;
   weekly_meal_id: string;
+  ingredient_id?: string | null;
   name: string;
   quantity: number;
   unit_type: "kg" | "g" | "l" | "ml" | "ud" | "pack" | "unidad";

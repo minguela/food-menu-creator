@@ -38,6 +38,7 @@ type GeneratePayload = {
   initialWeeklyMenuId?: string | null;
   specialMealKcal?: number;
   jobId?: string;
+  clearExistingShoppingList?: boolean;
 };
 
 export default defineEventHandler(async (event) => {
@@ -83,6 +84,7 @@ export default defineEventHandler(async (event) => {
       initial_weekly_menu_id: body.initialWeeklyMenuId || null,
       profile_ids_count: body.profileIds.length,
       special_meal_kcal: body.specialMealKcal,
+      clear_existing_shopping_list: body.clearExistingShoppingList !== false,
     },
     progress: { progress: 8, currentStep: "input_validation" },
   });
@@ -2323,6 +2325,7 @@ export default defineEventHandler(async (event) => {
     supabase,
     userId: body.userId,
     rotatingMenuId: rotatingMenu.id,
+    clearExisting: body.clearExistingShoppingList !== false,
   });
 
   if (shoppingBuild.skippedSpecialMeals > 0) {

@@ -46,25 +46,23 @@
               <span class="rounded-full px-2 py-1 text-xs" :class="statusClass(job.status)">
                 {{ statusLabel(job.status) }}
               </span>
-              <button
+              <IconActionButton
                 v-if="job.result_menu_id"
-                class="ui-btn-muted rounded px-2 py-1 text-xs"
+                :icon="faArrowUpRightFromSquare"
+                label="Abrir menú"
                 @click="openRotatingMenu(job.result_menu_id)"
-              >
-                Abrir menú
-              </button>
-              <button
-                class="ui-btn-muted rounded px-2 py-1 text-xs"
+              />
+              <IconActionButton
+                :icon="expandedJobId === job.id ? faEyeSlash : faEye"
+                :label="expandedJobId === job.id ? 'Ocultar logs' : 'Ver logs'"
                 @click="toggleJobLogs(job)"
-              >
-                {{ expandedJobId === job.id ? "Ocultar logs" : "Ver logs" }}
-              </button>
-              <button
-                class="ui-btn-danger rounded px-2 py-1 text-xs"
+              />
+              <IconActionButton
+                :icon="faTrashCan"
+                label="Eliminar job"
+                tone="danger"
                 @click="deleteJob(job)"
-              >
-                Eliminar job
-              </button>
+              />
             </div>
           </div>
           <p class="ui-subtle mt-1 text-xs">
@@ -154,24 +152,22 @@
               </p>
             </div>
             <div class="flex flex-wrap gap-2">
-              <button
-                class="ui-btn-muted rounded px-3 py-1.5 text-xs"
+              <IconActionButton
+                :icon="faArrowUpRightFromSquare"
+                label="Abrir menú"
                 @click="openRotatingMenu(menu.id)"
-              >
-                Abrir menú
-              </button>
-              <button
-                class="ui-btn-muted rounded px-3 py-1.5 text-xs"
+              />
+              <IconActionButton
+                :icon="faBasketShopping"
+                label="Ver compra asociada"
                 @click="openShoppingForMenu(menu.id)"
-              >
-                Ver compra asociada
-              </button>
-              <button
-                class="ui-btn-danger rounded px-3 py-1.5 text-xs"
+              />
+              <IconActionButton
+                :icon="faTrashCan"
+                label="Eliminar menú"
+                tone="danger"
                 @click="deleteRotatingMenu(menu)"
-              >
-                Eliminar
-              </button>
+              />
             </div>
           </div>
         </article>
@@ -181,6 +177,13 @@
 </template>
 
 <script setup lang="ts">
+import {
+  faArrowUpRightFromSquare,
+  faBasketShopping,
+  faEye,
+  faEyeSlash,
+  faTrashCan,
+} from "@fortawesome/free-solid-svg-icons";
 import { logError } from "~/utils/log-error";
 import type { RotatingMenu } from "~/types";
 
@@ -210,6 +213,7 @@ const supabase = useSupabase();
 const { loadCurrentUser } = useCurrentUser();
 const appToast = useAppToast();
 const { confirm: confirmDialog } = useConfirmDialog();
+const { chooseClearExistingShoppingList } = useShoppingListRegeneration();
 const router = useRouter();
 
 const loadingJobs = ref(true);
@@ -306,9 +310,15 @@ const openShoppingForMenu = async (rotatingMenuId: string) => {
   try {
     const currentUser = await loadCurrentUser();
     if (!currentUser) return;
+    const clearExisting = await chooseClearExistingShoppingList({
+      userId: currentUser.id,
+      title: "Regenerar lista de la compra",
+      confirmText: "Vaciar y abrir",
+      cancelText: "Mantener y abrir",
+    });
     await $fetch("/api/shopping-from-rotating", {
       method: "POST",
-      body: { userId: currentUser.id, rotatingMenuId },
+      body: { userId: currentUser.id, rotatingMenuId, clearExisting },
     });
     await router.push("/shopping");
   } catch (error) {

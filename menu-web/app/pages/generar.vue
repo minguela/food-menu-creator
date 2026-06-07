@@ -500,6 +500,7 @@ type MenuGenerationLog = {
 
 const supabase = useSupabase();
 const { loadCurrentUser } = useCurrentUser();
+const { chooseClearExistingShoppingList } = useShoppingListRegeneration();
 
 const name = ref( "Menú rotativo" );
 const days = ref( 30 );
@@ -658,6 +659,13 @@ const generateRotatingMenu = async () => {
       throw new Error( "Selecciona al menos un perfil" );
     }
 
+    const clearExistingShoppingList = await chooseClearExistingShoppingList( {
+      userId: currentUser.id,
+      title: "Nueva lista de la compra",
+      confirmText: "Vaciar y generar",
+      cancelText: "Mantener y generar",
+    } );
+
     const initialMenuId = initialWeeklyMenuId.value.trim();
     const requestBody = {
       userId: currentUser.id,
@@ -667,6 +675,7 @@ const generateRotatingMenu = async () => {
       sourceWeeklyMenuIds: selectedMenuIds.value,
       profileIds: selectedProfileIds.value,
       specialMealKcal: Math.max( 0, Math.min( 2000, Number( specialMealKcal.value ) || 700 ) ),
+      clearExistingShoppingList,
       ...( initialMenuId ? { initialWeeklyMenuId: initialMenuId } : {} ),
     };
 

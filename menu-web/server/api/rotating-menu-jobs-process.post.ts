@@ -3,6 +3,7 @@ import {
   createMenuGenerationLogger,
   sanitizeGenerationMetadata,
 } from "~~/server/utils/menu-generation-logger";
+import { summarizeRotatingGenerationErrorData } from "~/utils/rotating-job-failure.js";
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as { jobId?: string };
@@ -126,6 +127,7 @@ export default defineEventHandler(async (event) => {
     return { success: true, completed: true };
   } catch (error: any) {
     const errorData = error?.data?.data || error?.data || null;
+    const errorSummary = summarizeRotatingGenerationErrorData(errorData);
     const errorMessage =
       error?.data?.message ||
       error?.data?.statusMessage ||
@@ -140,6 +142,7 @@ export default defineEventHandler(async (event) => {
       metadata: {
         error: sanitizeGenerationMetadata(error),
         error_data: errorData,
+        error_summary: errorSummary,
         status_code: error?.statusCode || 500,
       },
       progress: {
@@ -149,6 +152,7 @@ export default defineEventHandler(async (event) => {
         errorMessage,
         resultPayload: {
           error_data: errorData,
+          error_summary: errorSummary,
           status_code: error?.statusCode || 500,
         },
         completedAt: new Date().toISOString(),

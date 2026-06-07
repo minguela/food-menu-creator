@@ -72,6 +72,23 @@
             {{ job.error_message }}
           </p>
           <div
+            v-if="jobFailureSummary(job)"
+            class="mt-2 rounded border border-red-200 bg-red-50 p-2 text-xs text-red-800"
+          >
+            <p v-if="jobFailureSummary(job)?.empty_required_types?.length">
+              Franjas sin recetas válidas:
+              {{ jobFailureSummary(job)?.empty_required_types.join(", ") }}
+            </p>
+            <p v-if="jobFailureSummary(job)?.discarded_total">
+              Opciones descartadas:
+              {{ jobFailureSummary(job)?.discarded_total }}
+            </p>
+            <p v-if="jobFailureSummary(job)?.affected_dishes?.length">
+              Platos afectados:
+              {{ jobFailureSummary(job)?.affected_dishes.join(", ") }}
+            </p>
+          </div>
+          <div
             v-if="job.status === 'failed' && failedRecipes(job).length > 0"
             class="mt-2 rounded border p-2 text-xs"
           >
@@ -209,6 +226,12 @@ type MenuGenerationLog = {
   created_at: string;
 };
 
+type JobFailureSummary = {
+  empty_required_types?: string[];
+  discarded_total?: number;
+  affected_dishes?: string[];
+};
+
 const supabase = useSupabase();
 const { loadCurrentUser } = useCurrentUser();
 const appToast = useAppToast();
@@ -338,6 +361,9 @@ const failedRecipes = (job: MenuGenerationJob) =>
     dish_name: string;
     reason: string;
   }>;
+
+const jobFailureSummary = (job: MenuGenerationJob) =>
+  (job.result_payload?.error_summary || null) as JobFailureSummary | null;
 
 const toggleJobLogs = async (job: MenuGenerationJob) => {
   if (expandedJobId.value === job.id) {

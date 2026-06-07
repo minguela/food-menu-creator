@@ -23,6 +23,8 @@
 /.codegraph/
 /.codex/agents/
 /.codex/migrate-to-codex-report.txt
+/.claude/settings.local.json
+/.gpt/settings.local.json
 
 # Nuxt dev/build outputs
 .output
@@ -57,5 +59,6 @@ test-results
 # Supabase local
 supabase/.branches
 supabase/.temp
+supabase/functions/**/function.zip
 
 .vercel

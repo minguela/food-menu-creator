@@ -19,11 +19,18 @@ on:
 env:
   NODE_VERSION: '20'
   WORKING_DIR: ./menu-web
+  OPENCODE_VERSION: '0.12.0'
+
+permissions:
+  contents: read
 
 jobs:
   fix-deploy:
     name: Fix Deploy Errors
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -108,7 +115,7 @@ jobs:
           echo "$ERROR_LOGS"
           echo "============================"
 
-          npx -y opencode@latest fix-errors "$ERROR_LOGS" \
+          npx -y "opencode@${OPENCODE_VERSION}" fix-errors "$ERROR_LOGS" \
             --skill nuxt-best-practices \
             --output commit \
             --working-dir ${{ env.WORKING_DIR }}

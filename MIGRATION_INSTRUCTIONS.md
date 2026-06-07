@@ -2,7 +2,7 @@
 
 ## Opción 1: Dashboard de Supabase (Recomendada)
 
-1. Ve a https://app.supabase.com/project/tceusgxbfpekjcthrrqu
+1. Ve a https://app.supabase.com/project/your-project-ref
 2. Inicia sesión si es necesario
 3. Ve a **SQL Editor** (en el menú lateral)
 4. Copia y pega el contenido de `supabase/migrations/002_weekly_menus.sql`
@@ -13,7 +13,7 @@
 Si tienes `psql` instalado, ejecuta:
 
 ```bash
-psql postgresql://postgres:[PASSWORD]@db.tceusgxbfpekjcthrrqu.supabase.co:5432/postgres -f supabase/migrations/002_weekly_menus.sql
+psql postgresql://postgres:[PASSWORD]@db.your-project-ref.supabase.co:5432/postgres -f supabase/migrations/002_weekly_menus.sql
 ```
 
 Necesitarás la contraseña de la base de datos (la encuentras en el dashboard de Supabase en **Settings > Database**).
@@ -23,7 +23,7 @@ Necesitarás la contraseña de la base de datos (la encuentras en el dashboard d
 Si tienes el CLI instalado:
 
 ```bash
-supabase link --project-ref tceusgxbfpekjcthrrqu
+supabase link --project-ref your-project-ref
 supabase db push
 ```
 

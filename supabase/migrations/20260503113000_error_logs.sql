@@ -74,5 +74,7 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION insert_error_log(TEXT, TEXT, TEXT) TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION list_error_logs(BIGINT, INT) TO anon, authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION insert_error_log(TEXT, TEXT, TEXT) FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION list_error_logs(BIGINT, INT) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION insert_error_log(TEXT, TEXT, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION list_error_logs(BIGINT, INT) TO service_role;

@@ -3,6 +3,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 serve(async (req: Request) => {
   try {
+    const migrationSecret = Deno.env.get("MIGRATION_SHARED_SECRET");
+    const providedSecret = req.headers.get("x-migration-secret") ?? "";
+
+    if (!migrationSecret || providedSecret !== migrationSecret) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""

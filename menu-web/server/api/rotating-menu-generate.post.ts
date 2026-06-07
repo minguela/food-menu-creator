@@ -1,6 +1,10 @@
 import { createSupabaseAdminClient } from "~~/server/utils/supabase-admin";
 import { buildShoppingListFromRotatingMenu } from "~~/server/utils/shopping-from-rotating";
 import { createMenuGenerationLogger } from "~~/server/utils/menu-generation-logger";
+import {
+  buildNutritionLookups,
+  normalizeIngredientLookupKey,
+} from "~~/server/utils/ingredient-nutrition-lookup.js";
 import { resolveRecipeIngredientRows } from "~~/server/utils/rotating-recipe-resolution.js";
 import { chooseRotatingMealSource } from "~~/server/utils/rotating-meal-source.js";
 import { summarizeRotatingGenerationErrorData } from "~/utils/rotating-job-failure.js";
@@ -413,7 +417,21 @@ export default defineEventHandler(async (event) => {
   const weeklyIngredientNormalizedNames = Array.from(
     new Set(
       (weeklyMealIngredientRows || [])
-        .map((row: any) => normalizeDishName(row.name))
+        .map((row: any) => normalizeIngredientLookupKey(row.name))
+        .filter(Boolean),
+    ),
+  );
+  const weeklyIngredientUnderscoreNames = Array.from(
+    new Set(
+      weeklyIngredientNormalizedNames
+        .map((name) => name.replace(/\s+/g, "_"))
+        .filter(Boolean),
+    ),
+  );
+  const weeklyIngredientNames = Array.from(
+    new Set(
+      (weeklyMealIngredientRows || [])
+        .map((row: any) => String(row.name || "").trim())
         .filter(Boolean),
     ),
   );
@@ -425,7 +443,7 @@ export default defineEventHandler(async (event) => {
         )
         .in("id", ingredientIds)
     : Promise.resolve({ data: [] as any[] });
-  const weeklyIngredientSelect = weeklyIngredientNormalizedNames.length
+  const weeklyIngredientSelectByNormalizedName = weeklyIngredientNormalizedNames.length
     ? supabase
         .from("ingredients")
         .select(
@@ -433,24 +451,45 @@ export default defineEventHandler(async (event) => {
         )
         .in("normalized_name", weeklyIngredientNormalizedNames)
     : Promise.resolve({ data: [] as any[] });
-  const [{ data: recipeIngredientRows }, { data: weeklyCatalogIngredientRows }] =
-    await Promise.all([recipeIngredientSelect, weeklyIngredientSelect]);
+  const weeklyIngredientSelectByUnderscoreName = weeklyIngredientUnderscoreNames.length
+    ? supabase
+        .from("ingredients")
+        .select(
+          "id, name, normalized_name, nutrition_status, caloric_density_level, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
+        )
+        .in("normalized_name", weeklyIngredientUnderscoreNames)
+    : Promise.resolve({ data: [] as any[] });
+  const weeklyIngredientSelectByName = weeklyIngredientNames.length
+    ? supabase
+        .from("ingredients")
+        .select(
+          "id, name, normalized_name, nutrition_status, caloric_density_level, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g",
+        )
+        .in("name", weeklyIngredientNames)
+    : Promise.resolve({ data: [] as any[] });
+  const [
+    { data: recipeIngredientRows },
+    { data: weeklyCatalogIngredientRows },
+    { data: weeklyCatalogIngredientRowsByUnderscore },
+    { data: weeklyCatalogIngredientRowsByName },
+  ] = await Promise.all([
+    recipeIngredientSelect,
+    weeklyIngredientSelectByNormalizedName,
+    weeklyIngredientSelectByUnderscoreName,
+    weeklyIngredientSelectByName,
+  ]);
   const ingredientRows = Array.from(
     new Map(
-      [...(recipeIngredientRows || []), ...(weeklyCatalogIngredientRows || [])].map(
-        (row: any) => [String(row.id), row],
-      ),
+      [
+        ...(recipeIngredientRows || []),
+        ...(weeklyCatalogIngredientRows || []),
+        ...(weeklyCatalogIngredientRowsByUnderscore || []),
+        ...(weeklyCatalogIngredientRowsByName || []),
+      ].map((row: any) => [String(row.id), row]),
     ).values(),
   );
-  const nutritionById = new Map(
-    (ingredientRows || []).map((row: any) => [String(row.id), row]),
-  );
-  const nutritionByNormalizedName = new Map(
-    (ingredientRows || []).map((row: any) => [
-      normalizeDishName(row.normalized_name || row.name),
-      row,
-    ]),
-  );
+  const { nutritionById, nutritionByNormalizedName } =
+    buildNutritionLookups(ingredientRows);
 
   await logger.log({
     level: "info",
@@ -774,7 +813,7 @@ export default defineEventHandler(async (event) => {
     const normalizedName = normalizeDishName(weeklyMeal.dish_name);
     const ingredientBase = explicitWeeklyIngredients.map((ing: any) => {
       const matchedIngredient = nutritionByNormalizedName.get(
-        normalizeDishName(ing.name),
+        normalizeIngredientLookupKey(ing.name),
       );
       return {
         ingredient_id: matchedIngredient?.id || null,

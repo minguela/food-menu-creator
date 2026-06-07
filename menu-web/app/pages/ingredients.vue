@@ -40,23 +40,6 @@
       </div>
     </section>
 
-    <section class="ui-surface rounded-xl p-5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 class="text-lg font-semibold text-white">Expansiones de ingredientes</h2>
-          <p class="text-sm ui-muted">
-            Gestiona reglas de expansion en una pagina dedicada.
-          </p>
-        </div>
-        <NuxtLink
-          href="/ingredients/expansions"
-          class="rounded-2xl border border-white/30 px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-surface-3)]/60"
-        >
-          Abrir expansiones
-        </NuxtLink>
-      </div>
-    </section>
-
     <section class="ui-surface rounded-lg border p-4">
       <div class="grid gap-2 md:grid-cols-1">
         <input v-model.trim=" query " class="w-full border rounded-lg px-3 py-2" placeholder="Buscar ingrediente..." />

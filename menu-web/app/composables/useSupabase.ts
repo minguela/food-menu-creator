@@ -6,11 +6,19 @@ export const useSupabase = () => {
   if (supabaseClient) return supabaseClient;
 
   const config = useRuntimeConfig();
+  const supabaseUrl = String(config.public.supabaseUrl || "");
+  const supabaseAnonKey = String(config.public.supabaseAnonKey || "");
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Supabase public configuration is missing.",
+    });
+  }
 
   supabaseClient = createClient(
-    config.public.supabaseUrl || "https://tceusgxbfpekjcthrrqu.supabase.co",
-    config.public.supabaseAnonKey ||
-      "sb_publishable__ar3t49-ts89flpoWupqTA_44jctdfW",
+    supabaseUrl,
+    supabaseAnonKey,
   );
 
   return supabaseClient;

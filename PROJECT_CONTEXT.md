@@ -62,7 +62,7 @@ Bot de Telegram + web app para gestión de menús semanales rotativos con lista 
 ## 3. CONFIGURACIÓN ACTUAL
 
 ### Supabase
-- **Project ID:** `tceusgxbfpekjcthrrqu`
+- **Project ID:** `your-project-ref`
 - **Variables en:** `./menu-web/.env`
   - `NUXT_PUBLIC_SUPABASE_URL`
   - `NUXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -77,7 +77,7 @@ Bot de Telegram + web app para gestión de menús semanales rotativos con lista 
 - **Deploy:** CI/CD automático al pushear
 
 ### Bot Telegram
-- **Webhook:** `https://tceusgxbfpekjcthrrqu.supabase.co/functions/v1/telegram-webhook`
+- **Webhook:** `https://your-project.supabase.co/functions/v1/telegram-webhook`
 - **Comandos:**
   - `/start` - Registro usuario
   - `/semanal` - Gestión menús semanales

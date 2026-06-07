@@ -482,8 +482,10 @@ const savedRecipes = ref<
   Array<{
     id: string;
     name: string;
+    normalized_name?: string | null;
     description?: string | null;
     recipe_ingredients?: Array<{
+      ingredient_id?: string | null;
       name: string;
       quantity: number | null;
       unit_type: string | null;
@@ -501,6 +503,7 @@ const newMeal = ref( {
 
 const ingredientRows = ref<
   Array<{
+    ingredient_id?: string | null;
     name: string;
     quantity: number;
     unit_type: WeeklyMealIngredient[ "unit_type" ];
@@ -648,7 +651,7 @@ const loadSavedRecipes = async () => {
   const { data, error } = await supabase
     .from( "dishes" )
     .select(
-      "id,name,description,recipe_ingredients(name,quantity,unit_type,is_confirmed)",
+      "id,name,normalized_name,description,recipe_ingredients(ingredient_id,name,quantity,unit_type,is_confirmed)",
     )
     .eq( "user_id", currentUser.id )
     .order( "name", { ascending: true } );
@@ -659,6 +662,69 @@ const loadSavedRecipes = async () => {
   }
 
   savedRecipes.value = data || [];
+};
+
+const normalizeLookupName = ( value: string ) =>
+  String( value || "" )
+    .trim()
+    .toLowerCase()
+    .normalize( "NFD" )
+    .replace( /[\u0300-\u036f]/g, "" )
+    .replace( /[_-]+/g, " " )
+    .replace( /\s+/g, " " );
+
+const findRecipeIdByName = ( dishName: string ) => {
+  const normalizedDishName = normalizeLookupName( dishName );
+  return (
+    savedRecipes.value.find(
+      ( recipe ) =>
+        normalizeLookupName( recipe.normalized_name || recipe.name ) ===
+        normalizedDishName,
+    )?.id || null
+  );
+};
+
+const ensureMasterIngredientId = async ( name: string, unitType: string ) => {
+  const normalizedIngredientName = normalizeLookupName( name );
+  if ( !normalizedIngredientName ) return null;
+
+  const normalizedUnderscoreName = normalizedIngredientName.replace( /\s+/g, "_" );
+  const { data: existingByNormalized } = await supabase
+    .from( "ingredients" )
+    .select( "id" )
+    .in( "normalized_name", [ normalizedIngredientName, normalizedUnderscoreName ] )
+    .limit( 1 )
+    .maybeSingle();
+
+  if ( existingByNormalized?.id ) return existingByNormalized.id;
+
+  const { data: existingByName } = await supabase
+    .from( "ingredients" )
+    .select( "id" )
+    .eq( "name", name.trim().toLowerCase() )
+    .maybeSingle();
+
+  if ( existingByName?.id ) return existingByName.id;
+
+  const { data: createdIngredient, error: createdIngredientError } = await supabase
+    .from( "ingredients" )
+    .insert( {
+      name: name.trim().toLowerCase(),
+      normalized_name: normalizedIngredientName,
+      default_unit_type: unitType,
+      unit_type: unitType,
+      source: "manual",
+      is_verified: false,
+    } )
+    .select( "id" )
+    .single();
+
+  if ( createdIngredientError ) {
+    console.error( "Error creando ingrediente maestro desde menú semanal:", createdIngredientError );
+    return null;
+  }
+
+  return createdIngredient?.id || null;
 };
 
 const ensureRecipeLibrary = async ( weeklyMeals: WeeklyMeal[] ) => {
@@ -894,6 +960,7 @@ const openMealModal = ( day: number, type: MealType, meal?: WeeklyMeal | null ) 
 
   ingredientRows.value = meal?.weekly_meal_ingredients?.length
     ? meal.weekly_meal_ingredients.map( ( ingredient ) => ( {
+      ingredient_id: ingredient.ingredient_id || null,
       name: ingredient.name,
       quantity: Number( ingredient.quantity ) || 1,
       unit_type: ingredient.unit_type,
@@ -934,6 +1001,7 @@ const applySavedRecipeToModal = () => {
   ingredientRows.value =
     confirmedIngredients.length > 0
       ? confirmedIngredients.map( ( ingredient ) => ( {
+        ingredient_id: ingredient.ingredient_id || null,
         name: ingredient.name,
         quantity:
           Number( ingredient.quantity ) > 0 ? Number( ingredient.quantity ) : 1,
@@ -974,6 +1042,20 @@ const saveMeal = async () => {
     : ingredientRows.value.filter(
       ( ingredient ) => ingredient.name && Number( ingredient.quantity ) > 0,
     );
+  const dishId =
+    !isSpecial && selectedRecipeId.value && !selectedRecipeId.value.startsWith( "COMPOUND:" )
+      ? selectedRecipeId.value
+      : !isSpecial
+        ? findRecipeIdByName( normalizedDishName )
+        : null;
+  const resolvedRowsToInsert = await Promise.all(
+    rowsToInsert.map( async ( ingredient ) => ( {
+      ...ingredient,
+      ingredient_id:
+        ingredient.ingredient_id ||
+        ( await ensureMasterIngredientId( ingredient.name, ingredient.unit_type ) ),
+    } ) ),
+  );
 
   const nextMealSlot = editingMealId.value
     ? Number( meals.value.find( ( meal ) => meal.id === editingMealId.value )?.meal_slot || 1 )
@@ -984,6 +1066,7 @@ const saveMeal = async () => {
     day_number: selectedDay.value,
     meal_type: selectedType.value,
     meal_slot: Math.max( 1, nextMealSlot ),
+    dish_id: dishId,
     dish_name: normalizedDishName,
     dish_description: newMeal.value.dish_description || null,
     is_special: isSpecial,
@@ -1046,12 +1129,13 @@ const saveMeal = async () => {
     return;
   }
 
-  if ( rowsToInsert.length > 0 ) {
+  if ( resolvedRowsToInsert.length > 0 ) {
     const { error: ingredientsError } = await supabase
       .from( "weekly_meal_ingredients" )
       .insert(
-        rowsToInsert.map( ( ingredient ) => ( {
+        resolvedRowsToInsert.map( ( ingredient ) => ( {
           weekly_meal_id: savedMeal.id,
+          ingredient_id: ingredient.ingredient_id,
           name: ingredient.name.toLowerCase(),
           quantity: ingredient.quantity,
           unit_type: ingredient.unit_type,

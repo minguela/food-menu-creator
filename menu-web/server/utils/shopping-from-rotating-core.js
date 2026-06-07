@@ -87,11 +87,13 @@ export const consolidateShoppingRowsFromPortions = (portionRows = []) => {
         quantity: ingredient.final_quantity,
         unitType: ingredient.unit_type,
       });
-      const key = `${String(ingredient.name || "").toLowerCase()}::${String(
+      const ingredientId = ingredient.ingredient_id || null;
+      const key = `${ingredientId || String(ingredient.name || "").toLowerCase()}::${String(
         ingredient.unit_type || "",
       ).toLowerCase()}`;
       if (!consolidated[key]) {
         consolidated[key] = {
+          ingredient_id: ingredientId,
           item_name: ingredient.name,
           quantity_grams: 0,
           conversion_status: conversion.status,
@@ -103,6 +105,7 @@ export const consolidateShoppingRowsFromPortions = (portionRows = []) => {
   }
 
   return Object.values(consolidated).map((item) => ({
+    ingredient_id: item.ingredient_id || null,
     item_name: item.item_name,
     quantity_needed: Math.round(item.quantity_grams),
     quantity_grams: Math.round(item.quantity_grams),
@@ -138,7 +141,10 @@ export const persistShoppingListRows = async ({
   }));
 
   if (rowsWithOwner.length > 0) {
-    const { error } = await supabase.from("shopping_lists").insert(rowsWithOwner);
+    const { error } = await supabase.from("shopping_lists").upsert(rowsWithOwner, {
+      ignoreDuplicates: true,
+      onConflict: "user_id,week_start,ingredient_id",
+    });
     if (error) throw error;
   }
 

@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveRecipeIngredientRows } from "../server/utils/rotating-recipe-resolution.js";
+import {
+  resolveRecipeIngredientRows,
+  resolveWeeklyIngredientRows,
+} from "../server/utils/rotating-recipe-resolution.js";
 
 test("resolves confirmed recipe rows by normalized name when ingredient_id is missing", () => {
   const nutritionByNormalizedName = new Map([
@@ -81,4 +84,39 @@ test("resolves confirmed recipe rows when stored normalized_name uses underscore
 
   assert.equal(result.unresolvedIngredientNames.length, 0);
   assert.equal(result.ingredientBase[0].ingredient_id, "ing-pan");
+});
+
+test("resolves weekly ingredient rows by ingredient_id before falling back to names", () => {
+  const nutritionById = new Map([
+    [
+      "ing-pina",
+      {
+        id: "ing-pina",
+        name: "piña",
+        normalized_name: "pina",
+        nutrition_status: "complete",
+        kcal_per_100g: 50,
+        protein_per_100g: 0.5,
+        carbs_per_100g: 13,
+        fat_per_100g: 0.1,
+      },
+    ],
+  ]);
+
+  const result = resolveWeeklyIngredientRows({
+    ingredientRows: [
+      {
+        ingredient_id: "ing-pina",
+        name: "nombre antiguo que ya no coincide",
+        quantity: 100,
+        unit_type: "g",
+      },
+    ],
+    nutritionById,
+    nutritionByNormalizedName: new Map(),
+  });
+
+  assert.equal(result.unresolvedIngredientNames.length, 0);
+  assert.equal(result.ingredientBase[0].ingredient_id, "ing-pina");
+  assert.equal(result.ingredientBase[0].normalized_name, "pina");
 });

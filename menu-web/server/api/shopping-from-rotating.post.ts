@@ -6,6 +6,7 @@ export default defineEventHandler(async (event) => {
     userId?: string;
     rotatingMenuId?: string;
     weekStart?: string;
+    clearExisting?: boolean;
   };
   const userId = String(body?.userId || "").trim();
   const rotatingMenuId = String(body?.rotatingMenuId || "").trim();
@@ -24,6 +25,7 @@ export default defineEventHandler(async (event) => {
     userId,
     rotatingMenuId,
     weekStart: body?.weekStart,
+    clearExisting: body?.clearExisting !== false,
   });
 
   return {

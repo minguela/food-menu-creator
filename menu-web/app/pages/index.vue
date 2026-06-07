@@ -668,6 +668,7 @@ const createMenu = async () => {
     const fixedRows = [];
     const fixedIngredientRows: Array<{
       weekly_meal_id: string;
+      ingredient_id: string | null;
       name: string;
       quantity: number;
       unit_type: string;
@@ -686,12 +687,14 @@ const createMenu = async () => {
         await ensureRecipeExists( type );
       }
       if ( !fixed.dish_name.trim() ) continue;
+      const fixedDishId = await ensureRecipeExists( type );
       for ( let day = 1; day <= 7; day++ ) {
         fixedRows.push( {
           weekly_menu_id: data.id,
           day_number: day,
           meal_type: type,
           meal_slot: 1,
+          dish_id: fixedDishId,
           dish_name: fixed.dish_name.trim(),
           dish_description: fixed.dish_description.trim() || null,
           kcal: 0,
@@ -738,9 +741,13 @@ const createMenu = async () => {
             ( ingredient ) => ingredient.name && ingredient.quantity > 0,
           );
           for ( const ing of ingredientRows ) {
-            await ensureMasterIngredientId( ing.name, ing.unit_type );
+            const ingredientId = await ensureMasterIngredientId(
+              ing.name,
+              ing.unit_type,
+            );
             fixedIngredientRows.push( {
               weekly_meal_id: meal.id,
+              ingredient_id: ingredientId,
               name: ing.name.toLowerCase(),
               quantity: ing.quantity,
               unit_type: ing.unit_type,

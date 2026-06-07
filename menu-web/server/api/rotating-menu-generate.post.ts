@@ -5,7 +5,10 @@ import {
   buildNutritionLookups,
   normalizeIngredientLookupKey,
 } from "~~/server/utils/ingredient-nutrition-lookup.js";
-import { resolveRecipeIngredientRows } from "~~/server/utils/rotating-recipe-resolution.js";
+import {
+  resolveRecipeIngredientRows,
+  resolveWeeklyIngredientRows,
+} from "~~/server/utils/rotating-recipe-resolution.js";
 import { chooseRotatingMealSource } from "~~/server/utils/rotating-meal-source.js";
 import { summarizeRotatingGenerationErrorData } from "~/utils/rotating-job-failure.js";
 import {
@@ -118,7 +121,7 @@ export default defineEventHandler(async (event) => {
       supabase
         .from("weekly_meals")
         .select(
-          "id, weekly_menu_id, day_number, meal_type, meal_slot, dish_name, dish_description, is_special, special_kcal_reserved, compound_day_id",
+          "id, weekly_menu_id, dish_id, day_number, meal_type, meal_slot, dish_name, dish_description, is_special, special_kcal_reserved, compound_day_id",
         )
         .in("weekly_menu_id", body.sourceWeeklyMenuIds),
     ]);
@@ -332,11 +335,18 @@ export default defineEventHandler(async (event) => {
           }
           return [name];
         })
+      .filter(Boolean),
+    ),
+  );
+  const weeklyMealDishIds = Array.from(
+    new Set(
+      (weeklyMeals || [])
+        .map((meal: any) => String(meal.dish_id || "").trim())
         .filter(Boolean),
     ),
   );
-  const { data: dishRows } = uniqueDishNames.length
-    ? await supabase
+  const dishSelectByName = uniqueDishNames.length
+    ? supabase
         .from("dishes")
         .select(
           "id,name,normalized_name,recipe_status,is_special,special_kcal_reserved",
@@ -346,7 +356,28 @@ export default defineEventHandler(async (event) => {
           "normalized_name",
           uniqueDishNames.map((name) => normalizeDishName(name)),
         )
-    : { data: [] as any[] };
+    : Promise.resolve({ data: [] as any[] });
+  const dishSelectById = weeklyMealDishIds.length
+    ? supabase
+        .from("dishes")
+        .select(
+          "id,name,normalized_name,recipe_status,is_special,special_kcal_reserved",
+        )
+        .eq("user_id", body.userId)
+        .in("id", weeklyMealDishIds)
+    : Promise.resolve({ data: [] as any[] });
+  const [{ data: dishRowsByName }, { data: dishRowsById }] = await Promise.all([
+    dishSelectByName,
+    dishSelectById,
+  ]);
+  const dishRows = Array.from(
+    new Map(
+      [...(dishRowsByName || []), ...(dishRowsById || [])].map((row: any) => [
+        String(row.id),
+        row,
+      ]),
+    ).values(),
+  );
   const dishByNormalizedName = new Map(
     (dishRows || []).map((row: any) => [
       normalizeDishName(row.normalized_name || row.name),
@@ -395,7 +426,7 @@ export default defineEventHandler(async (event) => {
   const { data: weeklyMealIngredientRows } = weeklyMealIds.length
     ? await supabase
         .from("weekly_meal_ingredients")
-        .select("id, weekly_meal_id, name, quantity, unit_type")
+        .select("id, weekly_meal_id, ingredient_id, name, quantity, unit_type")
         .in("weekly_meal_id", weeklyMealIds)
     : { data: [] as any[] };
   const weeklyMealIngredientsByMealId = new Map<string, any[]>();
@@ -409,9 +440,14 @@ export default defineEventHandler(async (event) => {
 
   const ingredientIds = Array.from(
     new Set(
-      (recipeRows || [])
-        .filter((row: any) => row.is_confirmed && row.ingredient_id)
-        .map((row: any) => row.ingredient_id),
+      [
+        ...(recipeRows || [])
+          .filter((row: any) => row.is_confirmed && row.ingredient_id)
+          .map((row: any) => row.ingredient_id),
+        ...(weeklyMealIngredientRows || [])
+          .map((row: any) => row.ingredient_id)
+          .filter(Boolean),
+      ],
     ),
   );
   const weeklyIngredientNormalizedNames = Array.from(
@@ -811,18 +847,12 @@ export default defineEventHandler(async (event) => {
     if (isSpecialMealCandidate(weeklyMeal)) continue;
 
     const normalizedName = normalizeDishName(weeklyMeal.dish_name);
-    const ingredientBase = explicitWeeklyIngredients.map((ing: any) => {
-      const matchedIngredient = nutritionByNormalizedName.get(
-        normalizeIngredientLookupKey(ing.name),
-      );
-      return {
-        ingredient_id: matchedIngredient?.id || null,
-        name: String(ing.name || ""),
-        normalized_name: normalizeDishName(ing.name),
-        quantity: Number(ing.quantity),
-        unit_type: String(ing.unit_type || ""),
-      };
-    });
+    const { ingredientBase, unresolvedIngredientNames } =
+      resolveWeeklyIngredientRows({
+        ingredientRows: explicitWeeklyIngredients,
+        nutritionById,
+        nutritionByNormalizedName,
+      });
     const hasInvalidQuantity = ingredientBase.some(
       (ing) => !Number.isFinite(ing.quantity) || ing.quantity <= 0,
     );
@@ -839,14 +869,6 @@ export default defineEventHandler(async (event) => {
       continue;
     }
 
-    const unresolvedIngredientNames = Array.from(
-      new Set(
-        ingredientBase
-          .filter((ing) => !ing.ingredient_id)
-          .map((ing) => String(ing.name || "").trim())
-          .filter(Boolean),
-      ),
-    );
     if (unresolvedIngredientNames.length > 0) {
       invalidWeeklyMealBaseByMealId.set(weeklyMealId, {
         reason: "missing_ingredient_link",
@@ -1040,29 +1062,19 @@ export default defineEventHandler(async (event) => {
 
   if (uncuredSet.size > 0) {
     await logger.log({
-      level: "error",
+      level: "warn",
       step: "recipe_validation",
-      status: "failed",
-      message: "La generación se bloquea por recetas o ingredientes sin curar.",
+      status: "completed",
+      message:
+        "Hay recetas o ingredientes sin curar; se descartan si existen alternativas válidas.",
       metadata: {
         uncured_recipes_count: uncuredRecipes.length,
         uncured_recipes: uncuredRecipes.slice(0, 50),
       },
       progress: {
-        progress: 100,
+        progress: 40,
         currentStep: "recipe_validation",
-        status: "failed",
-        errorMessage:
-          "Tienes recetas o ingredientes sin curar. Completa su curación antes de generar el menú rotativo.",
-        completedAt: new Date().toISOString(),
-        resultPayload: { error_data: { uncured_recipes: uncuredRecipes } },
       },
-    });
-    throw createError({
-      statusCode: 409,
-      statusMessage:
-        "Tienes recetas o ingredientes sin curar. Completa su curación antes de generar el menú rotativo.",
-      data: { uncured_recipes: uncuredRecipes },
     });
   }
 
@@ -1114,6 +1126,10 @@ export default defineEventHandler(async (event) => {
       const sourceMealId = String(sourceMeal.id || "").trim();
       const weeklyMealVirtualRecipeId = toWeeklyMealVirtualRecipeId(sourceMealId);
       const hasExplicitWeeklyIngredients = weeklyMealIngredientsByMealId.has(sourceMealId);
+      const sourceMealDish =
+        sourceMeal.dish_id && dishById.get(String(sourceMeal.dish_id))
+          ? dishById.get(String(sourceMeal.dish_id))
+          : null;
       let linkedDish = hasExplicitWeeklyIngredients
         ? {
             id: weeklyMealVirtualRecipeId,
@@ -1125,8 +1141,11 @@ export default defineEventHandler(async (event) => {
             is_special: false,
             special_kcal_reserved: 0,
             _fromWeeklyMealIngredients: true,
+            _sourceDishId: sourceMealDish?.id || null,
           }
-        : dishByNormalizedName.get(normalizeDishName(sourceMeal.dish_name)) || null;
+        : sourceMealDish ||
+          dishByNormalizedName.get(normalizeDishName(sourceMeal.dish_name)) ||
+          null;
 
       if (!hasExplicitWeeklyIngredients && !linkedDish && sourceMeal.compound_day_id) {
         const compoundDay = compoundDayById.get(String(sourceMeal.compound_day_id));
@@ -1520,6 +1539,11 @@ export default defineEventHandler(async (event) => {
         source_weekly_menu_id: picked.weekly_menu_id || null,
         source_day_number: Number(picked.day_number) || null,
         source_weekly_meal_id: picked.id,
+        recipe_id:
+          linkedDish?._sourceDishId ||
+          (linkedDish?.id && dishById.has(String(linkedDish.id))
+            ? linkedDish.id
+            : null),
         dish_name: picked.dish_name,
         dish_description: picked.dish_description || null,
         is_special: isSpecial,
@@ -1703,6 +1727,7 @@ export default defineEventHandler(async (event) => {
             fat += Number(n.fat_per_100g) * factor;
           }
           return {
+            ingredient_id: ing.ingredient_id,
             name: ing.name,
             base_quantity: ing.quantity,
             final_quantity: finalQuantity,
@@ -1751,6 +1776,7 @@ export default defineEventHandler(async (event) => {
         source_weekly_menu_id: plannedMeal.source_weekly_menu_id || null,
         source_day_number: Number(plannedMeal.source_day_number) || null,
         source_weekly_meal_id: plannedMeal.source_weekly_meal_id,
+        recipe_id: plannedMeal.recipe_id || null,
         dish_name: plannedMeal.dish_name,
         dish_description: plannedMeal.dish_description || null,
         is_special: isSpecial,
@@ -2188,6 +2214,7 @@ export default defineEventHandler(async (event) => {
       meal_type: meal.meal_type,
       meal_slot: normalizeMealSlot(meal.meal_slot),
       source_weekly_meal_id: meal.source_weekly_meal_id,
+      recipe_id: meal.recipe_id || null,
       dish_name: meal.dish_name,
       dish_description: meal.dish_description || null,
       is_special: Boolean(meal.is_special),
@@ -2299,6 +2326,7 @@ export default defineEventHandler(async (event) => {
             .filter((ing: any) => ing.name && ing.final_quantity > 0)
             .map((ing: any) => ({
               rotating_menu_meal_profile_portion_id: portionId,
+              ingredient_id: ing.ingredient_id || null,
               name: String(ing.name).toLowerCase(),
               base_quantity: ing.base_quantity,
               final_quantity: ing.final_quantity,

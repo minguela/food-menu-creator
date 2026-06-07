@@ -202,18 +202,16 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const shoppingBuild = await buildShoppingListFromRotatingMenu({
-    supabase,
-    userId,
-    rotatingMenuId,
-  });
+  const loadCurrentShoppingItems = async () =>
+    supabase
+      .from("shopping_lists")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("week_start", new Date().toISOString().split("T")[0])
+      .order("item_name", { ascending: true });
 
-  const { data: shoppingItems, error: shoppingError } = await supabase
-    .from("shopping_lists")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("week_start", new Date().toISOString().split("T")[0])
-    .order("item_name", { ascending: true });
+  const { data: existingShoppingItems, error: shoppingError } =
+    await loadCurrentShoppingItems();
 
   if (shoppingError) {
     throw createError({
@@ -221,6 +219,32 @@ export default defineEventHandler(async (event) => {
       statusMessage: `Error cargando lista de la compra: ${shoppingError.message}`,
       data: { debug: { ...debug, shopping_error: shoppingError } },
     });
+  }
+
+  let shoppingItems = existingShoppingItems || [];
+
+  if (shoppingItems.length === 0) {
+    await buildShoppingListFromRotatingMenu({
+      supabase,
+      userId,
+      rotatingMenuId,
+      clearExisting: true,
+    });
+    const { data: rebuiltShoppingItems, error: rebuiltShoppingError } =
+      await loadCurrentShoppingItems();
+    if (rebuiltShoppingError) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: `Error recargando lista de la compra: ${rebuiltShoppingError.message}`,
+        data: {
+          debug: {
+            ...debug,
+            rebuilt_shopping_error: rebuiltShoppingError,
+          },
+        },
+      });
+    }
+    shoppingItems = rebuiltShoppingItems || [];
   }
 
   const ingredientsByPortion = groupBy(
@@ -275,8 +299,6 @@ export default defineEventHandler(async (event) => {
     portions_count: portions?.length || 0,
     ingredients_count: ingredients?.length || 0,
     shopping_items_count: shoppingItems?.length || 0,
-    shopping_inserted: shoppingBuild.inserted,
-    shopping_skipped_special_meals: shoppingBuild.skippedSpecialMeals,
     empty_relations: {
       days: (days || []).length === 0,
       meals: (meals || []).length === 0,

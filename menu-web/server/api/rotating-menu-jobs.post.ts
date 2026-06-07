@@ -10,6 +10,7 @@ type CreateJobPayload = {
   profileIds: string[];
   initialWeeklyMenuId?: string | null;
   specialMealKcal?: number;
+  clearExistingShoppingList?: boolean;
 };
 
 export default defineEventHandler(async (event) => {
@@ -85,6 +86,7 @@ export default defineEventHandler(async (event) => {
       0,
       Math.min(2000, Number(body?.specialMealKcal) || 700),
     ),
+    clearExistingShoppingList: body?.clearExistingShoppingList !== false,
   };
 
   const { data: createdJob, error: createErrorJob } = await supabase
@@ -122,8 +124,9 @@ export default defineEventHandler(async (event) => {
       profiles_count: inputPayload.profileIds.length,
       source_menus_count: inputPayload.sourceWeeklyMenuIds.length,
       initial_weekly_menu_id: inputPayload.initialWeeklyMenuId,
-      start_date: inputPayload.startDate,
-    },
+        start_date: inputPayload.startDate,
+        clear_existing_shopping_list: inputPayload.clearExistingShoppingList,
+      },
     progress: { currentStep: "job_created", progress: 0, status: "pending" },
   });
 

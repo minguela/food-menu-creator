@@ -1,4 +1,7 @@
-import { convertToGrams } from "~/utils/shopping-conversions.js";
+import {
+  consolidateShoppingRowsFromPortions,
+  persistShoppingListRows,
+} from "./shopping-from-rotating-core.js";
 
 type SupabaseAdmin = {
   from: (table: string) => any;
@@ -9,6 +12,7 @@ type BuildShoppingParams = {
   userId: string;
   rotatingMenuId: string;
   weekStart?: string;
+  clearExisting?: boolean;
 };
 
 export const buildShoppingListFromRotatingMenu = async ({
@@ -16,6 +20,7 @@ export const buildShoppingListFromRotatingMenu = async ({
   userId,
   rotatingMenuId,
   weekStart = new Date().toISOString().split("T")[0],
+  clearExisting = true,
 }: BuildShoppingParams) => {
   const { data: dayRows } = await supabase
     .from("rotating_menu_days")
@@ -47,64 +52,14 @@ export const buildShoppingListFromRotatingMenu = async ({
     .select("rotating_menu_meal_profile_ingredients(*)")
     .in("rotating_menu_meal_id", mealIds);
 
-  const consolidated: Record<
-    string,
-    {
-      item_name: string;
-      quantity_grams: number;
-      conversion_status: string;
-      conversion_note: string;
-    }
-  > = {};
+  const rows = consolidateShoppingRowsFromPortions(portionRows || []);
+  const persistResult = await persistShoppingListRows({
+    supabase,
+    userId,
+    weekStart,
+    rows,
+    clearExisting,
+  });
 
-  for (const portion of portionRows || []) {
-    for (const ingredient of portion.rotating_menu_meal_profile_ingredients ||
-      []) {
-      const conversion = convertToGrams({
-        name: ingredient.name,
-        quantity: ingredient.final_quantity,
-        unitType: ingredient.unit_type,
-      });
-      const key = `${String(ingredient.name || "").toLowerCase()}::${String(
-        ingredient.unit_type || "",
-      ).toLowerCase()}`;
-      if (!consolidated[key]) {
-        consolidated[key] = {
-          item_name: ingredient.name,
-          quantity_grams: 0,
-          conversion_status: conversion.status,
-          conversion_note: conversion.note,
-        };
-      }
-      consolidated[key].quantity_grams += conversion.grams;
-    }
-  }
-
-  await supabase
-    .from("shopping_lists")
-    .delete()
-    .eq("user_id", userId)
-    .eq("week_start", weekStart);
-
-  const rows = Object.values(consolidated).map((item) => ({
-    user_id: userId,
-    week_start: weekStart,
-    item_name: item.item_name,
-    quantity_needed: Math.round(item.quantity_grams),
-    quantity_grams: Math.round(item.quantity_grams),
-    original_quantity: Math.round(item.quantity_grams),
-    original_unit_type: "g",
-    conversion_status: item.conversion_status,
-    conversion_note: item.conversion_note || "Generado desde menú rotativo",
-    is_extra: true,
-    purchased: false,
-    estimated_price: 0,
-  }));
-
-  if (rows.length > 0) {
-    const { error } = await supabase.from("shopping_lists").insert(rows);
-    if (error) throw error;
-  }
-
-  return { inserted: rows.length, skippedSpecialMeals };
+  return { inserted: persistResult.inserted, skippedSpecialMeals };
 };

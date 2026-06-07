@@ -7,6 +7,9 @@ on:
   schedule:
     - cron: "*/30 * * * *"
 
+permissions:
+  contents: read
+
 jobs:
   production-health-check:
     name: Production health-check

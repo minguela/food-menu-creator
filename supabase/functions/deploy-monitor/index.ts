@@ -22,8 +22,11 @@ async function sendTelegramMessage(text: string) {
 
 async function verifySignature(body: string, signature: string): Promise<boolean> {
   if (!VERIFY_TOKEN) {
-    console.warn("VERCEL_WEBHOOK_SECRET not configured, skipping verification");
-    return true;
+    console.warn("VERCEL_WEBHOOK_SECRET not configured, rejecting webhook");
+    return false;
+  }
+  if (!signature.startsWith("sha256=")) {
+    return false;
   }
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(

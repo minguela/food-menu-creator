@@ -19,15 +19,13 @@
             <p class="ui-subtle text-sm mt-1">Cantidades normalizadas a gramos</p>
           </div>
         </div>
-        <button @click=" loadShoppingList " :disabled=" loading "
-          class="group bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-xl hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 font-medium shadow-lg shadow-amber-200 hover:shadow-xl transition-all flex items-center gap-2">
-          <svg class="w-4 h-4 group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor"
-            viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 4v5h.582m15.582 0A13.93 13.93 0 0120 10c0 3.866-1.598 7.5-4.236 9.94a13.13 13.13 0 01-3.529 2.168A8.994 8.994 0 004 20c1.885 0 3.615.467 5.082 1.257M4 14h5.418a13.93 13.93 0 002.582 2.246c.927.475 1.986.76 3.04.853a8.997 8.997 0 016.336-3.038A8.978 8.978 0 0120 10c0-2.123-.74-4.09-1.96-5.618M4 14h5.418" />
-          </svg>
-          Actualizar
-        </button>
+        <IconActionButton
+          :icon="faRotateRight"
+          label="Actualizar lista"
+          tone="primary"
+          :disabled="loading"
+          @click="loadShoppingList"
+        />
       </div>
 
       <!-- Generate from menu section -->
@@ -107,6 +105,54 @@
         </section>
 
         <section class="ui-surface rounded-lg p-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="ui-title font-semibold">Acciones de lista</h2>
+              <p class="ui-subtle text-sm">
+                {{ selectionMode
+                  ? `${ selectedItemsCount } artículo${ selectedItemsCount === 1 ? "" : "s" } seleccionado${ selectedItemsCount === 1 ? "" : "s" } para eliminar`
+                  : "Gestiona la compra y el borrado desde aquí"
+                }}
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <IconActionButton
+                :icon="selectionMode ? faListCheck : faTrashCan"
+                :label="selectionMode ? 'Salir de selección' : 'Seleccionar para borrar'"
+                :tone="selectionMode ? 'success' : 'default'"
+                @click="toggleSelectionMode"
+              />
+              <IconActionButton
+                :icon="faSquareCheck"
+                label="Seleccionar todo"
+                :disabled="!selectionMode || items.length === 0"
+                @click="toggleSelectAllItems"
+              />
+              <IconActionButton
+                :icon="faTrashCan"
+                label="Eliminar seleccionados"
+                tone="danger"
+                :disabled="!selectionMode || selectedItemsCount === 0"
+                @click="deleteSelectedItems"
+              />
+              <IconActionButton
+                :icon="faTrash"
+                label="Vaciar lista"
+                tone="danger"
+                :disabled="items.length === 0"
+                @click="clearShoppingList"
+              />
+              <IconActionButton
+                :icon="faCheckDouble"
+                label="Marcar todo comprado"
+                :disabled="selectionMode"
+                @click="markAllAsPurchased"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section class="ui-surface rounded-lg p-4">
           <h2 class="ui-title font-semibold mb-3">Añadir artículo propio</h2>
           <form class="grid gap-2 md:grid-cols-[1fr_130px_auto]" @submit.prevent=" addExtraItem ">
             <input v-model.trim=" extraName " class="ui-input rounded-lg px-3 py-2" placeholder="Ej. papel higiénico"
@@ -152,9 +198,9 @@
             <div v-for=" item in categoryItems " :key=" item.id "
               class="grid gap-3 p-4 hover:bg-[var(--color-surface-3)] transition-colors md:grid-cols-[1fr_170px_110px]">
               <div class="flex items-start gap-3">
-                <input type="checkbox" :checked=" item.purchased " @change="togglePurchased( item )"
+                <input type="checkbox" :checked=" selectionMode ? isSelected( item.id ) : item.purchased " @change="toggleItemCheckbox( item )"
                   class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 mt-1" />
-                 <div :class=" { 'line-through ui-subtle': item.purchased } ">
+                 <div :class=" { 'line-through ui-subtle': !selectionMode && item.purchased } ">
                   <div class="flex flex-wrap items-center gap-2">
                     <p class="ui-title font-medium">
                       {{ item.item_name || item.ingredients?.name || "Artículo" }}
@@ -199,9 +245,6 @@
         </section>
 
         <div class="flex flex-wrap justify-end gap-2 pt-4">
-          <button @click=" markAllAsPurchased " class="ui-btn-muted px-4 py-2 rounded-lg">
-            Marcar todo como comprado
-          </button>
           <button @click=" exportAsText " :disabled=" exportLoading "
             class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50">
             {{ exportLoading ? "Exportando..." : "Exportar texto" }}
@@ -224,6 +267,14 @@
 
 <script setup lang="ts">
 import {
+  faCheckDouble,
+  faListCheck,
+  faRotateRight,
+  faSquareCheck,
+  faTrash,
+  faTrashCan,
+} from "@fortawesome/free-solid-svg-icons";
+import {
   buildShoppingCsv,
   convertToGrams,
 } from "~/utils/shopping-conversions.js";
@@ -233,6 +284,8 @@ import type { RotatingMenu } from "~/types";
 
 const supabase = useSupabase();
 const { loadCurrentUser, user } = useCurrentUser();
+const { confirm: confirmDialog } = useConfirmDialog();
+const { chooseClearExistingShoppingList } = useShoppingListRegeneration();
 const appToast = useAppToast();
 
 const items = ref<ShoppingListItem[]>( [] );
@@ -247,6 +300,8 @@ const mobileChannel = ref<"sms" | "whatsapp">( "sms" );
 const rotatingMenus = ref<RotatingMenu[]>( [] );
 const selectedRotatingMenuId = ref( "" );
 const exportLoading = ref( false );
+const selectionMode = ref( false );
+const selectedItemIds = ref<string[]>( [] );
 
 const itemsByCategory = computed( () => {
   return items.value.reduce(
@@ -279,6 +334,12 @@ const sendStatusLabel = computed( () => {
   if ( status === "error" ) return "Error";
   return "Pendiente";
 } );
+const allItemsSelected = computed(
+  () =>
+    items.value.length > 0 &&
+    selectedItemIds.value.length === items.value.length,
+);
+const selectedItemsCount = computed( () => selectedItemIds.value.length );
 
 const loadShoppingList = async () => {
   loading.value = true;
@@ -307,6 +368,13 @@ const loadShoppingList = async () => {
     items.value = await ensureGramFields( ( data || [] ) as ShoppingListItem[] );
   }
 
+  selectedItemIds.value = selectedItemIds.value.filter( ( itemId ) =>
+    items.value.some( ( item ) => item.id === itemId ),
+  );
+  if ( items.value.length === 0 ) {
+    selectionMode.value = false;
+  }
+
   loading.value = false;
 };
 
@@ -333,11 +401,18 @@ const buildFromRotatingMenu = async () => {
   if ( !currentUser || !selectedRotatingMenuId.value ) return;
   loading.value = true;
   try {
+    const clearExisting = await chooseClearExistingShoppingList( {
+      userId: currentUser.id,
+      title: "Generar lista desde menú rotativo",
+      confirmText: "Vaciar y generar",
+      cancelText: "Mantener y generar",
+    } );
     await $fetch( "/api/shopping-from-rotating", {
       method: "POST",
       body: {
         userId: currentUser.id,
         rotatingMenuId: selectedRotatingMenuId.value,
+        clearExisting,
       },
     } );
     await loadShoppingList();
@@ -389,6 +464,33 @@ const togglePurchased = async ( item: ShoppingListItem ) => {
 
   if ( error ) return console.error( "Error actualizando:", error );
   item.purchased = !item.purchased;
+};
+
+const isSelected = ( itemId: string ) => selectedItemIds.value.includes( itemId );
+
+const toggleSelectionMode = () => {
+  selectionMode.value = !selectionMode.value;
+  if ( !selectionMode.value ) {
+    selectedItemIds.value = [];
+  }
+};
+
+const toggleSelectedItem = ( itemId: string ) => {
+  if ( isSelected( itemId ) ) {
+    selectedItemIds.value = selectedItemIds.value.filter( ( id ) => id !== itemId );
+    return;
+  }
+
+  selectedItemIds.value = [ ...selectedItemIds.value, itemId ];
+};
+
+const toggleItemCheckbox = async ( item: ShoppingListItem ) => {
+  if ( selectionMode.value ) {
+    toggleSelectedItem( item.id );
+    return;
+  }
+
+  await togglePurchased( item );
 };
 
 const updateGrams = async ( item: ShoppingListItem, event: Event ) => {
@@ -459,6 +561,79 @@ const markAllAsPurchased = async () => {
   items.value.forEach( ( item ) => {
     item.purchased = true;
   } );
+};
+
+const toggleSelectAllItems = () => {
+  if ( allItemsSelected.value ) {
+    selectedItemIds.value = [];
+    return;
+  }
+
+  selectedItemIds.value = items.value.map( ( item ) => item.id );
+};
+
+const clearShoppingList = async () => {
+  const currentUser = await loadCurrentUser();
+  if ( !currentUser || items.value.length === 0 ) return;
+
+  const confirmed = await confirmDialog( {
+    title: "Vaciar lista de la compra",
+    message: "¿Quieres eliminar toda la lista de la compra actual?",
+    confirmText: "Vaciar lista",
+    cancelText: "Cancelar",
+    danger: true,
+  } );
+
+  if ( !confirmed ) return;
+
+  const { error } = await supabase
+    .from( "shopping_lists" )
+    .delete()
+    .eq( "user_id", currentUser.id );
+
+  if ( error ) {
+    appToast.error( "Error vaciando la lista: " + error.message );
+    return;
+  }
+
+  items.value = [];
+  selectedItemIds.value = [];
+  selectionMode.value = false;
+  appToast.success( "Lista de la compra vaciada." );
+};
+
+const deleteSelectedItems = async () => {
+  if ( selectedItemIds.value.length === 0 ) return;
+
+  const confirmed = await confirmDialog( {
+    title: "Eliminar artículos seleccionados",
+    message:
+      selectedItemIds.value.length === 1
+        ? "¿Eliminar el artículo seleccionado de la lista?"
+        : `¿Eliminar ${ selectedItemIds.value.length } artículos seleccionados de la lista?`,
+    confirmText: "Eliminar seleccionados",
+    cancelText: "Cancelar",
+    danger: true,
+  } );
+
+  if ( !confirmed ) return;
+
+  const { error } = await supabase
+    .from( "shopping_lists" )
+    .delete()
+    .in( "id", selectedItemIds.value );
+
+  if ( error ) {
+    appToast.error( "Error eliminando artículos: " + error.message );
+    return;
+  }
+
+  items.value = items.value.filter(
+    ( item ) => !selectedItemIds.value.includes( item.id ),
+  );
+  selectedItemIds.value = [];
+  selectionMode.value = false;
+  appToast.success( "Artículos eliminados de la lista." );
 };
 
 const sendToMobile = async () => {

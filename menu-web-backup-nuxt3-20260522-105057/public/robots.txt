@@ -1,6 +1,0 @@
-User-Agent: *
-Disallow:
-Crawl-delay: 1
-
-# Sitemap: añadir cuando se genere un sitemap.xml
-# Sitemap: https://tu-dominio.vercel.app/sitemap.xml

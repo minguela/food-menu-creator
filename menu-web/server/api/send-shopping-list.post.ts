@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import db from '~~/server/utils/db';
 import { logError } from "~/utils/log-error";
 import { buildShoppingListText } from "~/utils/shopping-conversions.js";
 
@@ -18,12 +18,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const supabase = createClient(
-      config.public.supabaseUrl,
-      config.supabaseServiceKey || config.public.supabaseAnonKey,
-    );
-
-    const { data: items, error: listError } = await supabase
+    const { data: items, error: listError } = await db
       .from("shopping_lists")
       .select("*, ingredients(name)")
       .eq("user_id", body.userId)
@@ -37,18 +32,13 @@ export default defineEventHandler(async (event) => {
     const text = `Lista de la compra\n\n${buildShoppingListText(items || [])}`;
     const channel = body.channel || "sms";
 
-    await supabase
+    await db
       .from("users")
       .update({ phone_number: body.phoneNumber, mobile_channel: channel })
       .eq("id", body.userId);
 
     if (!config.twilioAccountSid || !config.twilioAuthToken) {
-      await markSendStatus(
-        supabase,
-        body.userId,
-        "error",
-        "Twilio no está configurado en el servidor.",
-      );
+      await markSendStatus(body.userId, "error", "Twilio no está configurado en el servidor.");
       throw createError({
         statusCode: 503,
         statusMessage: "Twilio no está configurado en el servidor.",
@@ -61,12 +51,7 @@ export default defineEventHandler(async (event) => {
         : config.twilioFromNumber;
 
     if (!from) {
-      await markSendStatus(
-        supabase,
-        body.userId,
-        "error",
-        "Falta el número emisor.",
-      );
+      await markSendStatus(body.userId, "error", "Falta el número emisor.");
       throw createError({
         statusCode: 503,
         statusMessage: "Falta el número emisor.",
@@ -102,7 +87,7 @@ export default defineEventHandler(async (event) => {
 
     if (!response.ok) {
       const message = payload?.message || "Error enviando mensaje.";
-      await markSendStatus(supabase, body.userId, "error", message);
+      await markSendStatus(body.userId, "error", message);
       throw createError({
         statusCode: response.status,
         statusMessage: message,
@@ -110,7 +95,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const status = payload.status === "delivered" ? "delivered" : "sent";
-    await markSendStatus(supabase, body.userId, status, null);
+    await markSendStatus(body.userId, status, null);
 
     return {
       ok: true,
@@ -128,12 +113,11 @@ export default defineEventHandler(async (event) => {
 });
 
 async function markSendStatus(
-  supabase: any,
   userId: string,
   status: string,
   error: string | null,
 ) {
-  await supabase
+  await db
     .from("shopping_lists")
     .update({ send_status: status, send_error: error })
     .eq("user_id", userId);

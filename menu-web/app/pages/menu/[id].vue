@@ -822,17 +822,13 @@ const expandAndMergeIngredients = async ( userId: string, dishes: any[] ) => {
   const dishNames = dishes.map( ( d: any ) => d.name );
 
   try {
-    const response = await fetch(
-      `${ config.public.supabaseUrl }/functions/v1/expand-ingredients`,
-      {
-        method: "POST",
-        headers: {
-          apikey: config.public.supabaseAnonKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify( { dishNames, userId } ),
+    const response = await fetch(`/api/expand-ingredients`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ dishNames, userId }),
+    });
 
     const { results } = await response.json();
 
@@ -1379,17 +1375,11 @@ const invokeOcrWithRetry = async ( {
   const maxAttempts = 3;
   let lastError: Error | null = null;
 
-  for ( let attempt = 1; attempt <= maxAttempts; attempt++ ) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      const accessToken =
-        session?.access_token || runtimeConfig.public.supabaseAnonKey;
-
+      // No Supabase auth — use OCR shared secret via server proxy
       const formData = new FormData();
-      formData.append( "file", file );
+      formData.append("file", file);
 
       for ( const [ key, value ] of Object.entries( payload ) ) {
         if ( value === undefined || value === null ) continue;
@@ -1401,14 +1391,10 @@ const invokeOcrWithRetry = async ( {
         }
       }
 
-      const response = await fetch( "/api/ocr", {
+      const response = await fetch("/api/ocr", {
         method: "POST",
-        headers: {
-          apikey: runtimeConfig.public.supabaseAnonKey,
-          Authorization: `Bearer ${ accessToken }`,
-        },
         body: formData,
-      } );
+      });
 
       if ( response.ok ) return { error: null };
 

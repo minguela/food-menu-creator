@@ -696,7 +696,7 @@ const exportAsText = async () => {
   exportLoading.value = true;
   try {
     const response = await fetch(
-      `${ useRuntimeConfig().public.supabaseUrl }/functions/v1/export-shopping-list?user_id=${ currentUser.id }&format=text`
+      `/api/export-shopping-list?user_id=${ currentUser.id }&format=text`
     );
     const text = await response.text();
 
@@ -722,7 +722,7 @@ const exportAsCsv = async () => {
   exportLoading.value = true;
   try {
     const response = await fetch(
-      `${ useRuntimeConfig().public.supabaseUrl }/functions/v1/export-shopping-list?user_id=${ currentUser.id }&format=csv`
+      `/api/export-shopping-list?user_id=${ currentUser.id }&format=csv`
     );
     const text = await response.text();
 

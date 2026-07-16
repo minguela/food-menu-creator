@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import db from '~~/server/utils/db';
 import {
   USDA_ALIASES,
   isNonApplicableIngredient,
@@ -7,8 +7,6 @@ import {
   toNutrientNumberOrNull,
 } from "~~/server/utils/ingredient-enrichment";
 import {
-  normalizeEnrichSource,
-  resolveSupabaseServerKey,
   resolveUsdaKey,
   shouldTryOff,
   shouldTryUsda,
@@ -99,29 +97,10 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const supabaseKey = resolveSupabaseServerKey({
-    runtimeServiceKey: config.supabaseServiceKey,
-    envServiceRole: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    envNuxtServiceKey: process.env.NUXT_SUPABASE_SERVICE_KEY,
-    envSupabaseKey: process.env.SUPABASE_KEY,
-    envAnonKey: process.env.SUPABASE_ANON_KEY,
-    envNuxtPublicAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
-    publicAnonKey: config.public.supabaseAnonKey,
-  });
-  if (!supabaseKey) {
-    throw createError({
-      statusCode: 500,
-      statusMessage:
-        "SUPABASE_SERVICE_ROLE_KEY no configurada en runtime. Configúrala en Vercel/Supabase.",
-    });
-  }
-
-  const supabase = createClient(config.public.supabaseUrl, supabaseKey);
-
-  let ingredientsQuery = supabase
+  let ingredientsQuery = db
     .from("ingredients")
     .select("*")
-    .order("updated_at", { ascending: true, nullsFirst: true })
+    .order("updated_at", { ascending: true })
     .limit(limit);
 
   if (ingredientIds.length > 0) {

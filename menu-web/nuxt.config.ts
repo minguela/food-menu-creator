@@ -5,12 +5,10 @@ export default defineNuxtConfig({
   modules: ["@nuxtjs/tailwindcss"],
   css: ["~/assets/css/main.css"],
   nitro: {
-      preset: "vercel",  // OCR Docker requiere Node serverless (no Edge)
+      preset: "vercel",
   },
   runtimeConfig: {
     public: {
-      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
-      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
       adminTelegramId: process.env.NUXT_PUBLIC_ADMIN_TELEGRAM_ID,
       appVersion:
         process.env.NUXT_PUBLIC_APP_VERSION || process.env.npm_package_version,
@@ -21,7 +19,8 @@ export default defineNuxtConfig({
       appBuildTime: process.env.NUXT_PUBLIC_APP_BUILD_TIME || "",
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || "",
     },
-    supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    // Neon PostgreSQL (replaces Supabase)
+    neonDatabaseUrl: process.env.NEON_DATABASE_URL,
     ocrProcessorUrl: process.env.OCR_PROCESSOR_URL || "",
     ocrSharedSecret: process.env.OCR_SHARED_SECRET || "",
     twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,

@@ -1,7 +1,6 @@
 import type { Menu, Recipe, ShoppingItem, Ingredient } from '../../00.core/app/domain/models'
 
-// Generic query builder wrapper for the Supabase proxy API
-// This replaces direct useSupabase() calls with typed repositories
+// Generic query builder wrapper for the Neon database API.
 
 type QueryResult<T = any> = { data: T | null; error: Error | null }
 
@@ -50,7 +49,7 @@ function tableQuery(table: string) {
 
 // === Menu Repository ===
 export function createMenuRepository() {
-  const menus = tableQuery('menus')
+  const menus = tableQuery('weekly_menus')
   return {
     getAll: () => menus.select<Menu>({ order: 'created_at:desc' }),
     getById: (id: string) => menus.getById<Menu>(id),

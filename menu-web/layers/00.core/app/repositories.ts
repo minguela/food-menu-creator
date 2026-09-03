@@ -1,4 +1,5 @@
 import type { Menu, Recipe, ShoppingItem, Ingredient } from '../../00.core/app/domain/models'
+import { hydrateMenus } from './menu-hydration'
 
 // Generic query builder wrapper for the Neon database API.
 
@@ -50,9 +51,26 @@ function tableQuery(table: string) {
 // === Menu Repository ===
 export function createMenuRepository() {
   const menus = tableQuery('weekly_menus')
+  const meals = tableQuery('weekly_meals')
   return {
-    getAll: () => menus.select<Menu>({ order: 'created_at:desc' }),
-    getById: (id: string) => menus.getById<Menu>(id),
+    getAll: async () => {
+      const [menuResult, mealResult] = await Promise.all([
+        menus.select<Menu>({ order: 'created_at:desc' }),
+        meals.select<any>(),
+      ])
+      if (menuResult.error) return menuResult
+      if (mealResult.error) return { data: null, error: mealResult.error }
+      return { data: hydrateMenus(menuResult.data || [], mealResult.data || []), error: null }
+    },
+    getById: async (id: string) => {
+      const [menuResult, mealResult] = await Promise.all([
+        menus.getById<Menu>(id),
+        meals.select<any>({ weekly_menu_id: id }),
+      ])
+      if (menuResult.error) return menuResult
+      if (mealResult.error) return { data: null, error: mealResult.error }
+      return { data: hydrateMenus(menuResult.data ? [menuResult.data] : [], mealResult.data || [])[0] || null, error: null }
+    },
     create: (data: Partial<Menu>) => menus.insert<Menu>(data),
     update: (id: string, data: Partial<Menu>) => menus.update<Menu>({ ...data, id }),
     delete: (id: string) => menus.delete(id),

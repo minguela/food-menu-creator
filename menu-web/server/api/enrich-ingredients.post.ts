@@ -127,7 +127,7 @@ export default defineEventHandler(async (event) => {
   for (const ingredient of ingredients || []) {
     try {
       if (isNonApplicableIngredient(ingredient.name)) {
-        await supabase
+        await db
           .from("ingredients")
           .update({ nutrition_status: "pending" })
           .eq("id", ingredient.id);
@@ -261,7 +261,7 @@ export default defineEventHandler(async (event) => {
       }
 
       if (!bestCandidate || bestScore < OFF_MIN_CONFIDENCE) {
-        await supabase
+        await db
           .from("ingredients")
           .update({
             nutrition_status: "needs_review",
@@ -276,7 +276,7 @@ export default defineEventHandler(async (event) => {
       const needsNutritionReview = candidateNeedsReview(bestCandidate);
 
       if (bestScore >= OFF_MIN_CONFIDENCE && !needsNutritionReview) {
-        await supabase
+        await db
           .from("ingredients")
           .update({
             kcal_per_100g: bestCandidate.kcal_per_100g,
@@ -297,7 +297,7 @@ export default defineEventHandler(async (event) => {
         completed += 1;
       } else {
         const candidateKey = String(bestCandidate.external_id || "").trim();
-        const { data: existingCandidate } = await supabase
+        const { data: existingCandidate } = await db
           .from("ingredient_nutrition_candidates")
           .select("id, confidence")
           .eq("ingredient_id", ingredient.id)
@@ -306,7 +306,7 @@ export default defineEventHandler(async (event) => {
           .maybeSingle();
 
         if (existingCandidate?.id) {
-          await supabase
+          await db
             .from("ingredient_nutrition_candidates")
             .update({
               name: bestCandidate.name || ingredient.name,
@@ -322,7 +322,7 @@ export default defineEventHandler(async (event) => {
             })
             .eq("id", existingCandidate.id);
         } else {
-          await supabase.from("ingredient_nutrition_candidates").insert({
+          await db.from("ingredient_nutrition_candidates").insert({
             ingredient_id: ingredient.id,
             source: bestCandidate.source,
             external_id: candidateKey,
@@ -335,7 +335,7 @@ export default defineEventHandler(async (event) => {
             raw_payload: bestCandidate.raw_payload ?? null,
           });
         }
-        await supabase
+        await db
           .from("ingredients")
           .update({
             nutrition_status: "needs_review",

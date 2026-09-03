@@ -2,6 +2,7 @@
 // Replaces direct Supabase client queries from the browser
 import { defineEventHandler, getQuery, createError } from 'h3';
 import db from '~~/server/utils/db';
+import { signImageUrls } from '~~/server/utils/private-blob';
 
 export default defineEventHandler(async (event) => {
   const table = getRouterParam(event, 'table');
@@ -41,5 +42,5 @@ export default defineEventHandler(async (event) => {
   const { data, error } = await q;
   if (error) throw createError({ statusCode: 500, statusMessage: error.message });
 
-  return data;
+  return signImageUrls(table, data);
 });

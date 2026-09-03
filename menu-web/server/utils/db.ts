@@ -38,6 +38,7 @@ class QueryBuilder {
   private updateData: Record<string, any> | null = null;
   private upsertData: Record<string, any> | Record<string, any>[] | null = null;
   private upsertOnConflict: string | null = null;
+  private orExpression: string | null = null;
   private returnSingle: boolean = false;
   private maybeEmpty: boolean = false;
 
@@ -71,6 +72,7 @@ class QueryBuilder {
     return this;
   }
   ilike(column: string, value: string) { this.filters.push({ column, operator: 'ILIKE', value }); return this; }
+  or(expression: string) { this.orExpression = expression; return this; }
   order(column: string, opts?: { ascending?: boolean }) { this.orders.push({ column, ascending: opts?.ascending ?? true }); return this; }
   limit(n: number) { this.limitVal = n; return this; }
   range(start: number, end: number) { this.offsetVal = start; this.limitVal = end - start + 1; return this; }
@@ -168,7 +170,6 @@ class QueryBuilder {
   }
 
   private buildWhere(params: any[], param: (val: any) => string): string {
-    if (this.filters.length === 0) return '';
     const clauses = this.filters.map(f => {
       if (f.operator === 'IN') {
         const vals = (f.value as any[]).map(v => param(v)).join(', ');
@@ -178,6 +179,23 @@ class QueryBuilder {
       if (f.operator === 'IS NOT NULL') return `"${f.column}" IS NOT NULL`;
       return `"${f.column}" ${f.operator} ${param(f.value)}`;
     });
+    if (this.orExpression) {
+      const orClauses = this.orExpression.split(',').map((condition) => {
+        const [column, operator, ...valueParts] = condition.split('.');
+        if (!column || !operator || !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(column)) {
+          throw new Error('Invalid OR filter');
+        }
+        const value = valueParts.join('.');
+        if (operator === 'is' && value === 'null') return `"${column}" IS NULL`;
+        if (operator === 'is' && value === 'not.null') return `"${column}" IS NOT NULL`;
+        const sqlOperator = { eq: '=', neq: '!=', gt: '>', gte: '>=', lt: '<', lte: '<=', ilike: 'ILIKE' }[operator];
+        if (!sqlOperator || valueParts.length === 0) throw new Error('Invalid OR filter');
+        return `"${column}" ${sqlOperator} ${param(value)}`;
+      });
+      if (orClauses.length === 0) throw new Error('Invalid OR filter');
+      clauses.push(`(${orClauses.join(' OR ')})`);
+    }
+    if (clauses.length === 0) return '';
     return ' WHERE ' + clauses.join(' AND ');
   }
 }

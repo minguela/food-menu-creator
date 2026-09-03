@@ -7,11 +7,12 @@ import { signImageUrls } from '~~/server/utils/private-blob';
 export default defineEventHandler(async (event) => {
   const table = getRouterParam(event, 'table');
   if (!table) throw createError({ statusCode: 400, statusMessage: 'Table name required' });
+  const tableName = table === 'menus' ? 'weekly_menus' : table;
 
   const query = getQuery(event);
   const { select, order, limit, single, ...filters } = query;
 
-  let q = db.from(table).select(String(select || '*'));
+  let q = db.from(tableName).select(String(select || '*'));
 
   // Apply filters
   for (const [key, value] of Object.entries(filters)) {
@@ -42,5 +43,5 @@ export default defineEventHandler(async (event) => {
   const { data, error } = await q;
   if (error) throw createError({ statusCode: 500, statusMessage: error.message });
 
-  return signImageUrls(table, data);
+  return signImageUrls(tableName, data);
 });
